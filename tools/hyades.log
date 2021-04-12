@@ -100,3 +100,39 @@
 2020-01-27 10:55:11 INFO:Completed post processing for Diamond_Ramp variables: Pres, Rho, Te, Tr, Ti, U, sd1
 2020-01-27 11:02:48 INFO:Complete HYADES run for Diamond_Ramp in 2.5 seconds
 2020-01-27 11:02:48 INFO:Completed post processing for Diamond_Ramp variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 18:04:38 INFO:Complete HYADES run for testing1 in 23.5 seconds
+2021-02-17 18:04:38 INFO:Completed post processing for testing1 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 18:12:04 INFO:Complete HYADES run for testing1 in 19.8 seconds
+2021-02-17 18:12:04 INFO:Completed post processing for testing1 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 18:16:01 INFO:Complete HYADES run for testing1 in 14.1 seconds
+2021-02-17 20:01:43 INFO:Complete HYADES run for testing1 in 18.2 seconds
+2021-02-17 20:04:02 INFO:Complete HYADES run for testing1 in 18.2 seconds
+2021-02-17 20:04:04 INFO:Completed post processing for testing1 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 20:49:57 INFO:Complete HYADES run for testing1 in 16.4 seconds
+2021-02-17 20:49:57 INFO:Completed post processing for testing1 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 20:53:41 INFO:Complete HYADES run for testing1 in 15.8 seconds
+2021-02-17 20:53:45 INFO:Completed post processing for testing1 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 20:54:09 INFO:Complete HYADES run for testing2 in 13.6 seconds
+2021-02-17 20:54:14 INFO:Completed post processing for testing2 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 21:25:10 INFO:Complete HYADES run for sapphiretest2 in 0.2 seconds
+2021-02-17 21:25:14 INFO:Completed post processing for sapphiretest2 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-17 21:27:38 INFO:Complete HYADES run for sapphiretest2 in 18.7 seconds
+2021-02-17 21:27:43 INFO:Completed post processing for sapphiretest2 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-18 16:15:43 INFO:Complete HYADES run for saphhire150fast in 222.9 seconds
+2021-02-18 16:15:48 INFO:Completed post processing for saphhire150fast variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-18 16:35:12 INFO:Complete HYADES run for saphhire150fast in 31.7 seconds
+2021-02-18 16:35:17 INFO:Completed post processing for saphhire150fast variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-18 16:35:58 INFO:Complete HYADES run for sapphire75fast in 30.5 seconds
+2021-02-18 16:36:03 INFO:Completed post processing for sapphire75fast variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-19 10:59:04 INFO:Complete HYADES run for sapoptimfast_045 in 59.2 seconds
+2021-02-19 10:59:09 INFO:Completed post processing for sapoptimfast_045 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-19 20:44:22 INFO:Complete HYADES run for ex9 in 5.2 seconds
+2021-02-19 20:44:27 INFO:Completed post processing for ex9 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-22 11:24:16 INFO:Complete HYADES run for sapphire2222021_055 in 51.1 seconds
+2021-02-22 11:24:20 INFO:Completed post processing for sapphire2222021_055 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-22 16:31:31 INFO:Complete HYADES run for Sapphire75_222021 in 5482.7 seconds
+2021-02-22 16:31:36 INFO:Completed post processing for Sapphire75_222021 variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-02-23 20:03:05 INFO:Complete HYADES run for tylerNew2232021NoOptim in 61.0 seconds
+2021-02-23 20:03:11 INFO:Completed post processing for tylerNew2232021NoOptim variables: Pres, Rho, Te, Tr, Ti, U, sd1
+2021-03-10 10:53:45 INFO:Complete HYADES run for CleanedagainVinay352021_000 in 88.2 seconds
+2021-03-10 10:53:51 INFO:Completed post processing for CleanedagainVinay352021_000 variables: Pres, Rho, Te, Tr, Ti, U, sd1

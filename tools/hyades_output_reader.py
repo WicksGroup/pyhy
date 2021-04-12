@@ -111,6 +111,7 @@ class hyadesOutput:
         Read the specified .dat file and seperates the numbers from the mesh_lines at the bottom.
         The data is used to create all of the attributes of the Output class.
         '''
+        print(filename)
         if not filename.endswith('.dat'):
             filename += '.dat'
         with open(filename) as fh:

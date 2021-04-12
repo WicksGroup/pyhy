@@ -17,7 +17,7 @@ import re
 import json
 from hyades_output_reader import createOutput
 from hyades_runner import batchRunHyades, runHyadesPostProcess, runHyades
-from display_tabs import DisplayTabs
+#from display_tabs import DisplayTabs
 
 
 class hyadesOptimizer:
@@ -54,13 +54,8 @@ class hyadesOptimizer:
         
         
     def __initTabs__(self, initial_tabs=None):
-        if initial_tabs:
-            self.myTabs = initial_tabs
-        else:
-            self.myTabs = DisplayTabs()
-            self.myTabs.func()
-        
-        
+        self.plot1 = DynamicUpdate("t-up Optim vs Real")
+
     def updateVariables(self, var_vec):
         '''
         Take apart the single vector from the optimizer into the component parts
@@ -111,7 +106,7 @@ class hyadesOptimizer:
         # remove unneccessary hyades folders
         directories = [f for f in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, f))]
         for directory in directories:
-            if ('000' in directory) or (json_data['best optimization']['name'] in directory):
+            if ('000' in directory) or (json_data['best optimization']['name'] in directory) or (str(self.iter_count).zfill(3) in directory):
                 continue # do nothing, we want to keep these folders
             else:
                 delete_extensions = ('U.dat', 'Pres.dat', 'Te.dat', 'Rho.dat', 'Tr.dat', 'Ti.dat', 'sd1.dat',
@@ -154,8 +149,12 @@ class hyadesOptimizer:
         new = new.replace('TV_PRES', '\n'.join(pres_lines))
         
         # Write new file
+        try:
+            os.makedirs(self.inf_path+f'\{self.run_name}')
+        except:
+            print("path exists")
         out_fname = setup_inf.replace('setup', str(self.iter_count).zfill(3))
-        with open(os.path.join(self.inf_path, out_fname), 'w') as f:
+        with open(os.path.join(self.inf_path+f'\{self.run_name}', out_fname), 'w') as f:
             f.write(new)       
         
     
@@ -165,7 +164,8 @@ class hyadesOptimizer:
         '''
         inf_path = self.inf_path
         final_destination = self.path
-        batchRunHyades(inf_path, final_destination, copy_data_to_excel=False, debug=0)
+        print(inf_path,final_destination)
+        batchRunHyades(inf_path+f'\{self.run_name}', final_destination, copy_data_to_excel=False, debug=2)
 
     ###
 #        # setup a logging file
@@ -254,19 +254,20 @@ class hyadesOptimizer:
                 self.material_of_interest = hyades_U.material_of_interest
             idx = hyades_U.material_properties[self.material_of_interest]['endMesh'] - 1
             x, y = hyades_U.time - self.delay, hyades_U.output[idx,:]
+            print(x,y)
             f_hyades_U = scipy.interpolate.interp1d(x, y) # interpolation is just for residual calculation
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum( np.square(self.exp_data - interp_hyades) )
             plot_time = x
             plot_velocity = y
-#        print('Hyades time limits:', hyades_U.time.min(), hyades_U.time.max())
-#        print('interpolated limits:', plot_time)
-#        print('plot velocity:', plot_velocity)
-        self.myTabs.update_velocity_output(self.exp_time, self.exp_data,
-                                           plot_time, plot_velocity, hyades_path, 0.0,
-                                           use_shock_velocity=self.use_shock_velocity)
-    
-#    def calcShockVelocity(self, hyades_path):
+        print('Hyades time limits:', hyades_U.time.min(), hyades_U.time.max())
+        #print('interpolated limits:', plot_time)
+        #print('plot velocity:', plot_velocity)
+        #self.myTabs.update_velocity_output(self.exp_time, self.exp_data,plot_time, plot_velocity, hyades_path, 0.0,use_shock_velocity=self.use_shock_velocity)
+        self.plot1.on_running(plot_time,plot_velocity,self.exp_time,self.exp_data)
+        self.plot1.figure.savefig(f'{self.run_name}_{self.iter_count}.png')
+        
+# def calcShockVelocity(self, hyades_path):
 #        '''
 #        Trying to translate the matlab ShockFrontFunction
 #        '''
@@ -314,9 +315,9 @@ class hyadesOptimizer:
         self.calcResidual()
         self.saveObj()
         
-        self.myTabs.update_tab_info(str(self.iter_count).zfill(3), self.residual, self.pres)
-        self.myTabs.update_pressure_input(self.pres_time, self.pres, self.xs, self.ys)
-        self.myTabs.update_residual(self.residual)
+        #self.myTabs.update_tab_info(str(self.iter_count).zfill(3), self.residual, self.pres)
+        #self.myTabs.update_pressure_input(self.pres_time, self.pres, self.xs, self.ys)
+        #self.myTabs.update_residual(self.residual)
                          
         self.iter_count += 1
         if (self.residual < 30) and (len(self.pres_time)<=10):
@@ -332,5 +333,38 @@ class hyadesOptimizer:
 class resolutionError(Exception):
     # catcher to increase resolution
     pass
-                         
+
+
+
+import matplotlib.pyplot as plt
+import random
+plt.ion()
+class DynamicUpdate():
+    def __init__(self,name):
+        #Set up plot
+        self.figure, self.ax = plt.subplots()
+        self.figure.suptitle(name)
+        self.lines, = self.ax.plot([],[])
+        self.line2, = self.ax.plot([],[])
+        #Autoscale on unknown axis and known lims on the other
+        self.ax.set_autoscaley_on(True)
+        #self.ax.set_xlim(self.min_x, self.max_x)
+        #Other stuff
+        self.ax.grid()
+
+    def on_running(self, xdata, ydata, xdata2=[],ydata2=[]):
+        #Update data (with the new _and_ the old points)
+        self.lines.set_xdata(xdata)
+        self.lines.set_ydata(ydata)
+        if xdata2!=[] and ydata2!=[]:
+            self.line2.set_xdata(xdata2)
+            self.line2.set_ydata(ydata2)
+        #Need both of these in order to rescale
+        self.ax.relim()
+        self.ax.autoscale_view()
+        #We need to draw *and* flush
+        self.figure.canvas.draw()
+        self.figure.canvas.flush_events()
+
+        
                          

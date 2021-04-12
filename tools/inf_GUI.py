@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os
+import pathlib
+os.chdir(pathlib.Path(__file__).parent.absolute())
 import matplotlib
 matplotlib.use("TkAgg")
 from tkinter import ttk
@@ -7,7 +10,7 @@ from tkinter import messagebox
 from tkinter import *
 from inf_GUI_helper import Layer, inf_writer, myTab
 import datetime
-import os
+import asyncio
 import pandas as pd
 import hyades_runner
 import numpy as np
@@ -32,7 +35,9 @@ class myGUI:
         self.XrayProbeStart = DoubleVar()
         self.XrayProbeStop  = DoubleVar()        
         self.source_multiplier = DoubleVar()
-        
+        self.time_of_interestS = DoubleVar(root)
+        self.time_of_interestE = DoubleVar(root)
+        self.exp_file_name = StringVar(root)
         
         # set up the window and root of all the widgets
         root.title('Hyades Input File GUI')
@@ -77,27 +82,42 @@ class myGUI:
         # Checkbutton to save a copy of all the hyades data as an excel sheet. Default True.
         ttk.Checkbutton(self.parent, text="Save Excel copy",
                         variable=self.save_excel).grid(row=row, column=4, sticky="NW")
+        #Entry for visar for optimizer
+        ttk.Label(self.parent, text='t-up Datafile Name').grid(row=row, column=5, sticky='NW')
+        ttk.Entry(self.parent, textvariable=self.exp_file_name, width=7).grid(row=row, column=6,sticky='NW')
         row += 1
-        
+
         # Post Processor time step
         ttk.Label(self.parent, text='*Time Step (ns)').grid(row=row, column=1, sticky='NW')
         ttk.Entry(self.parent, textvariable=self.timeStep, width=7).grid(row=row, column=2, sticky='NW')
         # Write the .inf button
         ttk.Button(self.parent, text='Write inf',command=self.write_out_props).grid(row=row, column=3, sticky='NW')
+        #Time of interest
+        ttk.Label(self.parent, text='time of interest').grid(row=row, column=5, sticky='NW')
+        ttk.Label(self.parent, text='start:').grid(row=row, column=6, sticky='NW')
+        ttk.Entry(self.parent, textvariable= self.time_of_interestS, width=7).grid(row=row, column=7,sticky='NW')
         row += 1
         
         # Outfname entry
         ttk.Label(self.parent, text='*Output inf Name: ').grid(row=row, column=1, sticky='NW')
         ttk.Entry(self.parent, textvariable=self.outfname, width=24).grid(row=row, column=2, columnspan=2, sticky='NW')
+        
+        #time of interest end
+        ttk.Label(self.parent, text='end:').grid(row=row, column=6, sticky='NW')
+        ttk.Entry(self.parent, textvariable=self.time_of_interestE, width=7).grid(row=row, column=7,sticky='NW')
         row += 1
         
+        
+
+
         # add the number of layers entry and button
         pady = (5, 0)
         ttk.Label(self.parent, text='*Number of layers').grid(column=1, row=row, sticky='NW', pady=pady)
         ttk.Entry(self.parent, textvariable=self.nLayers, width=7).grid(column=2, row=row, sticky='NW', pady=pady)
         ttk.Button(self.parent, text='Generate layers',
                    command=self.generate_layers).grid(column=3, row=row, sticky='NW', pady=pady)        
-        
+        #Run Optimizer button
+        ttk.Button(root, text='Run optimizer', command= self.RunOptimizer).grid(row=row, column=5, sticky='NW')
         '''functions for the tv file and directory selection'''
         def selectPresFile():
             presfname =  filedialog.askopenfilename(initialdir='../data', title='Select Pressure Profile')
@@ -173,7 +193,22 @@ class myGUI:
         ttk.Button(root, text='Select .inf destination', command=selectDir).grid(row=row, column=1, sticky='NW', pady=pady)
         row += 1
         
-    
+    def RunOptimizer(self):
+        print(self.exp_file_name.get(),self.time_of_interestE.get(),self.time_of_interestS.get())
+        inf_path = '../data/inf/'
+        files = [f for f in os.listdir(inf_path) if f.endswith('_setup.inf')]
+        print(files)
+        for f in files:
+            print(pathlib.Path(f).parent.parent.parent.absolute())
+            try:
+                os.makedirs(f'../data/{f[0:-10]}')
+            except:
+                print(f'../data/{f[0:-10]} exists')  
+            print(f[0:-10])
+            os.system(f'mv ..\data\inf\{f} ..\data\{f[0:-10]}\{f}')
+            os.system(f'.\hyopRunner {self.exp_file_name.get()} {self.time_of_interestS.get()} {self.time_of_interestE.get()} {f[0:-10]}')
+
+
     def generate_layers(self):
         # Add nLayers number of tabs to the notebook, each tab holding a 'Layer' object
         self.tabs = [] # reset layers so they dont keep appending
@@ -285,6 +320,7 @@ class myGUI:
 if __name__=="__main__":
     root = Tk()
     GUI = myGUI(root)
+    print(GUI.exp_file_name)
     root.mainloop()
 
 

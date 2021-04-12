@@ -9,6 +9,7 @@ import time
 import logging
 from excel_writer import writeExcel
 import traceback
+import pathlib
 
 def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
     '''Use the runHyades and runHyadesPostProcess functions to simulate all .inf in a given folder.'''
@@ -27,13 +28,17 @@ def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
 
     inf_files = sorted([os.path.splitext(f)[0] for f in os.listdir(inf_path)
                        if (f.endswith('.inf')) and ('setup' not in f)])
+    
 
+    print(inf_files[0])
+    print(inf_path)
     if inf_files:
         if debug > 0:
             print(f'Found {len(inf_files)} .inf files: {", ".join(inf_files)} \n')
     else:
         raise Exception(f'Found no .inf files in {inf_path!r}')
     for run_name in inf_files:
+        print(run_name)
         # changed a current directory to an abs path, i think this will fix it
         # creates a new folder named "run_name"
         try:
@@ -69,17 +74,19 @@ def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
 def runHyades(path, run_name, final_destination, debug=0):
     ''' Run hyades for a given run name
         Create a new directory and move all files into it.'''
-#    os.chdir(path)
+    currpath = pathlib.Path(__file__).parent.absolute() 
+    os.chdir(path)
     assert f'{run_name}.inf' in os.listdir(path), f'Did not find {run_name}.inf in {path!r}'
     
     try:
         t0 = time.time()
-        command = f'hyades -c {os.path.join(path, run_name)}'
+        command = f'hyades -c {run_name}'
         if debug==2:
             print(os.getcwd())
             print(os.listdir())
         if debug==1 or debug==2:
             print(f'Started {command!r}')
+        os.system("rm SCRATCHX1")
         os.system(command)
         t1 = time.time()
         t2complete = t1 - t0
@@ -96,7 +103,7 @@ def runHyades(path, run_name, final_destination, debug=0):
         
     # Get the names of all files to move
     files_to_move = [f for f in os.listdir(path) if (f.startswith(run_name)) and (not os.path.isdir(os.path.join(path, f))) ]
-
+    print(files_to_move)
     try: # move the files
         for file in files_to_move:
             shutil.move(os.path.join(path, file), os.path.join(final_destination, run_name, file))
@@ -106,19 +113,24 @@ def runHyades(path, run_name, final_destination, debug=0):
         raise Exception(f'Error occured moving {file}')
 
     assert len(files_to_move)==4, f'Expected to find 4 files to move (.inf, .otf, .ppf, .tmf) - instead found {files_to_move}'
-
+    os.chdir(currpath)
     return t2complete
 
     
 def runHyadesPostProcess(run_name, variables, debug=0):
     '''Run HyadesPostProcess for a list of variables'''
+
     for var in variables:
-        command = f'HyadesPostProcess {run_name} {var}'
+        command = f'sh HyadesPostProcess.sh {run_name} {var}'
         os.system(command)
         if debug==2:
             print(f'Completed {command!r}')
-            matching = [f for f in os.listdir() if f.startswith(run_name) and f.endswith(f'{var}.dat')]
-            assert matching, f'Error: did not process {var}'
+            try:
+                matching = [f for f in os.listdir(pathlib.Path(run_name+"_Pres.dat").parent.absolute()) if f.startswith(run_name) and f.endswith(f'{var}.dat')]
+            except:
+                print("uhhh pressure?")
+            print(matching)
+            #assert matching, f'Error: did not process {var}'
     if debug==1 or debug==2:    
         print(f'Completed HyadesPostProcess for {variables}')
         

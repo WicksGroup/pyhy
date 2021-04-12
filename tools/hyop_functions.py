@@ -18,7 +18,7 @@ from hyades_output_reader import createOutput
 #from hyades_runner import run_hyades, run_hyades_post
 from hyop_class import hyadesOptimizer
 
-from display_tabs import DisplayTabs
+#from display_tabs import DisplayTabs
 
 
 
