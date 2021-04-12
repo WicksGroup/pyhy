@@ -1,0 +1,9 @@
+The first line is a comment. This is a ramp laser drive.
+time (ns), Power (TW)
+0.0, 0.0
+0.5, 0.05
+1.0, 0.125
+1.7, 0.4
+2.5, 1.0
+3.78, 0.68
+10,  0

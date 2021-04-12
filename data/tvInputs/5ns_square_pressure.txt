@@ -1,0 +1,6 @@
+Cu DCS, 
+time (ns), Pressure (Gpa)
+0.0, 0.0
+0.1, 40
+5.0, 40
+5.1, 0.0
