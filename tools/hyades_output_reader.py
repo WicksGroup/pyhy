@@ -177,16 +177,18 @@ class hyadesOutput:
 #         print(f'MESH PROP: {mesh_prop}')
         X = [] # variable for the lagranian distance
         lim = []
-        self.material_properties = {}
+        i=0
+        self.material_properties = []
         for material, properties in zip(materials, mesh_prop):
             start_mesh = properties[0]; end_mesh = properties[1];
             start_dist = properties[2]; end_dist = properties[3];
             increment  = properties[4]
             delta_dist = end_dist - start_dist
             delta_mesh = end_mesh - start_mesh
-            self.material_properties[material] = {'startMesh':int(start_mesh),'endMesh':int(end_mesh),
-                                                   'startX':start_dist*1e4,    'endX':end_dist*1e4,
-                                                   'increment':increment}
+            self.material_properties.append({'startMesh':int(start_mesh), 'endMesh':int(end_mesh),
+                                                   'startX':start_dist*1e4, 'endX':end_dist*1e4,
+                                                   'increment':increment, 'material': material})
+            i+=1
            
             if increment == 1:
                 # fzt - first zone thickness

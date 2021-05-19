@@ -253,11 +253,11 @@ def update_surface(children):
             ]
 #    annotations = []
     for mat in material_properties:
-        mat_X = material_properties[mat]['startX']
+        mat_X = mat['startX']
         index = np.argmin( abs(X - mat_X) )
         
         x = 5
-        y = (material_properties[mat]['startX'] + material_properties[mat]['endX']) / 2
+        y = (mat['startX'] + mat['endX']) / 2
         z = output.max() * 0.8
         
 #        annotations.append(dict(x=y,
@@ -273,7 +273,7 @@ def update_surface(children):
 
         traces.append(
                go.Scatter3d(x=time, y=[mat_X]*len(time), z=output[index,:],
-                            name=mat,
+                            name=mat['material'],
                             mode='lines',
                             line=dict(color='black', width=6, dash='dash'),
                             visible=False,
@@ -374,13 +374,13 @@ def update_heatmap(children):
                          'title_font':{'size':24}, 'tickfont':{'size':18}, "titleside":"right"})]
     annotations = []
     for mat in material_properties:
-        mat_X = material_properties[mat]['startX']
+        mat_X = mat['startX']
         index = np.argmin( abs(X - mat_X) )
         x = (0, time.max())
         y = [mat_X] * 2
         traces.append(
                       go.Scatter(x=x, y=y,
-                                 name=mat,
+                                 name=mat['material'],
                                  mode='lines',
                                  line=dict(color='white', width=2, dash='dash'),
                                  visible=False,
@@ -389,7 +389,7 @@ def update_heatmap(children):
                       )
 
         x = 100,
-        y = (material_properties[mat]['startX'] + material_properties[mat]['endX']) / 2
+        y = (mat['startX'] + mat['endX']) / 2
         annotations.append(dict(x=x,
                                 y=y,
                                 text=mat,
@@ -480,20 +480,20 @@ def update_lineout(selected_time, children):
     traces = []
     annotations = []
     for mat in material_properties:
-        start = material_properties[mat]['startMesh'] - 1
+        start = mat['startMesh'] - 1
         if start < 0: # check for the first material condition
             start = 0
-        stop = material_properties[mat]['endMesh']
+        stop = mat['endMesh']
         if stop > len(X) - 1:
             stop = len(X) - 1
 
         traces.append(
             go.Scatter(x=X[start:stop], y=output[start:stop, index],
-                       name=mat,
+                       name=mat['material'],
                        line=dict(width=4),
                       )
         )
-        dashedX = [material_properties[mat]['endX']] * 2
+        dashedX = [mat['endX']] * 2
         dashedY = [0, output.max() + 1]
         traces.append(
             go.Scatter(x=dashedX, y=dashedY,
@@ -502,11 +502,11 @@ def update_lineout(selected_time, children):
                       )
         )
         annotations.append(go.layout.Annotation(
-                    x=(material_properties[mat]['startX'] + material_properties[mat]['endX']) / 2,
+                    x=(mat['startX'] + mat['endX']) / 2,
                     y=output.max() * 0.9,
 #                     xref="x",
 #                     yref="y",
-                    text=mat,
+                    text=mat['material'],
                     font=dict(color="black",
                               size=16),
                     showarrow=False))

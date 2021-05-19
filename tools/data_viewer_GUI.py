@@ -340,15 +340,15 @@ class App:
             self.label_lines, self.label_text = [], []
             y = 0.85; old_x = -100
             for mat in self.hyades.material_properties:
-                label_line = self.ax.axvline(self.hyades.material_properties[mat]['startX'],
+                label_line = self.ax.axvline(mat['startX'],
                                              color='k', linestyle='dashed', linewidth=1)
-                x = (self.hyades.material_properties[mat]['startX'] + self.hyades.material_properties[mat]['endX']) / 2
+                x = (mat['startX'] + mat['endX']) / 2
                 # if a label would be closer than 10% of the window width to the previous label, then lower it
                 if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
                     y -= 0.05
                 else:
                     y = 0.85
-                label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, mat, ha='center')
+                label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, mat['material'], ha='center')
                 self.label_lines.append( label_line )
                 self.label_text.append( label_text )
                 old_x = x
@@ -490,21 +490,20 @@ class App:
             self.label_lines, self.label_text = [], []
             # add the new material labels
             y = 0.85; old_x = -100
-            for i, mat in enumerate(self.hyades.material_properties):
-                label_line = self.ax.axvline(self.hyades.material_properties[mat]['startX'],
+            for mat in self.hyades.material_properties:
+                label_line = self.ax.axvline(mat['startX'],
                                              color='k', linestyle='dashed', linewidth=1, alpha=0.5)
-                x = (self.hyades.material_properties[mat]['startX'] + self.hyades.material_properties[mat]['endX']) / 2
+                x = (mat['startX'] + mat['endX']) / 2
                 # if the new label would be placed closer than 10% of the window width, lower it
                 if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
                     y -= 0.05
                 else:
                     y = 0.85
                 label_text = self.ax.text(x, self.ax.get_ylim()[1] * y,
-                                           mat, ha='center')
+                                           mat['material'], ha='center')
                 self.label_lines.append( label_line )
                 self.label_text.append( label_text )
                 old_x = x
-
         self.canvas.draw()
         
         
@@ -520,11 +519,11 @@ class App:
                 self.txt._text = f'{self.hyades.X[ix]:.1f} um'
                 self.line.set_data(self.hyades.time, self.hyades.output[ix, :])
                 for mat in self.hyades.material_properties:
-    #                x0 = self.hyades.material_properties[mat]['startX']
-    #                x1 = self.hyades.material_properties[mat]['endX']
+    #                x0 = mat['startX']
+    #                x1 = mat['endX']
     #                x  = self.hyades.X[ix]
-                    greater_than = ix >= self.hyades.material_properties[mat]['startMesh'] - 1
-                    less_than    = ix < self.hyades.material_properties[mat]['endMesh'] - 1
+                    greater_than = ix >= mat['startMesh'] - 1
+                    less_than    = ix < mat['endMesh'] - 1
                     if less_than and greater_than:
                         self.label_text_time._text = mat
                         break
