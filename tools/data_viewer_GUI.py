@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 from hyades_output_reader import createOutput
 import tkinter
-from IPython import display
+# from IPython import display
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
@@ -117,7 +117,7 @@ class App:
         self.datasaur = self.ax.scatter([], [])
         self.ax.set(title='Select a file to begin',
                     xlabel='X Label', ylabel='Y Label',
-                    xlim=(0,100), ylim=(0,100))
+                    xlim=(0, 100), ylim=(0, 100))
 
 #
         # Initialize some variables to hold text but do not display them yet
@@ -136,15 +136,15 @@ class App:
                 
         # Create and fill the Menu at the top of the screen
         root_menu = tkinter.Menu(root)
-        root.config(menu = root_menu)
+        root.config(menu=root_menu)
         
         # creating sub menus in the root menu
         file_menu = tkinter.Menu(root_menu) # it intializes a new su menu in the root menu
         #file_menu.add_command(label = "New file.....", command = function)
-        root_menu.add_cascade(label = 'File', menu=file_menu) # it creates the name of the sub menu
-        file_menu.add_command(label = 'Open file', command=self.selectDir)
-        file_menu.add_separator() # it adds a line 
-        file_menu.add_command(label = 'Exit', command=root.quit)
+        root_menu.add_cascade(label='File', menu=file_menu) # it creates the name of the sub menu
+        file_menu.add_command(label='Open file', command=self.selectDir)
+        file_menu.add_separator()  # it adds a line
+        file_menu.add_command(label='Exit', command=root.quit)
 
         # creating another sub menu for saving
         save_menu = tkinter.Menu(root_menu)
@@ -153,7 +153,6 @@ class App:
         save_menu.add_command(label='Save Plot', command=self.savePlot)
         save_menu.add_command(label='Save CSV', command=self.saveCSV)
         # End Menu
-
         
     def animate(self, i):
         '''Helper function for the animator'''
@@ -164,8 +163,7 @@ class App:
         else:
             self.line.set_ydata(self.hyades.output[i,:])
         return self.line
-    
-    
+
     def playAnimation(self):
         '''Function for the button
            This isnt perfect weird things happen restarting and playing the animation'''
@@ -203,16 +201,15 @@ class App:
         anim.running = True
         anim.direction = +1
         self.fig.canvas.draw()
-    
-    
+
     def saveAnimation(self):
         '''Save a .mp4 animation of the slider moving through its range'''
-        if self.var.get()=='Shock Velocity':
+        if self.var.get() == 'Shock Velocity':
             tkinter.messagebox.showwarning("Warning from Save Animation", 'WARNING: Nothing to animate when Shock Velocity is plotted')
             return
         
         print('Saving movie...')
-        if self.x_mode.get()=='Distance':
+        if self.x_mode.get() == 'Distance':
             frame_num = self.hyades.nTime
         else:
             frame_num = self.hyades.nMesh
@@ -231,13 +228,13 @@ class App:
         writer = Writer(fps=fps, metadata=dict(artist='Me'), bitrate=1800)
         
         selection = self.var.get()
-        if selection=='Pressure':            var = 'Pres'
-        elif selection=='Density':           var = 'Rho'
-        elif selection=='Temperature':       var = 'Te'
-        elif selection=='Particle Velocity': var = 'Up'
+        if selection == 'Pressure':            var = 'Pres'
+        elif selection == 'Density':           var = 'Rho'
+        elif selection == 'Temperature':       var = 'Te'
+        elif selection == 'Particle Velocity': var = 'Up'
         
-        if self.x_mode.get()=='Distance': suffix = "Time"
-        else:                             suffix = "Distance"
+        if self.x_mode.get() == 'Distance': suffix = "Time"
+        else:                               suffix = "Distance"
         
         basename = f"{os.path.basename(self.filename)}_{var}_{suffix}"
         out_fname = basename
@@ -500,7 +497,7 @@ class App:
                 else:
                     y = 0.85
                 label_text = self.ax.text(x, self.ax.get_ylim()[1] * y,
-                                           mat['material'], ha='center')
+                                          mat['material'], ha='center')
                 self.label_lines.append( label_line )
                 self.label_text.append( label_text )
                 old_x = x
@@ -512,7 +509,7 @@ class App:
         if self.datasaur.get_visible():
             x = self.df.x[:self.ix_scale.get()]
             y = self.df.y[:self.ix_scale.get()]
-            self.datasaur.set_offsets( np.array([x,y]).T )
+            self.datasaur.set_offsets( np.array([x, y]).T )
         else:
             ix = self.ix.get()
             if self.x_mode.get()=='Time':

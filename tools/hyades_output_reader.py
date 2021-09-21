@@ -70,7 +70,7 @@ class hyadesOutput:
         self.name     = os.path.basename(inf_fname)
         
         data, comment = self.hyadesDatReader(dat_fname)
-        self.comment  = comment
+        self.comment = comment
         self.nMesh = int(data[0])
         self.nTime = int(data[1])
         self.mini = data[2]
@@ -156,7 +156,7 @@ class hyadesOutput:
         self.material_of_interest = None
         for i in range(len(materials)):
             if '!' in materials[i]:
-                materials[i] = materials[i].replace('!','')
+                materials[i] = materials[i].replace('!', '')
                 self.material_of_interest = materials[i]
             if '$' in materials[i]:
                 materials[i] = materials[i].replace('$', '')
@@ -167,7 +167,7 @@ class hyadesOutput:
 
         assert num_of_regions != 0, 'Found no mesh properties in .inf file'
 
-        mesh_lines = [line.split() for line in mesh_lines] # seperate words within each line
+        mesh_lines = [line.split() for line in mesh_lines] # separate words within each line
         mesh_prop = []
         # assumed variables arranged as follows in mesh_prop array:
         # starting mesh index, end mesh index, starting distance, end dist, increment

@@ -84,7 +84,7 @@ class myTab:
         self.row += 1
         
 #        self.quickLabel('Set one Material of Interest if opitimizing')
-        ttk.Label(self.parent, text='Set one Material of Interest if opitimizing').grid(column=1, columnspan=2, row=self.row, stick='NW')
+        ttk.Label(self.parent, text='Set one Material of Interest if optimizing').grid(column=1, columnspan=2, row=self.row, stick='NW')
         self.isMaterialOfInterest = IntVar()
         ttk.Checkbutton(self.parent, text='Set as Material of Interest',
                         variable=self.isMaterialOfInterest).grid(column=3, columnspan=2, row=self.row, sticky='NW')
@@ -93,7 +93,7 @@ class myTab:
         self.isShockMaterialOfInterest = IntVar() # binary 0/1 for False/ True
         ttk.Checkbutton(self.parent, text='Set as Shock MOI',
                         variable=self.isShockMaterialOfInterest).grid(column=3, columnspan=2, row=self.row, sticky='NW')
-        ttk.Label(self.parent, text='Set one Shock MOI if opitimizing shock veloicity').grid(column=1, columnspan=2, row=self.row, sticky='NW')
+        ttk.Label(self.parent, text='Set one Shock MOI if optimizing shock velocity').grid(column=1, columnspan=2, row=self.row, sticky='NW')
         self.row += 1
         
         self.thermalModel, self.thermalMultiplier = StringVar(), DoubleVar()
@@ -115,10 +115,10 @@ class myTab:
         self.thermalConductivityTempCutoff.set("Default to Model")
         ttk.Label(self.parent, text="Thermal Conductivity (W/mK)").grid(row=self.row, column=1, sticky="NW")
         ttk.Entry(self.parent, textvariable=self.thermalConductivity,
-                  width=14).grid(row=self.row, column=2, sticky="NW")
+                  width=16).grid(row=self.row, column=2, sticky="NW")
         ttk.Label(self.parent, text="Below Temps (K)").grid(row=self.row, column=3, sticky="NW")
         ttk.Entry(self.parent, textvariable=self.thermalConductivityTempCutoff,
-                  width=14).grid(row=self.row, column=4, sticky="NW")
+                  width=16).grid(row=self.row, column=4, sticky="NW")
         self.row += 1
 
         self.shearModel, self.shearModulus = StringVar(), DoubleVar()
