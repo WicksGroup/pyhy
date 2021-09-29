@@ -243,7 +243,7 @@ class myGUI:
         if 'te' in var.lower():
             scale = 1 / 11604000 # K to KeV
         elif 'pres' in var.lower():
-            scale = 1e9 # GPa to dynes / cm^2
+            scale = 1e10 # GPa to dynes / cm^2
         elif 'laser' in var.lower():
             laser_spot_diameter = self.laser_spot_diameter.get() / 10  # convert mm to cm
             spot_area = np.pi * (laser_spot_diameter / 2)**2 # pi * r^2
@@ -251,8 +251,8 @@ class myGUI:
             # laser intensity = laser power / spot_area
             # this scale converts to laser intensity then to hyades units of intensity
             scale = (1 / spot_area) * 1e19 # TeraWatts to ergs / sec
-            print('LASER TV SPOT AREA', spot_area)
-            print('SCALE:', scale, 'SCALE / 1e19', scale/1e19)
+            # print('LASER TV SPOT AREA', spot_area)
+            # print('SCALE:', scale, 'SCALE / 1e19', scale/1e19)
         else:
             raise Exception(f'Unknown variable requested from get_tv: {var}')
         
@@ -319,10 +319,9 @@ class myGUI:
         writer.write_out(os.path.join(outdir, self.outfname.get()))
             
                     
-if __name__=="__main__":
+if __name__ == "__main__":
     root = Tk()
     GUI = myGUI(root)
-    print(GUI.exp_file_name)
     root.mainloop()
 
 
