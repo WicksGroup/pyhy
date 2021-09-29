@@ -1,6 +1,12 @@
-# Connor Krill
-# August 2019
+"""Several classes used by the `inf_GUI` to handle .inf creation
 
+Todo:
+    * make sure this works with cdf reader
+    * reformat function names
+    * document functions
+    * reformat variables
+
+"""
 
 import datetime
 import numpy as np
@@ -22,7 +28,7 @@ class myTab:
         self.row = 2
         
     def quickLabel(self, string):
-        '''short cut to save typing this line out'''
+        """Short cut to save typing this line out"""
         if '*' in string:
             Label(self.parent, text=string).grid(column=1, row=self.row, stick='NW')
         else:
@@ -33,7 +39,7 @@ class myTab:
         Adds all the GUI widgets with appropriate labels and styles 
         '''
         # The options for materials are stored in inf_GUI_materials.xlsx
-        filename = './inf_GUI_materials.xlsx'
+        filename = './tools/inf_GUI_materials.xlsx'
         df = pd.read_excel(filename)
         material_options = []
         for m, e in zip(df['Material'], df['EOS']):
@@ -77,13 +83,12 @@ class myTab:
         ttk.Radiobutton(self.parent, text='Accurate', value='accurate',
                         variable=self.increment).grid(row=self.row, column=3, sticky='NW')
         self.row += 1
-        
-        
+
         ttk.Label(self.parent, text='Everything below is optional'
                   ).grid(row=self.row, column=1, columnspan=4, pady=(5,5))
         self.row += 1
         
-#        self.quickLabel('Set one Material of Interest if opitimizing')
+#        self.quickLabel('Set one Material of Interest if optimizing')
         ttk.Label(self.parent, text='Set one Material of Interest if optimizing').grid(column=1, columnspan=2, row=self.row, stick='NW')
         self.isMaterialOfInterest = IntVar()
         ttk.Checkbutton(self.parent, text='Set as Material of Interest',
@@ -181,7 +186,7 @@ class Layer:
             except ValueError as e:
                 print('Enter an integer for the custom EOS value')
                 raise e
-        filename = './inf_GUI_materials.xlsx'
+        filename = './tools/inf_GUI_materials.xlsx'
         df = pd.read_excel(filename)
         material, EOS = self.material.split()
         EOS = int(EOS)

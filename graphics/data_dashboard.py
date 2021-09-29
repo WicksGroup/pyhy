@@ -439,7 +439,7 @@ def update_heatmap(children):
     }
 ######################################################
 
-file  = './DatasaurusDozen.csv'
+file  = 'DatasaurusDozen.csv'
 df = pd.read_csv(file)
 #df = df.loc[df.dataset=='dino']
 #print(df.columns)

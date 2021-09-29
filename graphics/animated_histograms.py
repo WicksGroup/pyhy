@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation
 import numpy as np
-from reading_cdf import HyadesOutput
+from tools.hyades_output import HyadesOutput
 plt.style.use('ggplot')
 plt.rcParams['animation.ffmpeg_path'] = 'C:/Users/cjkri/ffmpeg/bin/ffmpeg.exe'
 

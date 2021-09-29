@@ -1,16 +1,25 @@
-#!/usr/bin/env python3
+"""A GUI used to create the .inf files for Hyades simulations
+
+Todo:
+    * implement the new cdf reader
+    * document functions
+    * reformat function names
+    * reformat variable names
+
+"""
 import os
 import pathlib
 import matplotlib
+import datetime
+import asyncio
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import *
-from inf_GUI_helper import Layer, inf_writer, myTab
-import datetime
-import asyncio
+from tools.inf_GUI_helper import Layer, inf_writer, myTab
+
 import pandas as pd
-import hyades_runner
+from tools import hyades_runner
 import numpy as np
 os.chdir(pathlib.Path(__file__).parent.absolute())
 matplotlib.use("TkAgg")
@@ -57,7 +66,7 @@ class myGUI:
         self.save_excel.set(0)
         def simulate():
             '''Function to run all .inf files in a directory for Run Hyades button'''
-            inf_path = '../data/inf/'
+            inf_path = 'data/inf/'
             final_destination = '../data/'
             if self.save_excel.get() == 1:
                 copy_data_to_excel = True
@@ -190,14 +199,14 @@ class myGUI:
         
         # Optionally select directory for inf
         pady = (5, 5)
-        self.outDir.set('../data/inf')
+        self.outDir.set('./data/inf')
         Label(root, textvariable=self.outDir).grid(row=row, column=2, sticky='NW', pady=pady)
         ttk.Button(root, text='Select .inf destination', command=selectDir).grid(row=row, column=1, sticky='NW', pady=pady)
         row += 1
         
     def RunOptimizer(self):
         print(self.exp_file_name.get(),self.time_of_interestE.get(),self.time_of_interestS.get())
-        inf_path = '../data/inf/'
+        inf_path = 'data/inf/'
         files = [f for f in os.listdir(inf_path) if f.endswith('_setup.inf')]
         print(files)
         for f in files:
@@ -309,8 +318,8 @@ class myGUI:
         if (self.outDir.get()=='Select Directory'):
                 if os.path.isdir('./data/inf'):
                     outdir = './data/inf'
-                elif os.path.isdir('../data/inf'):
-                    outdir = '../data/inf'
+                elif os.path.isdir('./data/inf'):
+                    outdir = './data/inf'
                 else:
                     outdir = './'
         else:

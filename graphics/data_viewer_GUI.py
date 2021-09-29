@@ -113,7 +113,7 @@ class App:
         # Initial plotting and labels
         self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
-        self.df = pd.read_csv('./DatasaurusDozen.csv')
+        self.df = pd.read_csv('DatasaurusDozen.csv')
         self.datasaur = self.ax.scatter([], [])
         self.ax.set(title='Select a file to begin',
                     xlabel='X Label', ylabel='Y Label',

@@ -1,15 +1,11 @@
-'''
-Connor Krill August 6, 2019
-Functions to run hyades. Intended for use with the inf_GUI.
-'''
-
 import os
 import shutil
 import time
 import logging
-from excel_writer import writeExcel
 import traceback
 import pathlib
+from tools.excel_writer import writeExcel
+
 
 def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
     '''Use the runHyades and runHyadesPostProcess functions to simulate all .inf in a given folder.'''

@@ -1,23 +1,31 @@
-'''
-Connor Krill December 5th, 2018
-Functions for converting the .dat files output from hyades to a coherent excel spreadsheet
-'''
+"""Convert .dat files to Excel files
 
+Todo: Get rid of .dat files and make this work with .dat
+"""
+
+import os
 import pandas as pd
 import numpy as np
-from hyades_output_reader import createOutput
-import os
+from tools.hyades_output_reader import createOutput
 
 
 def formatForExcel(obj, label):
-    '''Format a hyades_output_reader output as a pandas Dataframe for write_excel'''
+    """Format a hyades_output_reader output as a pandas Dataframe for write_excel
+
+    Args:
+        obj:
+        label:
+
+    Returns:
+
+    """
     top = obj.time.reshape( (len(obj.time),1) ) # time comes in as 1D needs to be 2D with one dimension length of 1
     left_bottom = obj.X.reshape( (len(obj.X),1) )
     right  = np.concatenate((top.T, obj.output[0:len(obj.X), :]), axis=0)
     left   = np.concatenate( (np.full([1,1], np.nan), left_bottom), axis=0) # NaN appended to beginning of X
     result = np.concatenate( (left, right), axis=1) # put the left as a vertical vector on the side of the right
     df = pd.DataFrame(result)
-    df.loc[0,0] = label
+    df.loc[0, 0] = label
     
     return df
 
