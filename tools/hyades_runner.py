@@ -8,23 +8,22 @@ from tools.excel_writer import writeExcel
 
 
 def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
-    '''Use the runHyades and runHyadesPostProcess functions to simulate all .inf in a given folder.'''
+    """Use the runHyades and runHyadesPostProcess functions to simulate all .inf in a given folder."""
     inf_path = os.path.abspath(inf_path)
     final_destination = os.path.abspath(final_destination)#.replace(' ','\ ')
     
     variables = ('Pres', 'Rho', 'Te', 'Tr', 'Ti', 'U', 'sd1')
     # setup a logging file
-    filename   = 'hyades.log'
+    filename = 'hyades.log'
     log_format = '%(asctime)s %(levelname)s:%(message)s'
-    datefmt    = '%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(filename=filename, 
-                        format=log_format, datefmt=datefmt, level=logging.DEBUG)
+    datefmt = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(filename=filename, format=log_format, datefmt=datefmt, level=logging.DEBUG)
     error_str = f'{filename} not in current directory, {os.getcwd()}'
     assert filename in os.listdir(os.getcwd()), error_str
 
     inf_files = sorted([os.path.splitext(f)[0] for f in os.listdir(inf_path)
                        if (f.endswith('.inf')) and ('setup' not in f)])
-    
+
 
     print(inf_files[0])
     print(inf_path)
@@ -64,7 +63,6 @@ def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
             print()
     if debug > 0:
         print('Finished')
-
 
 
 def runHyades(path, run_name, final_destination, debug=0):
@@ -108,31 +106,12 @@ def runHyades(path, run_name, final_destination, debug=0):
     except:
         raise Exception(f'Error occured moving {file}')
 
-    assert len(files_to_move)==4, f'Expected to find 4 files to move (.inf, .otf, .ppf, .tmf) - instead found {files_to_move}'
+    assert len(files_to_move) == 4, f'Expected to find 4 files to move (.inf, .otf, .ppf, .tmf) - instead found {files_to_move}'
     os.chdir(currpath)
     return t2complete
 
-    
-def runHyadesPostProcess(run_name, variables, debug=0):
-    '''Run HyadesPostProcess for a list of variables'''
 
-    for var in variables:
-        command = f'sh HyadesPostProcess.sh {run_name} {var}'
-        os.system(command)
-        if debug==2:
-            print(f'Completed {command!r}')
-            try:
-                matching = [f for f in os.listdir(pathlib.Path(run_name+"_Pres.dat").parent.absolute()) if f.startswith(run_name) and f.endswith(f'{var}.dat')]
-            except:
-                print("uhhh pressure?")
-            print(matching)
-            #assert matching, f'Error: did not process {var}'
-    if debug==1 or debug==2:    
-        print(f'Completed HyadesPostProcess for {variables}')
-        
-        
-        
-if __name__=='__main__':
+if __name__ =='__main__':
     inf_path = '../data/inf'
     final_destination = '../data/'
     copy_data_to_excel = True

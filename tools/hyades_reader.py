@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from scipy.io import netcdf
 
 
-
 class HyadesOutput:
     """Gets and stores Hyades simulation info from the .inf and .cdf
 
@@ -225,7 +224,7 @@ class HyadesOutput:
         """
         with open(filename) as f:
             lines = f.readlines()
-        xray_line = [line for line in lines if line.startswith('c XrayProbe ')]
+        xray_line = [line for line in lines if line.startswith('c xray_probe ')]
         if xray_line:
             xray_line = xray_line[0]
             xray_start = float(xray_line.split()[2])

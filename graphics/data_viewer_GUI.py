@@ -174,7 +174,7 @@ class App:
             if self.x_mode.get()=='Distance':
                 maximum = self.hyades.nTime
             else:
-                maximum = self.hyades.nMesh
+                maximum = self.hyades.n_mesh
             while (0 <= index) and (index < maximum - 1):
                 index += anim.direction
                 yield index
@@ -212,7 +212,7 @@ class App:
         if self.x_mode.get() == 'Distance':
             frame_num = self.hyades.nTime
         else:
-            frame_num = self.hyades.nMesh
+            frame_num = self.hyades.n_mesh
         anim = animation.FuncAnimation(self.fig, self.animate,
                                        frames=frame_num,
                                        interval=10, blit=False, repeat=False)
@@ -458,7 +458,7 @@ class App:
             self.line, = self.ax.plot(self.hyades.time, self.hyades.output[0,:], color=color) # create a new line
             ix = self.ix.get()
             if self.x_mode.get()=='Time':
-                if ix > self.hyades.nMesh-1:
+                if ix > self.hyades.n_mesh-1:
                     self.ix.set(0)
                 self.line.set_data(self.hyades.time, self.hyades.output[ix, :])
                 x_min, x_max = 0, self.hyades.time.max()

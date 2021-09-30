@@ -1,7 +1,4 @@
-import hyades_graphics_static
-import argparse
-import matplotlib.pyplot as plt
-import os
+
 
 """Command line interface to plot various Hyades figures.
 
@@ -11,6 +8,7 @@ Notes:
 Examples:
     If you already ran a Hyades simulation named `diamond_decay`, the following would generate XT Diagrams for 
     the Pressure, Density, and Particle Velocity, each in their own pop up window.
+
     $ python plot_hyades.py diamond_shock -XT Pres Rho U
     
     To save graphics without displaying them, combine the `--save` and `--quiet` commands. The following would
@@ -19,6 +17,11 @@ Examples:
 
 
 """
+import os
+import argparse
+import matplotlib.pyplot as plt
+from graphics import hyades_graphics_static
+
 
 parser = argparse.ArgumentParser(prog='plot_hyades.py',
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
