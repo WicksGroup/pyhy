@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io import netcdf
-from reading_cdf import ShockVelocity, HyadesOutput
+from tools.hyades_reader import ShockVelocity, HyadesOutput
 plt.style.use('ggplot')
 
 
@@ -262,13 +262,12 @@ def lineout(filename, var, times, show_layers: bool = True):
 
 
 if __name__ == '__main__':
-    # directory = 'C:/Users/cjkri/Documents/GitRepos/pyhy/data/'
-    directory = '../pyhy/data/FeSi'
-    filename = 's77742_shock10'
+    directory = '../data/'
+    filename = 'diamond_decay'
     var = 'Pres'
     f = os.path.join(directory, filename, filename+'.cdf')
-    fig, ax = plot_shock_velocity(f, 'left')
-
+    # fig, ax = plot_shock_velocity(f, 'all')
+    # ax.set_title('Three methods of calculating Shock Velocity')
     # fig, ax = lineout(f, var, [0, 10, 20, 30, 50, 100, 150, 250])
     # fig, ax = lineout(f, 'U', [])
     # fig, ax = XTDiagram(f, 'Rho')
@@ -279,8 +278,7 @@ if __name__ == '__main__':
     # print(hyades.x.min(), hyades.x.max())
     # print(hyades.output.min(), hyades.output.max())
 
-
-    shock_debug_plot = False
+    shock_debug_plot = True
     if shock_debug_plot:
         hyades = HyadesOutput(f, 'Pres')
         shock = ShockVelocity(f, 'left')
@@ -290,7 +288,7 @@ if __name__ == '__main__':
         x1 = hyades.x[shock.window_stop]
         y1 = hyades.time[10:]
         ax.plot(x0, y0,
-                color='white', ls='dotted', lw=2)
+                color='white', ls='dotted', lw=2, label='Shock Window')
         ax.plot(x1, y1,
                 color='white', ls='dotted', lw=2)
         ax.plot(hyades.x[shock.shock_index], hyades.time[10:], 'red', label='Shock Front', lw=1)

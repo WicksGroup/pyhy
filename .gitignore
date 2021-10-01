@@ -1,5 +1,13 @@
-./data/experimental/*
 ./data/inf/*
 ./scratch
 ./data/tvInputs/FeSi*
 ./data/FeSi
+./data/diamond_decay
+
+./data/*
+!./data/inf
+!./data/tvInputs
+
+./data/experimental/
+!./data/experimental
+

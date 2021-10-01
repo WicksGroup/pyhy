@@ -1,5 +1,3 @@
-
-
 """Command line interface to plot various Hyades figures.
 
 Notes:
@@ -7,14 +5,20 @@ Notes:
     
 Examples:
     If you already ran a Hyades simulation named `diamond_decay`, the following would generate XT Diagrams for 
-    the Pressure, Density, and Particle Velocity, each in their own pop up window.
+    the Pressure, Density, and Particle Velocity, each in their own pop up window::
 
-    $ python plot_hyades.py diamond_shock -XT Pres Rho U
+    $ python plot_hyades.py diamond_decay -XT Pres Rho U
     
     To save graphics without displaying them, combine the `--save` and `--quiet` commands. The following would
-    plot the target design and save the figure without displaying it.
+    plot the target design and save the figure without displaying it::
+
     $ python plot_hyades.py diamond_decay -target -sq
 
+Todo:
+    * handle case in lineout where the user forgets to put in a variable
+    * see if June wants the 2 separate y-axis plots so show two different variables at the same time
+    * add custom title option
+    * add a useful help message for lineout
 
 """
 import os
@@ -25,7 +29,7 @@ from graphics import hyades_graphics_static
 
 parser = argparse.ArgumentParser(prog='plot_hyades.py',
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
-                                 description='''\ A command line interface to plot common Hyades graphics.
+                                 description='''A command line interface to plot common types of Hyades graphics.
                                  
 This is a Python script to generate common plots from Hyades data.
 It can create many different static graphics, such as XT Diagrams,
@@ -33,9 +37,19 @@ diagram of the target design, and/or a plot of the shock velocity.
 Please note the shock velocity function is only designed for shock
 simulations and may not yield useful results for ramp compression.
 
-The --save feature uses default file names and will write over
-files with the same name. Use caution when saving large batches of 
-files.''',
+--save uses default names and overwrites files with the same name.
+
+Examples:
+    If you already ran a simulation named 'diamond_decay' then the
+    following line would create XT Diagrams for Pressure, Density,
+    and Particle Velocity, each in their own pop up window:
+    $ python plot_hyades.py diamond_decay -XT Pres Rho U
+    
+    To save graphics without displaying them, combine the `--save`
+    and `--quiet` commands. The following would create a figure of
+    the target design and save the figure without displaying it:
+    $ python plot_hyades.py diamond_decay -target -sq
+''',
 epilog='''\
                       ___      _  _      
                      | _ \_  _| || |_  _ 
@@ -67,7 +81,7 @@ parser.add_argument('-q', '--quiet', action='store_true',
 
 args = parser.parse_args()
 
-abs_path = '../pyhy/data/FeSi/' + args.filename
+abs_path = './data/' + args.filename
 if args.XT:
     for var in args.XT:
         fig, ax = hyades_graphics_static.xt_diagram(abs_path, var)
@@ -106,4 +120,5 @@ if args.quiet and (not args.save):
 # Below is the best line of Python I've ever written
 is_only_filename = not any([getattr(args, arg) for arg in vars(args) if not arg == 'filename'])
 if is_only_filename:
-    print('Whoops! Try adding one of the options to plot a figure. See --help for more info.')
+    print('Whoops! No graphics were specified.'
+          'Try adding one of the options to plot a figure. See --help for more info.')

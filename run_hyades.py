@@ -28,9 +28,9 @@ Developed by the Wicks' Lab at JHU.
                                  )
 
 parser.add_argument('-in', '--inf_dir', type=str, default='./data/inf/',
-                    help='Name of the directory containing the .inf files.')
+                    help='Name of the directory containing the .inf files. (default: %(default)s)')
 parser.add_argument('-out', '--out_dir', type=str, default='./data/',
-                    help='Location where data will endup')
+                    help='Folder where data will end up. (default: %(default)s)')
 
 args = parser.parse_args()
 
@@ -45,4 +45,11 @@ try:
 except FileNotFoundError:
     # handle file not found error.
 
+import shutil
+program = 'Python'
+location = shutil.which(program)
+if location:
+    print('You have ' + program)
+else:
+print('Sorry, could not find ' + program)
 '''
