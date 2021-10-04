@@ -14,13 +14,15 @@ Todo:
 import os
 import pathlib
 import matplotlib
+import pandas as pd
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import *
 from tools.inf_GUI_helper import Layer, InfWriter, LayerTab
-import pandas as pd
 from tools import hyades_runner
+
+
 import numpy as np
 os.chdir(pathlib.Path(__file__).parent.absolute())
 matplotlib.use("TkAgg")
@@ -313,11 +315,11 @@ class InputGUI:
                      }
 
         if self.is_optimize_pressure.get() == 1:
-            if not sum([L.isMaterialOfInterest for L in layers]) == 1:
+            if not sum([L.is_material_of_interest for L in layers]) == 1:
                 messagebox.showerror("Hyades Input File GUI",
                                      "Exactly one layer must be selected as Material of Interest when optimizing")
                 raise Exception("Exactly one layer must be selected as Material of Interest when optimizing")
-            if not sum([L.isShockMaterialOfInterest for L in layers]) < 2:
+            if not sum([L.is_shock_material_of_interest for L in layers]) < 2:
                 messagebox.showerror("Hyades Input File GUI",
                                      "No more than 1 layer can be selected as Shock MOI when optimizing")
                 raise Exception("No more than 1 layer can be selected as Shock MOI when optimizing")

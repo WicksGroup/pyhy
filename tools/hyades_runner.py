@@ -1,3 +1,8 @@
+"""Runs Hyades, post processes with .dat files, moves all outputs to a single folder named after the .inf
+
+
+"""
+
 import os
 import shutil
 import time

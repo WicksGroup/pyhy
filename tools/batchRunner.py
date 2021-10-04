@@ -30,7 +30,7 @@ def otf2cdf(otf_name):
     """Runs the PPF2NCDF command to convert Hyades output (.otf) to a netcdf (.cdf) file
 
     Args:
-        inf_name (string): Name of the .otf (should match name of .inf)
+        otf_name (string): Name of the .otf (should match name of .inf)
 
     Returns:
         terminal output, terminal error message, terminal response code

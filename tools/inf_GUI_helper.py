@@ -37,12 +37,12 @@ class LayerTab:
         self.increment = StringVar()
         self.is_material_of_interest = IntVar()
         self.is_shock_material_of_interest = IntVar()
-        self.thermal_model = DoubleVar()
+        self.thermal_model = StringVar()
         self.thermal_model_multiplier = StringVar()
-        self.yield_modulus = StringVar()
-        self.yield_model = DoubleVar()
-        self.shear_modulus = StringVar()
-        self.shear_model = DoubleVar()
+        self.yield_modulus = DoubleVar()
+        self.yield_model = StringVar()
+        self.shear_modulus = DoubleVar()
+        self.shear_model = StringVar()
         self.thermal_conductivity_temp_cutoff = StringVar()
         self.thermal_conductivity = StringVar()
 
@@ -86,8 +86,7 @@ class LayerTab:
         self.row += 1       
         
         # Input the number of mesh points (integer)
-        ttk.Entry(self.parent, textvariable=self.n_mesh,
-                  width=7).grid(column=2, row=self.row, sticky='NW')
+        ttk.Entry(self.parent, textvariable=self.n_mesh, width=7).grid(column=2, row=self.row, sticky='NW')
         self.quick_label('*Num Mesh Points')
         self.row += 1
         
@@ -178,17 +177,17 @@ class Layer:
     def __init__(self, props):
         self.material = props['material']
         self.thickness = props['thickness']
-        self.nMesh = props['n_mesh']
-        self.thermalModel = props['thermal_model']
-        self.thermalMultiplier = props['thermal_model_multiplier']
-        self.thermalConductivity = props['thermal_conductivity']
-        self.thermalConductivityTempCutoff = props['thermal_conductivity_temp_cutoff']
-        self.shearModel = props['shear_model']
-        self.shearModulus = props['shear_modulus']
-        self.yieldModel = props['yield_model']
-        self.yieldModulus = props['yield_modulus']
-        self.isMaterialOfInterest = props['is_material_of_interest']
-        self.isShockMaterialOfInterest = props['is_shock_material_of_interest']
+        self.n_mesh = props['n_mesh']
+        self.thermal_model = props['thermal_model']
+        self.thermal_model_multiplier = props['thermal_model_multiplier']
+        self.thermal_conductivity = props['thermal_conductivity']
+        self.thermal_conductivity_temp_cutoff = props['thermal_conductivity_temp_cutoff']
+        self.shear_model = props['shear_model']
+        self.shear_modulus = props['shear_modulus']
+        self.yield_model = props['yield_model']
+        self.yield_modulus = props['yield_modulus']
+        self.is_material_of_interest = props['is_material_of_interest']
+        self.is_shock_material_of_interest = props['is_shock_material_of_interest']
         self.increment = props['increment']
 
         if props['custom_eos'] == 'Default':
@@ -380,6 +379,8 @@ class InfWriter:
 
     def calc_increments(self, layers, FZM_match_density=False):
         """Calculate the increment powers for all of the layers"""
+        print(layers)
+        print(vars(layers[0]).keys())
         n_mesh = [L.n_mesh for L in layers]
         thickness = [L.thickness * 1e-6 for L in layers]
         density = [L.density for L in layers]
@@ -419,7 +420,7 @@ class InfWriter:
 #                    print("IMJ Less than 10", IMJ[i], "|", IMJ, "|", increment_range[j])
                     # if this IMJ < threshold move onto the next one
                     break
-                if j==len(increment_range)-1:
+                if j == len(increment_range)-1:
                     # if gets to the last increment in the increment_range
                     raise Exception(f'Failed to find increment for layer {i+1}\ni_ignore={i_ignore}')
                 
