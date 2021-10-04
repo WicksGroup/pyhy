@@ -89,12 +89,12 @@ class InputGUI:
 
         def simulate():
             """Function to run all .inf files in a directory for Run Hyades button"""
-            inf_path = 'data/inf/'
-            final_destination = '../data/'
+            inf_path = './data/inf/'
+            final_destination = './data/'
             if self.save_excel.get() == 1:
-                copy_data_to_excel = True
+                excel_variables = ['Pres', 'U', 'Rho', 'Te']
             else:
-                copy_data_to_excel = False
+                excel_variables = []
 
             title = 'Hyades Input File GUI'
             files = [f for f in os.listdir(inf_path) if f.endswith('.inf')]
@@ -103,7 +103,7 @@ class InputGUI:
             if len(files) == 0:
                 messagebox.showerror(title, f'Found no .inf files in {inf_path}')
             elif messagebox.askyesno(title, message):
-                hyades_runner.batchRunHyades(inf_path, final_destination, copy_data_to_excel)
+                hyades_runner.batch_run_hyades(inf_path, final_destination, excel_variables=excel_variables)
 
         # time_max and time_step entries
         ttk.Label(self.parent, text='*Simulation Time (ns)').grid(row=row, column=1, sticky='NW')
@@ -244,8 +244,8 @@ class InputGUI:
 
     def generate_layers(self):
         """Generate the layer options inside the GUI"""
-        self.tabs = []  # reset layers so they dont keep appending
-        notebook = ttk.Notebook(self.parent) # reset the notebook
+        self.tabs = []  # reset layers so they do not keep appending
+        notebook = ttk.Notebook(self.parent)  # reset the notebook
         notebook.grid(column=1, row=8, columnspan=9, sticky='NWE')
         for i in range(self.n_layers.get()):
             frame = ttk.Frame(notebook)

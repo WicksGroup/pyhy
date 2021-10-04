@@ -2,6 +2,9 @@
 Created on Wed Apr  4 22:52:49 2018
 Connor Krill
 Update August 22, 2019
+
+Todo:
+    * confirm the new hyades_reader.py works then delete this file
 """
 import matplotlib.pyplot as plt
 import numpy as np
