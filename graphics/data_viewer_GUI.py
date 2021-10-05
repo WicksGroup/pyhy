@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-'''
+"""
 tkinter GUI to view the data output from HYADES simulations.
 Allows for nearly all lineouts from the data
 Plot pressure, density, particle velocity, shock velocity, or temperature on the y-axis
@@ -8,7 +7,11 @@ Includes animation features.
 Includes drop down menu (along top of screen) to save many file types
 
 Connor Krill 2019
-'''
+
+Todo:
+    * Implement cdf reader
+    * this script is an absolute mess
+"""
 import matplotlib
 matplotlib.use("TkAgg")
 from hyades_output_reader import createOutput

@@ -3,10 +3,8 @@
 Todo:
     * The line collection isn't the best way to do this. For Zone indexes I could add a patch collection instead
     * add initial material interface labels
-    * add moving interface labels
+    * add moving material interface labels
     * I don't trust this for Rho or Te based on animated lineout visualizations
-    * add save
-
 """
 import os
 import numpy as np
@@ -27,6 +25,7 @@ def eulerian_animation(inf_name, color_var):
         color_var (string): Abbreviated variable name, used to color the sample
 
     Returns:
+        anim (matplotlib animation)
 
     """
     hyades = HyadesOutput(inf_name, color_var)
@@ -36,12 +35,8 @@ def eulerian_animation(inf_name, color_var):
     cdf.close()
 
     if hyades.output.shape[1] == eulerian_positions.shape[1]:  # if hyades.output is using Mesh indexing
-        print(color_var, 'Mesh indexing')
-        print(hyades.output.min(), hyades.output.max())
         pass
     elif hyades.output.shape[1] + 1 == eulerian_positions.shape[1]:  # if hyades.output is using Zone indexing
-        print(color_var, 'Zone indexing')
-        print(hyades.output.min(), hyades.output.max())
         # Pressure, Temperature, and Density all use zone indexing
         left_mesh = eulerian_positions[:, :-1]
         right_mesh = eulerian_positions[:, 1:]
@@ -71,15 +66,17 @@ def eulerian_animation(inf_name, color_var):
     # Set up the color bar
     cmap = mpl.cm.plasma
     norm = mpl.colors.Normalize(vmin=hyades.output.min(), vmax=hyades.output.max())
-    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), label='Particle Velocity (km/s)')
+    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), label=f'{hyades.long_name} ({hyades.units})')
 
     def animate(i):
-        """Is called by FuncAnimation to update all the graphs"""
+        """Is called by FuncAnimation to update all the graphics"""
         ax.clear()
+        # Update the position and colors of the lines
         line_coordinates = [np.array([[x, 0], [x, 1]]) for x in eulerian_positions[i, :]]
         colors = mpl.cm.plasma(hyades.output[i, :])
         line_collection = LineCollection(line_coordinates, colors=colors)
         ax.add_collection(line_collection)
+        # Update the text displaying the time
         text_str = f'Time: {hyades.time[i]:.2f} ns'
         ax.text(0, 1.1, text_str)
         # Update formatting, titles, grids
@@ -93,16 +90,23 @@ def eulerian_animation(inf_name, color_var):
         # Add initial position lines
         ax.vlines((left_free_surface, right_free_surface), -0.1, 1.1,
                   linestyles='dashed', color='black', alpha=0.7)
-
         fig.canvas.draw()
 
         return line_collection,
 
-    ani = mpl.animation.FuncAnimation(fig, animate, frames=len(hyades.time), interval=10, blit=True)
+    anim = mpl.animation.FuncAnimation(fig, animate, frames=len(hyades.time), interval=10, blit=True)
+
+    return anim
 
 
 if __name__ == '__main__':
     f = '../data/diamond_decay/diamond_decay'
     color_var = 'Pres'
-    eulerian_animation(f, color_var)
+    anim = eulerian_animation(f, color_var)
+
+    save = True
+    if save:
+        print('Saving...')
+        anim.save('eulerian.mp4', fps=12)
+        print('Saved.')
     plt.show()

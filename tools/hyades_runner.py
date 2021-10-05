@@ -70,13 +70,17 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
         None
 
     """
+    inf_files = [f for f in os.listdir(inf_dir) if f.endswith('.inf')]
+    if len(inf_files) == 0:  # if there are no inf files in the inf_directory
+        raise ValueError(f'Did not find any .inf files in {inf_dir}')
+
     # Set up a logging file
     filename = 'hyades.log'
     log_format = '%(asctime)s %(levelname)s:%(message)s'
     date_format = '%Y-%m-%d %H:%M:%S'
     logging.basicConfig(filename=filename, format=log_format, datefmt=date_format, level=logging.DEBUG)
 
-    inf_files = [f for f in os.listdir(inf_dir) if f.endswith('.inf')]
+
     for inf in inf_files:
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)

@@ -1,7 +1,7 @@
-"""Animate a lineout moving through all times
+"""Animate a variable lineout moving through all times
 
 Todo:
-    * add save feature
+    * Add material interfaces
 """
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
@@ -9,12 +9,15 @@ from tools.hyades_reader import HyadesOutput
 plt.style.use('ggplot')
 
 
-def animiated_lineout(inf_name, var):
+def lineout_animation(inf_name, var):
     """Animate a single variable lineout as it changes over time
 
+    Note:
+        Click the screen to pause/play the animation
+
     Args:
-        inf_name:
-        var:
+        inf_name (string): Name of the Hyades run
+        var (string): Abbreviated variable name
 
     Returns:
 
@@ -40,17 +43,22 @@ def animiated_lineout(inf_name, var):
     hyades = HyadesOutput(inf_name, var)
 
     fig, ax = plt.subplots()
-    ax.set_title(f'Animated Lineout of {hyades.run_name}')
+    ax.set_title(f'Animated Lineout of {hyades.run_name} {var}')
     ax.set(xlabel='Position (µm)', ylabel=f'{hyades.long_name} ({hyades.units})',
            ylim=(hyades.output.min(), hyades.output.max()))
+    ax.grid(b=True, which='major', axis='both', lw=1)
+    ax.grid(b=True, which='minor', axis='both', lw=0.5, alpha=0.5)
+    ax.minorticks_on()
     line, = ax.plot(hyades.x, hyades.output[0, :], lw=2)
-    txt = ax.text(hyades.x.max() * 0.98, hyades.output.max() * 0.94, 'Time 0.00 ns', ha='right')
+    txt = ax.text(hyades.x.max() * 0.98, hyades.output.max() * 0.94, 'Time 0.00 ns', ha='right', fontsize='large')
     fig.canvas.mpl_connect('button_press_event', onclick)
     anim = animation.FuncAnimation(fig, animate, frames=len(hyades.time), interval=70, blit=False)
+
+    return anim
 
 
 if __name__ == '__main__':
     f = '../data/diamond_decay'
-    var = 'Te'
-    animiated_lineout(f, var)
+    var = 'Pres'
+    lineout_animation(f, var)
     plt.show()
