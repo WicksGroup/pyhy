@@ -6,7 +6,9 @@ organizing the outputs, and visualizing the inputs and outputs.
 
 This repository assumes familiarity with Hyades simulations and basic terminal usage.
 Almost no Python knowledge is required.
+
 ---
+
 ### Creating Inputs
 `inf_GUI.py` is a GUI to help create the input files for Hyades.
 Gives user easy control over many, but not all, options for Hyades input.
