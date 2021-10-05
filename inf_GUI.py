@@ -6,10 +6,10 @@ The `Run Hyades` button **does** require a local installation of Hyades to work.
 Example:
     Start the GUI with the following line::
 
-    $ python inf_GUI.py
+        $ python inf_GUI.py
 
 Todo:
-    * implement the new cdf reader
+    * confirm the new cdf version of hyades_runner.py is compatible
 """
 import os
 import pathlib

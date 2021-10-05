@@ -12,7 +12,7 @@ import os
 
 
 def createOutput(run_path, var, debug=0, info=False):
-    '''Create the Output here to handle the scales'''
+    """Create the Output here to handle the scales"""
     if 'pres' in var.lower():
         var = 'Pres'
         obj_scale = 1e-10
@@ -55,10 +55,10 @@ def createOutput(run_path, var, debug=0, info=False):
     
     # subtract sd1 when calculating pressure
     # sd1 is in the same units as pressure, so it also has the scale 1e-10
-    if 'pres' in var.lower():
-        sd1_dat = f'{run_path}_sd1.dat'
-        sd1 = hyadesOutput(sd1_dat, inf_fname, 1e-10)
-        hyades.output = hyades.output - sd1.output
+    # if 'pres' in var.lower():
+    #     sd1_dat = f'{run_path}_sd1.dat'
+    #     sd1 = hyadesOutput(sd1_dat, inf_fname, 1e-10)
+    #     hyades.output = hyades.output - sd1.output
         
     return hyades
 

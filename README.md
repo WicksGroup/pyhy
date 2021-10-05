@@ -24,7 +24,9 @@ Use
 Adding or Removing a material:  
 * To add or remove a material as an option from the inf_GUI, edit the excel spreadsheet `inf_GUI_materials.xlsx`.
 Follow the formatting (using comma separated entries for materials with multiple elements) used in existing columns.
+
 ---
+
 ### Running Hyades
 `run_hyades.py` is a command line interface to run multiple Hyades simulations.  
 Run `python run_hyades.py` in terminal to run all simulations and neatly format the output for all .inf files in `data/inf`.

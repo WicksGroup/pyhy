@@ -2,9 +2,8 @@
 
 Todo:
     * make sure this works with cdf reader
-    * reformat function names
-    * document functions
-    * reformat variables
+    * confirm the increment calculator works well
+    * do we need the custom EOS option? Or should you have to add a new line in the excel file everytime
 
 """
 import datetime
@@ -21,9 +20,6 @@ class LayerTab:
     A single GUI can have multiple tabs, one per layer in the simulation.
     The LayerTab class has no function to write its information, all of the necessary information
     is saved as attributes that are scraped by the other classes.
-
-    Todo:
-        * Do we need the custom EOS option? Or should that material be added to the excel file?
     """
     def __init__(self, parent):
         """Declares all material properties as variables and formats tkinter tab."""
@@ -315,18 +311,18 @@ class InfWriter:
         # most of these parameters are generic and used on all simulations
         self.inf['GEOMETRY'] = ['geometry 1 1']
         
-        materials_with_MOI = []
+        materials_with_moi = []
         for L in layers:
             material_name = L.material.split()[0]
             if L.is_material_of_interest == 1:
                 material_name += '!'
             if L.is_shock_material_of_interest == 1:
                 material_name += '$'
-            materials_with_MOI.append(material_name)
+            materials_with_moi.append(material_name)
                 
         self.inf['DESCRIPTION'] = ['c HYADES Simulation Input File',
                                    f'c Created {datetime.date.today().strftime("%A, %B %d %Y")}',
-                                   f'c Simulation of [{"] [".join([mat for mat in materials_with_MOI])}]',
+                                   f'c Simulation of [{"] [".join([mat for mat in materials_with_moi])}]',
                                    ]
         if ('xray_probe_start' in sim_props) and ('xray_probe_stop' in sim_props):
             line = f'c xray_probe {sim_props["xray_probe_start"]} {sim_props["xray_probe_stop"]}'

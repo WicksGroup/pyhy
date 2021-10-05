@@ -1,3 +1,4 @@
+"""Useful plots of Hyades inputs and outputs"""
 import os
 import matplotlib
 import matplotlib.pyplot as plt

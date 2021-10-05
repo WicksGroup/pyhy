@@ -81,9 +81,8 @@ parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'al
                     help='Toggle to plot the Shock Velocity.'
                          ' Must select how to index the Particle Velocity with L, R, Avg (Average), All, Difference (L - R).')
 
-parser.add_argument('-t', '--title', type=str, nargs='+',
+parser.add_argument('--title', type=str, nargs='+',
                     help='Sets a custom title on *all* figures. Recommended use when only one plot is specified.')
-
 parser.add_argument('-s', '--save', action='store_true',
                     help='Toggle to save all graphics after they are closed.')
 parser.add_argument('-q', '--quiet', action='store_true',
