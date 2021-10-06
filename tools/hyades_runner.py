@@ -20,15 +20,22 @@ def run_hyades(inf_name):
         inf_name (string): Name of the .inf
 
     Returns:
-        terminal output, terminal error message, terminal response code
+        log_string (string): Status and details of Hyades simulation
 
     """
+    t0 = time.time()
     command = ['hyades', inf_name]
     sp = subprocess.run(command)
-    response_code = sp.wait()
-    out, err = sp.communicate()
+    t1 = time.time()
+    file_extensions = ('.otf', '.ppf', '.tmf')
+    found_all = all([os.path.splitext(inf_name)[0] + ext in os.listdir(os.path.dirname(inf_name))
+                     for ext in file_extensions])
+    if found_all and sp.returncode == 0:
+        log_string = f'Completed Hyades simulation of {os.path.basename(inf_name)} in {t1 - t0:.2f} seconds.'
+    else:
+        log_string = f'Failed to run Hyades simulation of {os.path.basename(inf_name)}.'
 
-    return out, err, response_code
+    return log_string
 
 
 def otf2cdf(otf_name):
@@ -38,15 +45,18 @@ def otf2cdf(otf_name):
         otf_name (string): Name of the .otf (should match name of .inf)
 
     Returns:
-        terminal output, terminal error message, terminal response code
+        log_string (string): status of the PPF2NCDF command
 
     """
     cmd = ['PPF2NCDF', os.path.splitext(otf_name)[0]]
     sp = subprocess.run(cmd)
-    response_code = sp.wait()
-    out, err = sp.communicate()
+    found = os.path.splitext(otf_name)[0] + '.cdf' in os.listdir(os.path.dirname(otf_name))
+    if found and sp.returncode == 0:
+        log_string = 'Completed PPF2NCDF.'
+    else:
+        log_string = 'Failed PPF2NCDF.'
 
-    return out, err, response_code
+    return log_string
 
 
 def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
@@ -65,6 +75,9 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
     if len(inf_files) == 0:  # if there are no inf files in the inf_directory
         raise ValueError(f'Did not find any .inf files in {inf_dir}')
 
+    if inf_dir.startswith('./'):  # Hyades doe not work with ./ prepended on directories
+        inf_dir = inf_dir[2:]
+
     # Set up a logging file
     filename = 'hyades.log'
     log_format = '%(asctime)s %(levelname)s:%(message)s'
@@ -74,22 +87,11 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
     for inf in inf_files:
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
-        if abs_path.startswith('./'):  # Hyades does not work with prepended ./ on directories
-            abs_path = abs_path[2:]
-        t0 = time.time()
-        # Run Hyades and add details to log
-        command = ['hyades', abs_path]
-        sp = subprocess.run(command)
-        if sp.returncode != 0:
-            raise Exception(f'Error from terminal while running {" ".join(command)!r}')
-        t1 = time.time()
-        log_note = f'Completed Hyades simulation of {inf} in {t1 - t0:.2f} seconds.'
+        # Run Hyades
+        log_note = run_hyades(abs_path)
         # Run PPF2NCDF to create .cdf file and add note to log
-        command = ['PPF2NCDF', os.path.splitext(abs_path)[0]]
-        sp = subprocess.run(command)
-        if sp.returncode != 0:
-            raise Exception(f'Error from terminal while running {" ".join(command)!r}')
-        log_note += ' Completed PPF2NCDF.'
+        log_note += otf2cdf(abs_path) + ' '
+
         # Optionally convert .cdf as a human-readable excel file
         if excel_variables:
             excel_filename = os.path.join(abs_path, os.path.splitext(inf)[0])

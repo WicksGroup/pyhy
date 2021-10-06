@@ -19,7 +19,7 @@ to a folder named after the .inf.
 
 Example:
     The following line would run all .inf files in the directory ./data/inf
-    $ python run_hyades.py
+        $ python run_hyades.py
 '''
 epilog = '''
                       ___      _  _      
