@@ -1,7 +1,8 @@
 """Animate a variable lineout moving through all times
 
 Todo:
-    * Add material interfaces
+    - Add material interfaces
+    - Would it be helpful to add the ambient density as a horizontal line for each layer?
 """
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt

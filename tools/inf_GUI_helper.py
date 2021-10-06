@@ -375,8 +375,6 @@ class InfWriter:
 
     def calc_increments(self, layers, FZM_match_density=False):
         """Calculate the increment powers for all of the layers"""
-        print(layers)
-        print(vars(layers[0]).keys())
         n_mesh = [L.n_mesh for L in layers]
         thickness = [L.thickness * 1e-6 for L in layers]
         density = [L.density for L in layers]

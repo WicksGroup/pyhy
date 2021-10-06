@@ -263,23 +263,11 @@ def lineout(filename, var, times, show_layers: bool = True):
 
 
 if __name__ == '__main__':
-    directory = '../data/'
-    filename = 'diamond_decay'
-    var = 'Pres'
-    f = os.path.join(directory, filename, filename+'.cdf')
-    # fig, ax = plot_shock_velocity(f, 'all')
-    # ax.set_title('Three methods of calculating Shock Velocity')
-    # fig, ax = lineout(f, var, [0, 10, 20, 30, 50, 100, 150, 250])
-    # fig, ax = lineout(f, 'U', [])
-    # fig, ax = XTDiagram(f, 'Rho')
-    # fig, ax = XTDiagram(f, 'Pres')
-    # fig, ax = XTDiagram(f, 'U')
-    # hyades = hyadesOutput(f, 'Pres')
-    # print(hyades.time.min(), hyades.time.max())
-    # print(hyades.x.min(), hyades.x.max())
-    # print(hyades.output.min(), hyades.output.max())
 
-    shock_debug_plot = True
+    f = '../data/diamond_decay'
+    fig, ax = plot_shock_velocity(f, ['L', 'R', 'Cubic'])
+
+    shock_debug_plot = False
     if shock_debug_plot:
         hyades = HyadesOutput(f, 'Pres')
         shock = ShockVelocity(f, 'left')

@@ -77,7 +77,7 @@ parser.add_argument('-l', '--lineout', nargs='+',
                     help='Plot lineouts of a single variable of interest at multiple times')
 parser.add_argument('-t', '--target', action='store_true',
                     help='Toggle to plot the target design. Works best on targets with wide layers.')
-parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'all'], nargs='+',
+parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'Cubic', 'all'], nargs='+',
                     help='Toggle to plot the Shock Velocity.'
                          ' Must select how to index the Particle Velocity with L, R, Avg (Average), All, Difference (L - R).')
 

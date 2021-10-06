@@ -3,6 +3,7 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import netcdf
+from scipy.interpolate import CubicSpline
 
 
 class HyadesOutput:
@@ -301,6 +302,7 @@ class ShockVelocity:
 
     Todo:
         Implement stop condition once the shock reaches the free surface
+        * Add option for cubic spline interpolation to shock velocity calculations
 
     Note:
         Assumes the Rankine–Hugoniot conditions and in general should not be used for ramp compression simulations.
@@ -425,6 +427,16 @@ class ShockVelocity:
                 particle_velocity[j] = right
             elif (mode.lower() == 'average') or (mode.lower() == 'avg'):
                 particle_velocity[j] = (left + right) / 2
+            elif mode.lower() == 'cubic':  # Interpolate Particle Velocity with Cubic Spline
+                x = hyades_Up.x
+                y = hyades_Up.output[t, :]
+                cubic_spline = CubicSpline(x, y)
+                zone_x = hyades_pres.x[shock_index]
+                cubic_particle_velocity = cubic_spline(zone_x)
+                particle_velocity[j] = cubic_particle_velocity
+            else:
+                raise ValueError(f'Shock Velocity Interpolation Mode {mode!r} not recognized. '
+                                 f'Use one of Left, Right, Average, Cubic')
 
         shock_velocity = pressure / (density * particle_velocity)
         time = hyades_pres.time[min_index:max_index]
