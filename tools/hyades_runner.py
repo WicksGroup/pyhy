@@ -84,10 +84,11 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
         t0 = time.time()
+        os.system(f'hyades {abs_path}')
         # Run Hyades and post processor
-        out, err, rc = run_hyades(abs_path)
-        if err:
-            raise Exception(f'Error from terminal while running "Hyades {abs_path}":\n{err}')
+        # out, err, rc = run_hyades(abs_path)
+        # if err:
+        #     raise Exception(f'Error from terminal while running "Hyades {abs_path}":\n{err}')
         t1 = time.time()
         log_note = f'Completed Hyades simulation of {inf} in {t1-t0:.2f} seconds.'
         out, err, rc = otf2cdf(abs_path)
