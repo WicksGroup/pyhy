@@ -3,7 +3,7 @@
 Example:
     The following line would run all the .inf files in the `./data/inf` folder::
 
-    $ python run_hyades.py
+        $ python run_hyades.py
 
 """
 import os

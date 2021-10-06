@@ -302,7 +302,6 @@ class ShockVelocity:
 
     Todo:
         Implement stop condition once the shock reaches the free surface
-        * Add option for cubic spline interpolation to shock velocity calculations
 
     Note:
         Assumes the Rankine–Hugoniot conditions and in general should not be used for ramp compression simulations.
