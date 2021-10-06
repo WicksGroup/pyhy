@@ -84,6 +84,7 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
         t0 = time.time()
+        print('ABS_PATH: ', abs_path, 'inf_dir', inf_dir, 'inf', inf)
         os.system(f'hyades {abs_path}')
         # Run Hyades and post processor
         # out, err, rc = run_hyades(abs_path)

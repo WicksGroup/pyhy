@@ -5,6 +5,7 @@ Todo:
     * add initial material interface labels
     * add moving material interface labels
     * I don't trust this for Rho or Te based on animated lineout visualizations
+    - Tyler doesn't think the Eulerian Animation and Pressure XT Diagram match up with each other.
 """
 import os
 import numpy as np

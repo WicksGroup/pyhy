@@ -2,7 +2,8 @@
 
 Note:
     Save feature requires ffmpeg installed.
-
+    Oct 6, 2021 All three animations and the save feature work on the lab iMac
+    quiet broke things somehow
 
 """
 import os

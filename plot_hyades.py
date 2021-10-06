@@ -2,6 +2,8 @@
 
 Notes:
     See --help for usage.
+    Oct 6, 2021 lineouts, XT, target, save, quiet all work on lab iMac
+        Did not try shock bc of insufficient data
     
 Examples:
     If you already ran a Hyades simulation named `diamond_decay`, the following would generate XT Diagrams for 

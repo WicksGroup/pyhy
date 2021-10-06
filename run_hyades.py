@@ -29,7 +29,6 @@ epilog = '''
                           |__/      |__/ 
                Developed by the Wicks Lab at JHU
 '''
-
 parser = argparse.ArgumentParser(prog='run_hyades.py',
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description=description,
@@ -43,9 +42,6 @@ parser.add_argument('-out', '--out_dir', type=str, default='./data/',
 parser.add_argument('-r', '--run', action='store_true', default=False,
                     help='Toggle to disable inf filename preview and run Hyades without confirmation. (default: False)')
 args = parser.parse_args()
-
-# inf_dir = args.inf_dir or './data/inf'
-# out_dir = args.out_dir or './data/'
 
 if args.run:  # Input request to run Hyades without confirmation
     batch_run_hyades(args.inf_dir, args.out_dir)
