@@ -28,7 +28,8 @@ def run_hyades(inf_name):
     sp = subprocess.run(command)
     t1 = time.time()
     file_extensions = ('.otf', '.ppf', '.tmf')
-    found_all = all([os.path.splitext(inf_name)[0] + ext in os.listdir(os.path.dirname(inf_name))
+    run_name = os.path.basename(os.path.splitext(inf_name)[0])
+    found_all = all([run_name + ext in os.listdir(os.path.dirname(inf_name))
                      for ext in file_extensions])
     if found_all and sp.returncode == 0:
         log_string = f'Completed Hyades simulation of {os.path.basename(inf_name)} in {t1 - t0:.2f} seconds.'
@@ -50,7 +51,8 @@ def otf2cdf(otf_name):
     """
     cmd = ['PPF2NCDF', os.path.splitext(otf_name)[0]]
     sp = subprocess.run(cmd)
-    found = os.path.splitext(otf_name)[0] + '.cdf' in os.listdir(os.path.dirname(otf_name))
+    run_name = os.path.basename(os.path.splitext(otf_name)[0])
+    found = run_name + '.cdf' in os.listdir(os.path.dirname(otf_name))
     if found and sp.returncode == 0:
         log_string = 'Completed PPF2NCDF.'
     else:
@@ -84,7 +86,7 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
     date_format = '%Y-%m-%d %H:%M:%S'
     logging.basicConfig(filename=filename, format=log_format, datefmt=date_format, level=logging.DEBUG)
 
-    for inf in inf_files:
+    for inf in sorted(inf_files):
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
         # Run Hyades
