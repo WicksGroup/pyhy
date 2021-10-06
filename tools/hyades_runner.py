@@ -23,12 +23,8 @@ def run_hyades(inf_name):
         terminal output, terminal error message, terminal response code
 
     """
-    cmd = f'hyades {inf_name}'
-    sp = subprocess.Popen(cmd,
-                          shell=True,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          universal_newlines=True)
+    command = ['hyades', inf_name]
+    sp = subprocess.run(command)
     response_code = sp.wait()
     out, err = sp.communicate()
 
@@ -45,13 +41,8 @@ def otf2cdf(otf_name):
         terminal output, terminal error message, terminal response code
 
     """
-    cmd = f'PPF2NCDF {os.path.splitext(otf_name)[0]}'
-    print(cmd)
-    sp = subprocess.Popen(cmd,
-                          shell=True,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          universal_newlines=True)
+    cmd = ['PPF2NCDF', os.path.splitext(otf_name)[0]]
+    sp = subprocess.run(cmd)
     response_code = sp.wait()
     out, err = sp.communicate()
 
@@ -83,20 +74,23 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
     for inf in inf_files:
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
+        if abs_path.startswith('./'):  # Hyades does not work with prepended ./ on directories
+            abs_path = abs_path[2:]
         t0 = time.time()
-        print('ABS_PATH: ', abs_path, 'inf_dir', inf_dir, 'inf', inf)
-        os.system(f'hyades {abs_path}')
-        # Run Hyades and post processor
-        # out, err, rc = run_hyades(abs_path)
-        # if err:
-        #     raise Exception(f'Error from terminal while running "Hyades {abs_path}":\n{err}')
+        # Run Hyades and add details to log
+        command = ['hyades', abs_path]
+        sp = subprocess.run(command)
+        if sp.returncode != 0:
+            raise Exception(f'Error from terminal while running {" ".join(command)!r}')
         t1 = time.time()
-        log_note = f'Completed Hyades simulation of {inf} in {t1-t0:.2f} seconds.'
-        out, err, rc = otf2cdf(abs_path)
-        if err:
-            raise Exception(f'Error from terminal while running "PPF2NCDF {abs_path}":\n{err}')
+        log_note = f'Completed Hyades simulation of {inf} in {t1 - t0:.2f} seconds.'
+        # Run PPF2NCDF to create .cdf file and add note to log
+        command = ['PPF2NCDF', os.path.splitext(abs_path)[0]]
+        sp = subprocess.run(command)
+        if sp.returncode != 0:
+            raise Exception(f'Error from terminal while running {" ".join(command)!r}')
         log_note += ' Completed PPF2NCDF.'
-        # Optionally save .cdf as a human-readable excel file
+        # Optionally convert .cdf as a human-readable excel file
         if excel_variables:
             excel_filename = os.path.join(abs_path, os.path.splitext(inf)[0])
             write_excel(abs_path, excel_filename, excel_variables)
@@ -107,14 +101,11 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
         basename = os.path.splitext(inf)[0]
         new_dir = os.path.join(out_dir, basename)
         os.mkdir(new_dir)
-        print(f'Made {new_dir}')
-
         # Move all files with the same name as the .inf to the new directory
         for f in os.listdir(inf_dir):
             if os.path.splitext(f)[0] == basename:
                 source = os.path.join(inf_dir, f)
                 destination = os.path.join(new_dir, f)
                 shutil.move(source, destination)
-                print(f'moved {destination}')
 
-    return None
+    return log_note
