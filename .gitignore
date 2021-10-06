@@ -1,5 +1,5 @@
 ./data/*
-!./data/inf
+!./data/inf/
 !./data/tvInputs
 ./data/tvInputs/FeSi*
 
