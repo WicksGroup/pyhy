@@ -45,7 +45,7 @@ def otf2cdf(otf_name):
         terminal output, terminal error message, terminal response code
 
     """
-    cmd = f'PP2NCDF {os.path.splitext(otf_name)[0]}'
+    cmd = f'PPF2NCDF {os.path.splitext(otf_name)[0]}'
     print(cmd)
     sp = subprocess.Popen(cmd,
                           shell=True,
@@ -79,7 +79,6 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
     log_format = '%(asctime)s %(levelname)s:%(message)s'
     date_format = '%Y-%m-%d %H:%M:%S'
     logging.basicConfig(filename=filename, format=log_format, datefmt=date_format, level=logging.DEBUG)
-
 
     for inf in inf_files:
         print(f'Starting Hyades {inf}')
