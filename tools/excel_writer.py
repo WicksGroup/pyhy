@@ -58,7 +58,7 @@ def write_excel(cdf_path, excel_fname, variables):
     if not excel_fname.endswith('.xlsx'):
         excel_fname += '.xlsx'
 
-    writer = pd.ExcelWriter(excel_fname)
+    writer = pd.ExcelWriter(excel_fname, mode='w')
     for var in variables:
         if var == 'Pres':
             label, units = 'Pressure', '(GPa)'

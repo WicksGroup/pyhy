@@ -136,6 +136,7 @@ class HyadesOutput:
         elif 'Ekappa' == var:
             unit_conversion = 1  # 0.1
         elif 'Pres' == var:
+            long_name = 'Pressure'
             units = 'GPa'
             unit_conversion = 1e-10
         elif 'Qrad' == var:
@@ -149,6 +150,7 @@ class HyadesOutput:
             units = 'µm'
             unit_conversion = 1e4
         elif 'Rho' == var:
+            long_name = 'Density'
             units = 'g/cc'
             unit_conversion = 1
         elif 'Sd1' == var:
@@ -161,6 +163,7 @@ class HyadesOutput:
             units = '° K'
             unit_conversion = 11604 * 1000
         elif 'U' == var:
+            long_name = 'Particle Velocity'
             units = 'km/s'
             unit_conversion = 1e-5
         elif 'Ubin' == var:

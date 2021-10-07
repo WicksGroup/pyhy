@@ -95,7 +95,7 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
 
         # Optionally convert .cdf as a human-readable excel file
         if excel_variables:
-            excel_filename = os.path.join(abs_path, os.path.splitext(inf)[0])
+            excel_filename = os.path.join(os.path.splitext(abs_path)[0])
             write_excel(abs_path, excel_filename, excel_variables)
             log_note += f' Saved {", ".join(excel_variables)} to excel file.'
         logging.info(log_note)

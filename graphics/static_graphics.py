@@ -44,17 +44,18 @@ def xt_diagram(filename, var, show_layers: bool = True, show_shock_front: bool =
                 color='white', ha='right')
 
     if show_layers:
-        for material in hyades.layers:
-            x_start = hyades.layers[material]['X Start']
-            x_stop = hyades.layers[material]['X Stop']
-            if x_stop < hyades.x.max():
-                ax.vlines(x_stop, hyades.time.min(), hyades.time.max(),
-                          color='white', linestyles='solid', lw=1, alpha=0.7)
-            text_x = x_start + ((x_stop - x_start) / 2)
-            text_y = hyades.time.max() * 0.9
-            label = f"{hyades.layers[material]['Name']}\n{hyades.layers[material]['EOS']}"
-            ax.text(text_x, text_y, label,
-                    color='white', ha='center')
+        ax = add_layers(hyades, ax, color='white')
+        # for material in hyades.layers:
+        #     x_start = hyades.layers[material]['X Start']
+        #     x_stop = hyades.layers[material]['X Stop']
+        #     if x_stop < hyades.x.max():
+        #         ax.vlines(x_stop, hyades.time.min(), hyades.time.max(),
+        #                   color='white', linestyles='solid', lw=1, alpha=0.7)
+        #     text_x = x_start + ((x_stop - x_start) / 2)
+        #     text_y = hyades.time.max() * 0.9
+        #     label = f"{hyades.layers[material]['Name']}\n{hyades.layers[material]['EOS']}"
+        #     ax.text(text_x, text_y, label,
+        #             color='white', ha='center')
 
     if show_shock_front:
         shock = ShockVelocity(filename, 'left')
@@ -227,7 +228,7 @@ def lineout(filename, var, times, show_layers: bool = True):
 
     Args:
         filename (string): Name of the .cdf
-        var (string): Abbreviated name of variable of interest - one of Pres, Rho, U, Te, Ti, Tr, R
+        var (list): Abbreviated name of variable of interest - any of Pres, Rho, U, Te, Ti, Tr
         times (list): Floats of times to be plotted
         show_layers (bool, optional): Toggle to show the layer interfaces and names.
 
@@ -235,38 +236,111 @@ def lineout(filename, var, times, show_layers: bool = True):
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
-    hyades = HyadesOutput(filename, var)
-    colors = matplotlib.cm.viridis(np.linspace(0, 1, num=len(times)))
-    fig, ax = plt.subplots()
-    for t, c in zip(times, colors):
-        i = np.argmin(abs(hyades.time - t))
-        ax.plot(hyades.x, hyades.output[i, :], color=c, label=f'{hyades.time[i]:.2f} ns')
-    ax.set_title(f'Lineouts of {hyades.run_name}')
-    ax.set(xlabel='Lagrangian Position (µm)', ylabel=f'{hyades.long_name} ({hyades.units})')
-    ax.legend()
-    y_min, y_max = ax.get_ylim()
-    if show_layers:
-        for material in hyades.layers:
-            x_start = hyades.layers[material]['X Start']
-            x_stop = hyades.layers[material]['X Stop']
-            if x_stop < hyades.x.max():
-                ax.vlines(x_stop, y_min - 0.5, y_max + 0.5,
-                          color='black', linestyles='solid', lw=1, alpha=0.7)
-            text_x = x_start + ((x_stop - x_start) / 2)
-            text_y = y_max * 0.9
-            label = f"{hyades.layers[material]['Name']}\n{hyades.layers[material]['EOS']}"
-            ax.text(text_x, text_y, label,
-                    color='black', ha='center')
-    ax.set_ylim(y_min, y_max)
+    colors = matplotlib.cm.copper(np.linspace(0, 1, num=len(times)))
+    if len(var) == 1:  # One variable plots on a single axis
+        var = var[0]
+        hyades = HyadesOutput(filename, var)
+        fig, ax = plt.subplots()
+        for t, c in zip(times, colors):  # Plot a line for each time
+            i = np.argmin(abs(hyades.time - t))
+            ax.plot(hyades.x, hyades.output[i, :],
+                    color=c, label=f'{hyades.time[i]:.2f} ns')
+        if show_layers:  # Add material names and interfaces
+            ax = add_layers(hyades, ax)
+        if var == 'Rho':  # If plotting density, add horizontal lines for each layer ambient density
+            ax = show_ambient_density(hyades, ax)
+        # Format title, labels, axis, materials
+        ax.set_title(f'{hyades.long_name} of {hyades.run_name}')
+        ax.set(xlabel='Lagrangian Position (µm)', ylabel=f'{hyades.long_name} ({hyades.units})')
+        ax.grid(b=True, which='major', axis='both', lw=1)
+        ax.grid(b=True, which='minor', axis='both', lw=0.5, alpha=0.5)
+        ax.minorticks_on()
+        ax.legend()
+
+        return fig, ax
+
+    else:  # Multiple variables plot on stacked axis
+        fig, ax_arr = plt.subplots(nrows=len(var), ncols=1, sharex=True)
+        for v, ax in zip(var, ax_arr):  # Each variable gets its own axis
+            hyades = HyadesOutput(filename, v)
+            for t, c in zip(times, colors):  # Plot a line for each time
+                i = np.argmin(abs(hyades.time - t))
+                ax.plot(hyades.x, hyades.output[i, :],
+                        color=c, label=f'{hyades.time[i]:.2f} ns')
+            if show_layers:  # Add material names and interfaces
+                ax = add_layers(hyades, ax)
+            # Format axis labels for its respective variable
+            ax.set_ylabel(f'{hyades.long_name} ({hyades.units})', fontsize='small')
+            ax.legend(fontsize='x-small', loc='lower right')
+        fig.suptitle(f'Lineouts of {hyades.run_name}')
+        ax_arr[-1].set_xlabel('Lagrangian Position (µm)')  # Add x label to the bottom axis
 
     return fig, ax
 
 
+def add_layers(hyades, ax, color='black'):
+    """Add the layer names and interfaces to an axis
+
+    Args:
+        hyades (HyadesOutput): Used for the layer information
+        ax (matplotlib axis): axis to add the layers to
+        color (string, optional): Color used for text and lines. Try to pick one constrasting your plot
+    """
+    y_min = ax.get_ylim()[0]
+    y_max = ax.get_ylim()[1]
+    for material in hyades.layers:
+        x_start = hyades.layers[material]['X Start']
+        x_stop = hyades.layers[material]['X Stop']
+        if x_stop < hyades.x.max():
+            ax.vlines(x_stop, y_min, y_max,
+                      color=color, linestyles='solid', lw=1, alpha=0.7)
+        text_x = x_start + ((x_stop - x_start) / 2)
+        text_y = y_max * 0.8
+        label = hyades.layers[material]['Name']
+        ax.text(text_x, text_y, label,
+                color=color, ha='center')
+    ax.set_ylim(y_min, y_max)
+
+    return ax
+
+
+def show_ambient_density(hyades, ax):
+    """Add horizontal lines for each layer's ambient density
+
+    Args:
+        hyades (HyadesOutput): instance of hyades output used to plot
+        ax: matplotlib axis to add the labels to
+
+    Returns:
+        ax (matplotlib axis)
+
+    """
+    cdf_name = os.path.join(hyades.dir_name, hyades.run_name + '.cdf')
+    cdf = netcdf.netcdf_file(cdf_name, 'r')
+    region_numbers = cdf.variables['RegNums'].data.copy()
+    region_numbers = region_numbers[1:-1]  # RegNums has a zero padded on either end
+    cdf.close()
+    show_label = True
+    for layer_num in np.unique(region_numbers):
+        mask, = np.where(region_numbers == layer_num)
+        layer_coordinates = hyades.x[mask]
+        layer_ambient_density = hyades.output[0, mask]  # Density at time zero for a single layer
+        if show_label:  # Cheap way to only label the Ambient Density line once
+            ax.plot(layer_coordinates, layer_ambient_density,
+                    linestyle='dotted', color='black', label='Ambient\nDensity', zorder=20)
+        else:
+            ax.plot(layer_coordinates, layer_ambient_density,
+                    linestyle='dotted', color='black', zorder=20)
+        show_label = False
+
+    return ax
+
+
 if __name__ == '__main__':
-
-    f = '../data/diamond_decay'
-    fig, ax = plot_shock_velocity(f, ['L', 'R', 'Cubic'])
-
+    f = '../data/FeSi/CFe_shock100'
+    fig, ax = lineout(f, ['Pres', 'U', 'Rho'], [0.25, 0.5, 0.75])
+    # fig, ax = lineout(f, ['Pres', 'Te'], [0.25, 0.5, 0.75])
+    # fig, ax = lineout(f, ['Pres'], [0.25, 0.5, 0.75])
     shock_debug_plot = False
     if shock_debug_plot:
         hyades = HyadesOutput(f, 'Pres')
