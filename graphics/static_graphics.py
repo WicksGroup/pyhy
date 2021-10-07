@@ -122,9 +122,6 @@ def visualize_target(filename):
 def eulerian_position(filename):
     """Plot the Eulerian position all zones over time.
 
-    Todo:
-        * Adjust the x scale and add a note during laser ablation to account for ablated material
-
     Note:
         In laser simulations the ablated material travels very far, throwing off the x scale.
 

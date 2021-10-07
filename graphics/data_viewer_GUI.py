@@ -1,24 +1,12 @@
-"""
-tkinter GUI to view the data output from HYADES simulations.
-Allows for nearly all lineouts from the data
-Plot pressure, density, particle velocity, shock velocity, or temperature on the y-axis
-Plot distance or time on the x-axis
-Includes animation features.
-Includes drop down menu (along top of screen) to save many file types
+"""tkinter GUI to view the data output from Hyades simulations.
 
-Connor Krill 2019
+Run with $python data_viewer_GUI.py
 
-Todo:
-    - impliment the cdf hyades_reader.py
-    - this script is an absolute mess
-    - Get rid of shock velocity and replace all the labeling with new ones it'll be much shorter?
 """
 import os
-import time
 import tkinter
 from tkinter import *
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -26,23 +14,31 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from tools.hyades_output_reader import createOutput
+from tools.hyades_reader import HyadesOutput, ShockVelocity
 matplotlib.use("TkAgg")
-
-
 plt.style.use('seaborn')
 
 
 class App:
-    
-    def __init__(self, master, path, run, var):
-        
+    """tkinter application to scroll through Hyades data.
+
+    Can create lineouts of common variables with Time or Lagrangian Position on x-axis.
+    Has animation features, can save the plot on screen, export data on screen, or save animation
+
+    Note:
+        Saving the animations require ffmpeg installed.
+
+    Example:
+        Start the script with::
+            $ python data_viewer_GUI.py
+
+    """
+    def __init__(self, master):
+        """Constructor method that creates and formats the entire GUI"""
         root.title('Hyades Data Viewer GUI')
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
-        
-#        self.filename = os.path.join(path, run, run)
-#        self.hyades = createOutput(self.filename, var)
+
         row = 1
         # Big title at the top
         my_label = Label(root, text='Hyades Data Viewer')
@@ -72,7 +68,7 @@ class App:
                                                                               sticky='NW', padx=(100, 5))
         Label(root, text='[L/R arrow keys] - move one frame').grid(row=row, column=2, sticky='NW')
         row += 1
-        self.ix_scale = Scale(master, from_=0, to=142,  # self.hyades.nTime-1,
+        self.ix_scale = Scale(master, from_=0, to=142,  # len(self.hyades.time)-1,
                               var=self.ix, command=self.update_index,
                               length=250, orient='horizontal')
         self.ix_scale.grid(row=row, column=1, sticky='NWE', columnspan=3, padx=(100, 10))
@@ -81,22 +77,11 @@ class App:
         row += 1
         
         padx = (100, 5)
-#         Button(root, text='Save Animation', command=self.saveAnimation).grid(row=row, column=1, sticky='NW',
-#                                                                              padx=padx, pady=(10,0))
-#         Label(root, text='Save a complete loop of the animation').grid(row=row, column=2, sticky='NW',
-#                                                                        pady=(10,0))
-#         row += 1
-#         Button(root, text='Save Plot', command=self.savePlot).grid(row=row, column=1, sticky='NW',padx=padx)
-#         Label(root, text='Save the current plot as a static .png').grid(row=row, column=2, sticky='NW')
-#         row += 1
-#         Button(root, text='Save ASCII', command=self.saveCSV).grid(row=row, column=1, sticky='NW', padx=padx)
-#         Label(root, text='Save the current data in the plot to a .csv file').grid(row=row, column=2, sticky='NW')
-#         row += 1
         
         Label(root, text='_'*100).grid(row=row, column=1, columnspan=3, sticky='NEW', padx=padx)
         row += 1
         
-        # Radiobuttons to select variables for the X and Y axis
+        # Radio buttons to select variables for the X and Y axis
         self.var = StringVar()
         self.var.set('Pressure')
         Label(root, text='Select Y-axis variable').grid(row=row, column=1,
@@ -151,7 +136,7 @@ class App:
         # creating sub menus in the root menu
         file_menu = tkinter.Menu(root_menu)  # it initializes a new su menu in the root menu
         # file_menu.add_command(label = "New file.....", command = function)
-        root_menu.add_cascade(label='File', menu=file_menu) # it creates the name of the sub menu
+        root_menu.add_cascade(label='File', menu=file_menu)  # it creates the name of the sub menu
         file_menu.add_command(label='Open file', command=self.select_dir)
         file_menu.add_separator()  # it adds a horizontal line to separate options
         file_menu.add_command(label='Exit', command=root.quit)
@@ -165,13 +150,13 @@ class App:
         # End Menu
         
     def animate(self, i):
-        """Helper function for the animator"""
+        """Updates the slider index and sets line data during the animation"""
         self.ix_scale.set(i)
         self.update_index()  # trying to get the saved animation to work
         if self.x_mode.get() == 'Distance':
-            self.line.set_ydata(self.hyades.output[:len(self.hyades.X), i])
-        else:
             self.line.set_ydata(self.hyades.output[i, :])
+        else:
+            self.line.set_ydata(self.hyades.output[:, i])
         return self.line
 
     def play_animation(self):
@@ -184,10 +169,11 @@ class App:
             """Helper function for the animator"""
             if 'index' not in locals():
                 index = self.ix_scale.get()
+
             if self.x_mode.get() == 'Distance':
-                maximum = self.hyades.nTime
+                maximum = len(self.hyades.time)
             else:
-                maximum = self.hyades.n_mesh
+                maximum = len(self.hyades.x)
             while (0 <= index) and (index < maximum - 1):
                 index += anim.direction
                 yield index
@@ -224,9 +210,9 @@ class App:
         
         print('Saving movie...')
         if self.x_mode.get() == 'Distance':
-            frame_num = self.hyades.nTime
+            frame_num = len(self.hyades.time)
         else:
-            frame_num = self.hyades.n_mesh
+            frame_num = len(self.hyades.x)
         anim = animation.FuncAnimation(self.fig, self.animate,
                                        frames=frame_num,
                                        interval=10, blit=False, repeat=False)
@@ -284,11 +270,13 @@ class App:
             var = 'Up'
         elif selection == 'Shock Velocity':
             var = 'Us'
+        else:
+            raise ValueError(f'Did not recognize selection {self.var.get()!r}')
 
         if self.x_mode.get() == 'Distance':
             suffix = f'{self.hyades.time[self.ix_scale.get()]:.1f}ns'
         else:
-            suffix = f'{self.hyades.X[self.ix_scale.get()]:.1f}um'
+            suffix = f'{self.hyades.x[self.ix_scale.get()]:.1f}um'
 
         if selection == 'Shock Velocity':
             basename = f'{os.path.basename(self.filename)}_{var}'
@@ -311,7 +299,7 @@ class App:
             index = f'{self.hyades.time[self.ix_scale.get()]:.1f}ns'
         else:
             x_title = 'Time (ns)'
-            index = f'{self.hyades.X[self.ix_scale.get()]:.1f}um'
+            index = f'{self.hyades.x[self.ix_scale.get()]:.1f}um'
         var = self.var.get()
         if var == 'Pressure':
             y_title = 'Pressure (GPa)'
@@ -327,6 +315,8 @@ class App:
             y_title = 'Particle Velocity (km/s)'
         elif var == 'Shock Velocity':
             y_title = 'Shock Velocity (km/s)'
+        else:
+            raise ValueError(f'Did not recognize selection {self.var.get()!r}')
 
         df = pd.DataFrame({x_title: self.line.get_xdata(),
                            y_title: self.line.get_ydata()})
@@ -350,42 +340,38 @@ class App:
         tkinter.messagebox.showinfo("Save Message", f'Successfully saved the csv {out_fname!r}')
 
     def select_dir(self):
-        """Function to create a hyadesOutput when a new data directory is selected"""
+        """Function to create a HyadesOutput when a new data directory is selected"""
         fname = filedialog.askdirectory(initialdir='../data', title='Select Hyades output')
         if self.datasaur.get_visible():
             self.datasaur.set_visible(False)
         print(fname)
         end_dir = os.path.basename(os.path.normpath(fname))
         self.file_label.set(end_dir)
-        found_variable = []
-        for v in ('Pres', 'Rho', 'U', 'Te'):
-            status = any([f.endswith(f'{v}.dat') for f in os.listdir(fname)])
-            found_variable.append(status)
+        self.filename = os.path.join(fname, end_dir)
 
-        if all(found_variable):
-            self.filename = os.path.join(fname, end_dir)        
-            self.update_variable()
-            self.update_x_mode()
-            self.ax.set(title=f'{end_dir} Lineout')
-            for L, T in zip(self.label_lines, self.label_text):
-                L.remove()
-                T.remove()  # remove the labels while we still have access to them
-            self.label_lines, self.label_text = [], []
-            y = 0.85
-            old_x = -100
-            for mat in self.hyades.material_properties:
-                label_line = self.ax.axvline(mat['startX'],
-                                             color='k', linestyle='dashed', linewidth=1)
-                x = (mat['startX'] + mat['endX']) / 2
-                # if a label would be closer than 10% of the window width to the previous label, then lower it
-                if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
-                    y -= 0.05
-                else:
-                    y = 0.85
-                label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, mat['material'], ha='center')
-                self.label_lines.append(label_line)
-                self.label_text.append(label_text)
-                old_x = x
+        self.update_variable()
+        self.update_x_mode()
+
+        self.ax.set(title=f'{end_dir} Lineout')
+        for L, T in zip(self.label_lines, self.label_text):  # Remove the labels
+            L.remove()
+            T.remove()
+        self.label_lines, self.label_text = [], []
+        y = 0.85
+        old_x = -100
+        for mat in self.hyades.layers:
+            label_line = self.ax.axvline(self.hyades.layers[mat]['X Start'],
+                                         color='k', linestyle='dashed', linewidth=1)
+            x = (self.hyades.layers[mat]['X Start'] + self.hyades.layers[mat]['X Stop']) / 2
+            # if a label would be closer than 10% of the window width to the previous label, then lower it
+            if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
+                y -= 0.05
+            else:
+                y = 0.85
+            label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, self.hyades.layers[mat]['Name'], ha='center')
+            self.label_lines.append(label_line)
+            self.label_text.append(label_text)
+            old_x = x
         self.canvas.draw()
 
     def update_x_mode(self):
@@ -393,23 +379,27 @@ class App:
         self.ix_scale.set(0)
         ix = self.ix_scale.get()
         if self.x_mode.get() == 'Distance':
-            self.line.set_data(self.hyades.X, self.hyades.output[:len(self.hyades.X), ix])
-            self.ax.set(xlim=(0, self.hyades.X.max()),
+            self.line.set_data(self.hyades.x, self.hyades.output[ix, :])
+            self.ax.set(xlim=(0, self.hyades.x.max()),
                         xlabel='Lagrangian Distance (um)')
+
             self.txt._text = f'{self.hyades.time[ix]} ns'
             self.txt._x = self.ax.get_xlim()[1] * 0.95
-            self.ix_scale.configure(to=self.hyades.nTime-1)
+
+            self.ix_scale.configure(to=len(self.hyades.time) - 1)
             for L, T in zip(self.label_lines, self.label_text):
                 L.set_visible(True)
                 T.set_visible(True)
             self.label_text_time.set_visible(False)
-        elif self.x_mode.get()=='Time':
-            self.line.set_data(self.hyades.time, self.hyades.output[ix, :])
-            self.ax.set(xlim=(0,self.hyades.time.max()), 
+        elif self.x_mode.get() == 'Time':
+            self.line.set_data(self.hyades.time, self.hyades.output[:, ix])
+            self.ax.set(xlim=(0, self.hyades.time.max()),
                         xlabel='Time (ns)')
-            self.txt._text = f'{self.hyades.X[ix]} um'
-            self.txt._x    = self.ax.get_xlim()[1] * 0.95
-            self.ix_scale.configure(to=len(self.hyades.X)-1)
+
+            self.txt._text = f'{self.hyades.x[ix]} um'
+            self.txt._x = self.ax.get_xlim()[1] * 0.95
+
+            self.ix_scale.configure(to=len(self.hyades.x) - 1)
             for L, T in zip(self.label_lines, self.label_text):
                 L.set_visible(False)
                 T.set_visible(False)
@@ -456,86 +446,86 @@ class App:
             # Turn off the slider bc there is no index on the shock velocity
             self.ix_scale.config(state="disabled")
             # plot the shock velocity
-            shock = createOutput(self.filename, var)
-            self.line, = self.ax.plot(shock.time, shock.Us, color=color) # create a new line
+            shock = ShockVelocity(self.filename, 'Cubic')
+            self.line, = self.ax.plot(shock.time, shock.Us, color=color)
             y_max = shock.Us.max() * 1.05
             y_min = shock.Us.min()
-            self.ax.set(xlim=(min(shock.time), max(shock.time)), ylim=(y_min ,y_max),
+            self.ax.set(xlim=(min(shock.time), max(shock.time)), ylim=(y_min, y_max),
                         xlabel='Time (ns)', ylabel=ylabel)
             # get rid of all the text onscreen
             self.txt._text = ''
             self.label_text_time._text = ''
             for L, T in zip(self.label_lines, self.label_text):
                 L.remove()
-                T.remove() # remove the labels while we still have access to them
+                T.remove()  # remove the labels while we still have access to them
             self.label_lines, self.label_text = [], []
             # add the material labels - calculated in Shock Velocity based on changes in density
-            y = 0.85
-            old_x = -100
-            for mat in shock.material_properties:
-                label_line = self.ax.axvline(shock.material_properties[mat]['timeIn'],
-                                             color='k', linestyle='dashed', linewidth=1, alpha=0.5)
-                    
-                x = (shock.material_properties[mat]['timeIn'] + shock.material_properties[mat]['timeOut']) / 2
-                # if the new label would be placed closer than 10% of the window width, lower it
-                if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
-                    y -= 0.05
-                else:
-                    y = 0.85
-                label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, mat, ha='center')
-                self.label_lines.append(label_line)
-                self.label_text.append(label_text)
-                old_x = x
+            # y = 0.85
+            # old_x = -100
+            # for mat in shock.layers:
+            #     label_line = self.ax.axvline(shock.layers[mat]['timeIn'],
+            #                                  color='k', linestyle='dashed', linewidth=1, alpha=0.5)
+            #
+            #     x = (shock.layers[mat]['timeIn'] + shock.layers[mat]['timeOut']) / 2
+            #     # if the new label would be placed closer than 10% of the window width, lower it
+            #     if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
+            #         y -= 0.05
+            #     else:
+            #         y = 0.85
+            #     label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, mat, ha='center')
+            #     self.label_lines.append(label_line)
+            #     self.label_text.append(label_text)
+            #     old_x = x
         else:
             # turn the slider back on
             self.ix_scale.config(state="normal")
             # create hyades and update the line
-            self.hyades = createOutput(self.filename, var)
-            self.line, = self.ax.plot(self.hyades.time, self.hyades.output[0, :], color=color)  # create a new line
+            self.hyades = HyadesOutput(self.filename, var)
+            self.line, = self.ax.plot(self.hyades.x, self.hyades.output[0, :], color=color)  # create a new line
             ix = self.ix.get()
             if self.x_mode.get() == 'Time':
-                if ix > self.hyades.n_mesh-1:
+                if ix > len(self.hyades.x) - 1:
                     self.ix.set(0)
-                self.line.set_data(self.hyades.time, self.hyades.output[ix, :])
+                print(self.hyades.time.shape, self.hyades.output[:, self.ix.get()].shape)
+                self.line.set_data(self.hyades.time, self.hyades.output[:, self.ix.get()])
+
                 x_min, x_max = 0, self.hyades.time.max()
                 xlabel = 'Time (ns)'
             elif self.x_mode.get() == 'Distance':
-                if ix > self.hyades.nTime-1:
+                if ix > len(self.hyades.time) - 1:
                     self.ix.set(0)
-                self.line.set_data(self.hyades.X, self.hyades.output[0:len(self.hyades.X), ix])
-                x_min, x_max = self.hyades.X.min(), self.hyades.X.max()
+                self.line.set_data(self.hyades.x, self.hyades.output[self.ix.get(), :])
+                x_min, x_max = self.hyades.x.min(), self.hyades.x.max()
                 xlabel = 'Lagrangian Distance (um)'
             # format the plot
-#            ten_micron_index = np.argmin( abs(self.hyades.X - 10) )
-#            y_max = self.hyades.output[ten_micron_index:, :].max() * 1.05
             y_max = self.hyades.output[11:, :].max() * 1.05
-#            y_min = self.hyades.output[ten_micron_index:, :].min()
             y_min = self.hyades.output.min()
-            self.ax.set(xlim=(x_min, x_max), ylim=(y_min ,y_max),
-                        ylabel=ylabel, xlabel=xlabel)
+            self.ax.set(xlabel=xlabel, ylabel=ylabel,
+                        xlim=(x_min, x_max), ylim=(y_min, y_max))
             self.txt._y = y_max * 0.95
             self.label_text_time._y = y_max * 0.9
             # remove the old material labels - need to do this when switching to / from shock velocity
             if ('label_lines' in vars(self)) and ('label_text' in vars(self)):
                 for L, T in zip(self.label_lines, self.label_text):
                     L.remove()
-                    T.remove() # remove the labels while we still have access to them
+                    T.remove()
             self.label_lines, self.label_text = [], []
             # add the new material labels
-            y = 0.85; old_x = -100
-            for mat in self.hyades.material_properties:
-                label_line = self.ax.axvline(mat['startX'],
+            y = 0.85
+            old_x = -100
+            for mat in self.hyades.layers:
+                label_line = self.ax.axvline(self.hyades.layers[mat]['X Start'],
                                              color='k', linestyle='dashed', linewidth=1, alpha=0.5)
-                x = (mat['startX'] + mat['endX']) / 2
+                x = (self.hyades.layers[mat]['X Start'] + self.hyades.layers[mat]['X Stop']) / 2
                 # if the new label would be placed closer than 10% of the window width, lower it
                 if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
                     y -= 0.05
                 else:
                     y = 0.85
                 label_text = self.ax.text(x, self.ax.get_ylim()[1] * y,
-                                          mat['material'], ha='center')
-                self.label_lines.append( label_line )
-                self.label_text.append( label_text )
+                                          self.hyades.layers[mat]['Name'], ha='center')
+                self.label_lines.append(label_line)
+                self.label_text.append(label_text)
                 old_x = x
         self.canvas.draw()
 
@@ -548,27 +538,22 @@ class App:
         else:
             ix = self.ix.get()
             if self.x_mode.get() == 'Time':
-                self.txt._text = f'{self.hyades.X[ix]:.1f} um'
-                self.line.set_data(self.hyades.time, self.hyades.output[ix, :])
-                for mat in self.hyades.material_properties:
-                    # x0 = mat['startX']
-                    # x1 = mat['endX']
-                    # x  = self.hyades.X[ix]
-                    greater_than = ix >= mat['startMesh'] - 1
-                    less_than = ix < mat['endMesh'] - 1
+                self.txt._text = f'{self.hyades.x[ix]:.1f} um'
+                self.line.set_data(self.hyades.time, self.hyades.output[:, ix])
+                for mat in self.hyades.layers:
+                    self.hyades.layers[mat]['Mesh Start']
+                    greater_than = ix >= self.hyades.layers[mat]['Mesh Start'] - 1
+                    less_than = ix < self.hyades.layers[mat]['Mesh Stop'] - 1
                     if less_than and greater_than:
-                        self.label_text_time._text = mat
+                        self.label_text_time._text = self.hyades.layers[mat]['Name']
                         break
             elif self.x_mode.get() == 'Distance':
                 self.txt._text = f'{self.hyades.time[ix]:.1f} ns'
-                self.line.set_data(self.hyades.X, self.hyades.output[:len(self.hyades.X), ix])
+                self.line.set_data(self.hyades.x, self.hyades.output[ix, :])
         self.canvas.draw()
 
 
 if __name__ == '__main__':
-    var = 'Pres'
-    path = '../data/'
-    file = 'demo'
     root = tkinter.Tk()
-    app = App(root, path, file, 'Pres')
+    app = App(root)
     root.mainloop()

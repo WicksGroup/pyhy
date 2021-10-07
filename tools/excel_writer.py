@@ -1,7 +1,6 @@
 """Convert netcdf (.cdf) files to more friendly excel format
 
 Todo:
-    * Confirm this works inside the inf_GUI.py
     * Figure out why excel throws an error when I first try to open these notebooks
       error does not break the excel notebook, just throws a pop up that doesn't appear to change any data
 """

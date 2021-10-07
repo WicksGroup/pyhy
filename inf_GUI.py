@@ -7,9 +7,6 @@ Example:
     Start the GUI with the following line::
 
         $ python inf_GUI.py
-
-Todo:
-    * confirm the new cdf version of hyades_runner.py is compatible
 """
 import os
 import pathlib

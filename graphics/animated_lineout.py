@@ -1,8 +1,4 @@
-"""Animate a variable lineout moving through all times
-
-Todo:
-    - Would it be helpful to add the ambient density as a horizontal line for each layer?
-"""
+"""Animate a variable lineout moving through all times"""
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from tools.hyades_reader import HyadesOutput

@@ -1,10 +1,7 @@
 """Several classes used by the `inf_GUI` to handle .inf creation
 
 Todo:
-    * make sure this works with cdf reader
     * confirm the increment calculator works well
-    * do we need the custom EOS option? Or should you have to add a new line in the excel file everytime
-
 """
 import datetime
 import numpy as np

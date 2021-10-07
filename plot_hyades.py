@@ -22,14 +22,21 @@ Examples:
     $ python plot_hyades.py diamond_decay -lo Pres 1 2 3 5 9
 
 Todo:
-    * Add the dueling axis option to the lineouts
-
+    * Add the twin axis plot type
 """
 import os
 import argparse
 import matplotlib.pyplot as plt
 from graphics import static_graphics
 
+
+def is_float(string):
+    """Returns True if a string can be converted to a float, otherwise False"""
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
 
 description = '''A command line interface to plot common types of Hyades graphics.
                                  
@@ -98,6 +105,11 @@ abs_path = './data/' + os.path.splitext(args.filename)[0]
 base_out_filename = os.path.join('./data/', os.path.splitext(args.filename)[0], os.path.splitext(args.filename)[0])
 
 if args.XT:
+    '''XT Diagrams require a variable of interest. Multiple variables are plotted on separate figures.
+    Example:
+        $ python plot_hyades.py file_name -XT Pres U
+        Would create one XT Diagram for the Pressure and one for the Particle Velocity, each in their own figure.
+    '''
     for var in args.XT:
         fig, ax = static_graphics.xt_diagram(abs_path, var)
         if args.title:
@@ -107,21 +119,34 @@ if args.XT:
             plt.savefig(out_fname, dpi=200)
 
 if args.lineout:
-    var = args.lineout[0]
-    if var not in ('Pres', 'Rho', 'U', 'Te', 'Ti', 'Tr'):
-        error_string = 'Variable of interest required for lineout plots.\n' \
-                       'Example: --lineout Pres 1 2 3\n' \
-                       'Options for variable are {Pres, Rho, U, Te, Ti, Tr}'
-        raise ValueError(error_string)
-    times = [float(t) for t in args.lineout[1:]]
-    fig, ax = static_graphics.lineout(abs_path, var, times)
+    '''
+    Lineouts require a list of variables and a list of times to plot the data at.
+    Multiple variables create axis stacked on top of each other, sharing the x-axis on a single figure.
+    Example:
+        $ python plot_hyades.py file_name --lineout Pres Rho 1 2 3 4 10
+        Would plot Pressure and Density lineouts of the data from file_name at times 1, 2, 3, 4, and 10 nanoseconds.
+    '''
+    variables = []
+    times = []
+    for v in args.lineout:  # Go through all inputs to get variables and times
+        if is_float(v):  # Times are floats
+            times.append(float(v))
+        else:  # Variables are string abbreviations of Hyades variables
+            if v not in ('Pres', 'Rho', 'U', 'Te', 'Ti', 'Tr'):
+                error_string = 'Variable of interest required for lineout plots.\n' \
+                               'Example: --lineout Pres 1 2 3\n' \
+                               'Options for variable are {Pres, Rho, U, Te, Ti, Tr}'
+                raise ValueError(error_string)
+            variables.append(v)
+    fig, ax = static_graphics.lineout(abs_path, variables, times)
     if args.title:
         ax.set_title(' '.join(args.title))
     if args.save:
-        out_fname = f'{base_out_filename} {var} lineout.png'
+        out_fname = f'{base_out_filename} {" ".join(variables)} lineout.png'
         plt.savefig(out_fname, dpi=200)
 
 if args.target:
+    '''Target diagrams only use the required filename'''
     fig, ax = static_graphics.visualize_target(abs_path)
     if args.title:
         ax.set_title(' '.join(args.title))
@@ -130,6 +155,7 @@ if args.target:
         plt.savefig(out_fname, dpi=200)
 
 if args.shock:
+    '''Shock Velocity plots only use the required filename.'''
     if len(args.shock) == 1:
         args.shock = args.shock[0]
     fig, ax = static_graphics.plot_shock_velocity(abs_path, args.shock)

@@ -1,8 +1,4 @@
-"""Functions to run Hyades, convert the .otf to .cdf, and organize the output files into folders.
-
-Todo:
-    * Confirm this works with the inf_GUI.py
-"""
+"""Functions to run Hyades, convert the .otf to .cdf, and organize the output files into folders."""
 import os
 import time
 import shutil

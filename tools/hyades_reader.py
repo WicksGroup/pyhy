@@ -284,19 +284,6 @@ class HyadesOutput:
             layers[k]['X Start'] = float(mesh_words[3]) * 1e4  # convert centimeters to microns
             layers[k]['X Stop'] = float(mesh_words[4]) * 1e4  # convert centimeters to microns
 
-
-        '''Could read the cdf file for Atomic Weight, Atomic Number, Molar Fraction
-        cdf_name = filename
-        if cdf_name.endswith('.inf'):
-            cdf_name = cdf_name[:-4]
-        if not cdf_name.endswith('.cdf'):
-            cdf_name += '.cdf'
-        cdf = netcdf.netcdf_file(cdf_name, 'r')
-        
-        for i, layer in enumerate(layers):
-            NumMatsReg = cdf.variables['NumMatsReg']
-        '''
-
         return layers
 
 
@@ -439,6 +426,9 @@ class ShockVelocity:
             else:
                 raise ValueError(f'Shock Velocity Interpolation Mode {mode!r} not recognized. '
                                  f'Use one of Left, Right, Average, Cubic')
+
+            if abs(len(hyades_pres.x) - shock_index) <= 2:  # If the shock index is 0 or 1 points from the free surface
+                break
 
         shock_velocity = pressure / (density * particle_velocity)
         time = hyades_pres.time[min_index:max_index]
