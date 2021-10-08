@@ -108,7 +108,7 @@ class App:
         # Initial plotting and labels
         self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
-        self.df = pd.read_csv('DatasaurusDozen.csv')
+        self.df = pd.read_csv('graphics/DatasaurusDozen.csv')
         self.datasaur = self.ax.scatter([], [])
         self.ax.set(title='Select a file to begin',
                     xlabel='X Label', ylabel='Y Label',
@@ -245,7 +245,7 @@ class App:
         basename = f"{os.path.basename(self.filename)}_{var}_{suffix}"
         out_fname = basename
         counter = 2
-        while out_fname+".mp4" in os.listdir("../data/"):
+        while out_fname+".mp4" in os.listdir("data/"):
             out_fname = basename + f"_{counter}"
             counter += 1
 
@@ -284,7 +284,7 @@ class App:
             basename = f'{os.path.basename(self.filename)}_{var}_{suffix}'
         out_fname = basename
         counter = 2
-        while out_fname+".png" in os.listdir("../data/"):
+        while out_fname+".png" in os.listdir("data/"):
             out_fname = basename + f"_{counter}"
             counter += 1
         
@@ -329,7 +329,7 @@ class App:
 
         out_fname = basename
         counter = 2
-        while out_fname+".csv" in os.listdir("../data/"):
+        while out_fname+".csv" in os.listdir("data/"):
             out_fname = basename + f"_{counter}"
             counter += 1
 

@@ -1,9 +1,12 @@
 """Useful plots of Hyades inputs and outputs"""
+
 import os
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io import netcdf
+import sys
+sys.path.append(os.getcwd())
 from tools.hyades_reader import ShockVelocity, HyadesOutput
 plt.style.use('ggplot')
 
