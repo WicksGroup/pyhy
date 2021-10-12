@@ -1,1 +1,0 @@
-start python3 hyop.py %1 %2 %3 %4

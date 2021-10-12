@@ -337,24 +337,29 @@ def show_ambient_density(hyades, ax):
 
 
 if __name__ == '__main__':
-    f = '../data/FeSi/CFe_shock100'
-    fig, ax = lineout(f, ['Pres', 'U', 'Rho'], [0.25, 0.5, 0.75])
+    f = '../data/FeSi/s76624_sep23_A'
+    # fig, ax = lineout(f, ['Pres', 'U', 'Rho'], [0.25, 0.5, 0.75])
     # fig, ax = lineout(f, ['Pres', 'Te'], [0.25, 0.5, 0.75])
     # fig, ax = lineout(f, ['Pres'], [0.25, 0.5, 0.75])
+
+    hyades = HyadesOutput(f, 'Pres')
+    print(hyades.moi, hyades.shock_moi)
+    fig, ax = xt_diagram(f, 'Pres')
     shock_debug_plot = False
     if shock_debug_plot:
         hyades = HyadesOutput(f, 'Pres')
-        shock = ShockVelocity(f, 'left')
+        shock = ShockVelocity(f, 'Cubic')
+        print(shock.time.shape, shock.Us.shape)
         fig, ax = xt_diagram(f, 'Pres')
         x0 = hyades.x[shock.window_start]
-        y0 = hyades.time[10:]
+        y0 = shock.time
         x1 = hyades.x[shock.window_stop]
-        y1 = hyades.time[10:]
+        y1 = shock.time
         ax.plot(x0, y0,
                 color='white', ls='dotted', lw=2, label='Shock Window')
         ax.plot(x1, y1,
                 color='white', ls='dotted', lw=2)
-        ax.plot(hyades.x[shock.shock_index], hyades.time[10:], 'red', label='Shock Front', lw=1)
+        ax.plot(hyades.x[shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
         ax.legend()
 
     plt.show()

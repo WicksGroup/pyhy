@@ -251,32 +251,21 @@ class InfWriter:
         """
         # Check for increments. If any are default calculate all of them
         if layers[0].increment == 'fast':
-            increments = self.calc_increments(layers, FZM_match_density=False)
+            # Fast increments are set to 1.0 for now.
+            increments = self.calculate_increments(layers,  FZM_match_density=True)
         elif layers[0].increment == 'accurate':
-            increments = self.calc_increments(layers, FZM_match_density=True)
+            # Accurate increments space the mesh so the mass change between neighboring zones is less than 10%
+            increments = self.calculate_increments(layers,  FZM_match_density=False)
         elif not any([(L.increment == 'fast') or (L.increment == 'accurate') for L in layers]):
             increments = [float(L.increment) for L in layers]
-#        print("INCREMENTS", increments)
-#        if any([L.increment=='Default' for L in layers]):
-#            try:
-#                increments = self.calc_increments(layers, FZM_match_density=True)
-#            except:
-#                increments = self.calc_increments(layers, FZM_match_density=False)
-#        else:
-#            increments = [float(L.increment) for L in layers]
+
 
         mesh_total = 1
         thickness_total = 0.0
         for i, L in enumerate(layers):
-            
-#             if (i==len(layers)-1):
-#                 mesh_total -= 1
             mesh_line = f'mesh {mesh_total} {mesh_total + L.n_mesh} {thickness_total * 1e-4:.6f} {(thickness_total + L.thickness) * 1e-4:.6f} {increments[i]:.3f}'
             self.inf['MESH'].append(mesh_line)    
 
-#            if (i==len(layers)-1):
-#                region_end = mesh_total + L.n_mesh # if the last layer dont subtract 1
-#            else:
             region_end = mesh_total + L.n_mesh - 1
             self.inf['REGION'].append(f'region {mesh_total} {region_end} {i+1} {L.density}')
             for atom_num, atom_mass, mol_frac in zip(L.atomic_number, L.atomic_mass, L.molar_fraction):
@@ -335,7 +324,7 @@ class InfWriter:
                                  f'sourcem {sim_props["sourceMultiplier"]}']
             self.inf['LASER'] += sim_props['tvLaser']  # extends the list, not a numerical addition
 
-        self.inf['PARM'] = ['pparray r u acc rho te ti tr pres zbar sd1',
+        self.inf['PARM'] = ['pparray r u acc rho te ti tr pres zbar sd1 entrpye entrpyi',
                             'parm nstop 5000000',
                             'parm IRDTRN 0',
                             f'parm tstop {sim_props["time_max"] * 1e-9:.2e}',
@@ -370,57 +359,132 @@ class InfWriter:
             fh.writelines(outlines)
         print(f'Wrote {out_filename}')
 
-    def calc_increments(self, layers, FZM_match_density=False):
-        """Calculate the increment powers for all of the layers"""
-        n_mesh = [L.n_mesh for L in layers]
-        thickness = [L.thickness * 1e-6 for L in layers]
-        density = [L.density for L in layers]
-        increments = [1.0 for i in range(len(layers))]  # lists are ugly but numpy caused issues
-        increment_range = np.arange(0.90, 1.10, step=0.001)
+    def calculate_zone_width(self, layer, zone_index, increment):
+        """Calculates the width of any Zone inside a given layer.
 
-        if FZM_match_density:
-            # Calculate the first increment so the FirstZoneMass is as close to the density of the material as possible
-            FZM = np.zeros(increment_range.shape) * np.nan
-            for i in range(len(increment_range)):
-                incr = increment_range[i]
-                # First Zone Mass formulas from self.calc_IMJ
-                if incr == 1.0:
-                    first_zone_mass = 100 * thickness[0] * density[0] / n_mesh[0]
-                else:
-                    first_zone_mass = 100 * thickness[0] * density[0]
-                    first_zone_mass *= (1 - incr) * (1 - (incr ** n_mesh[0]))
-                FZM[i] = first_zone_mass
-            ix = np.argmin(abs(FZM - density[0]))
-            first_increment = increment_range[ix]
-            increments[0] = first_increment
-#            print("First Material", layers[0].material)
-#            print("Density:", density[0], "First Zone Mass:", FZM[ix], "Increment:", first_increment)
+        A helper function for calculate_increment.
+
+        Args:
+            layer:
+            zone_index:
+            increment:
+
+        Returns:
+            Zone width in microns (float)
+        """
+        if increment == 1:
+            return layer.thickness / layer.n_mesh
+
+        denominator = sum([increment ** i for i in range(layer.n_mesh + 1)])
+        width_0 = layer.thickness / denominator
+
+        return width_0 * (increment ** zone_index)
+
+    def calculate_increments(self, layers):
+        """As of October 12, 2021 this function fails miserably for simulation setups with thin epoxy layers.
+        Compute accurate increments so the mass difference at layer interfaces is less than 10%
+
+        Args:
+            layers (list): A list of Layer objects
+
+        Returns:
+            increments (list): A list of the increments, one per layer
+        """
+        output = []
+        for i in range(len(layers)):
+            if i == 0:  # Assume the first increment is 1.0
+                output.append(1.0)
+                continue
+
+            # Compute the mass on the left side of the interface
+            left_layer = layers[i - 1]
+            left_zone_width = self.calculate_zone_width(left_layer,
+                                                        left_layer.n_mesh - 1,
+                                                        output[i - 1])
+            left_zone_mass = left_layer.density * left_zone_width * 1e-4
+
+            # Compute the right side mass for each increment between 0.9 and 1.1
+            increments = np.arange(0.9, 1.1, step=0.001)
+            right_layer = layers[i]
+            right_zone_widths = np.array([self.calculate_zone_width(right_layer, 0, incr)
+                                          for incr in increments])
+            right_zone_masses = right_layer.density * right_zone_widths * 1e-4
+
+            # Get the smallest mass change across the interface
+            mass_difference = abs(right_zone_masses - left_zone_mass)
+            k = np.argmin(mass_difference)  # Index of the smallest element in mass_difference
+            increment = increments[k]
+            right_zone_mass = right_zone_masses[k]
+
+            # Throw an error if the mass difference is greater than  10%
+            interface_mass_change = (left_zone_mass - right_zone_mass) / right_zone_mass
+            if abs(interface_mass_change) > 0.10:
+                raise ValueError(f'Could not find increment for Layer {i+1} that created interface mass change '
+                                 f'of less than 10%. The best attempt is:\n'
+                                 f'Increment: {increment} Mass Change (%): {100 * interface_mass_change}\n'
+                                 f'Left Zone Mass (g): {left_zone_mass:.2e} Right Zone Mass (g): {right_zone_mass:.2e}')
+
+            output.append(increment)
+
+        return output
+
+
+
+    def calc_increments(self, layers, FZM_match_density=False):
+            """Calculate the increment powers for all of the layers"""
+            n_mesh = [L.n_mesh for L in layers]
+            thickness = [L.thickness * 1e-6 for L in layers]
+            density = [L.density for L in layers]
+            increments = [1.0 for i in range(len(layers))]  # lists are ugly but numpy caused issues
+            increment_range = np.arange(0.90, 1.10, step=0.001)
+
+            if FZM_match_density:
+                '''
+                Calculate the first increment so the FirstZoneMass is as close to the density of the material as possible.
+                '''
+                #
+                FZM = np.zeros(increment_range.shape) * np.nan
+                for i in range(len(increment_range)):
+                    incr = increment_range[i]
+                    # First Zone Mass formulas from self.calc_IMJ
+                    if incr == 1.0:
+                        first_zone_mass = 100 * thickness[0] * density[0] / n_mesh[0]
+                    else:
+                        first_zone_mass = 100 * thickness[0] * density[0]
+                        first_zone_mass *= (1 - incr) * (1 - (incr ** n_mesh[0]))
+                    FZM[i] = first_zone_mass
+                ix = np.argmin(abs(FZM - density[0]))
+                first_increment = increment_range[ix]
+                increments[0] = first_increment
+                return increments
+            ###
+            # For loop always skips the first material
+            # if FZM_match_density, then this leaves the altered increment alone
+            # else the first increment is just one
+            for i in range(1, len(increments)):
+                j = 0
+                while j < len(increment_range):
+                    increments[i] = increment_range[j]
+                    IMJ = self.calc_IMJ(n_mesh, thickness, density, increments)
+
+                    if abs(IMJ[i]) < 10:  # index is from outer loop
+                        #                    print("IMJ Less than 10", IMJ[i], "|", IMJ, "|", increment_range[j])
+                        # if this IMJ < threshold move onto the next one
+                        break
+                    if j == len(increment_range) - 1:
+                        # if gets to the last increment in the increment_range
+                        raise Exception(f'Failed to find increment for layer {i + 1}')
+
+                    j += 1
 
             return increments
-        ###
-        # For loop always skips the first material
-        # if FZM_match_density, then this leaves the altered increment alone
-        # else the first increment is just one
-        for i in range(1, len(increments)):
-            j = 0
-            while j < len(increment_range):
-                increments[i] = increment_range[j]
-                IMJ = self.calc_IMJ(n_mesh, thickness, density, increments)
-                
-                if abs(IMJ[i]) < 10: # index is from outer loop
-#                    print("IMJ Less than 10", IMJ[i], "|", IMJ, "|", increment_range[j])
-                    # if this IMJ < threshold move onto the next one
-                    break
-                if j == len(increment_range)-1:
-                    # if gets to the last increment in the increment_range
-                    raise Exception(f'Failed to find increment for layer {i+1}\ni_ignore={i_ignore}')
-                
-                j += 1
-                
-        return increments
             
     def calc_IMJ(self, n_mesh, thickness, density, increments):
         """Calculate the interface mass jump between each of the layers.
+
+        FZM is First Zone Mass
+        LZM is Last Zone Mass
+        AZM is Average Zone Mass
 
         Note:
             This formula came from an old excel sheet that Ray and June had.

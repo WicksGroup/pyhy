@@ -36,13 +36,13 @@ def useLaserPower(hyop, exp_file_name, laser_spot_diameter, debug=0):
     laser_spot_diameter = laser_spot_diameter / 1e4          # convert to centimeters
     spot_area = np.pi * (laser_spot_diameter / 2)**2         # pi * r^2
     laser_intensity = laser_power / spot_area
-    if (hyop.materials[0]=='Diamond'):
+    if (hyop.materials[0] == 'Diamond'):
         ablation_pressure = 42.0 * (laser_intensity ** 0.71) # diamond ablation pressure formula
-        if debug==1:
+        if debug == 1:
             print('Using diamond ablation pressure formula')
     else:
         ablation_pressure = 46.5 * (laser_intensity ** 0.80) # CH ablation pressure formula. Ray said use this as default
-        if debug==1:
+        if debug == 1:
             print('Using CH ablation pressure formula')
     f_laser = interpolate.interp1d(laser_time, ablation_pressure) # Interpolate ablation pressure onto time scale
     
@@ -50,18 +50,17 @@ def useLaserPower(hyop, exp_file_name, laser_spot_diameter, debug=0):
     hyop.pres = f_laser(hyop.pres_time)
     laser_log_message = f'Estimated initial pressure using data from {os.path.basename(exp_file_name)!r}'
     ###
-    if debug==1:
+    if debug == 1:
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
-        ax1.plot(hyop.pres_time, hyop.pres,'r', label='Hyades Pressure')
-        ax2.plot(laser_time, laser_power,'b', label='Laser Power')
+        ax1.plot(hyop.pres_time, hyop.pres, 'r', label='Hyades Pressure')
+        ax2.plot(laser_time, laser_power, 'b', label='Laser Power')
         ax2.grid()
         plt.title('Hyades Pressure and Laser Power')
         ax1.legend(loc=2)
         ax2.legend(loc=4)
         plt.show()
     return hyop, laser_log_message
-
 
 
 def restartFrom(restart_folder, time_for_pressure, debug=0):
