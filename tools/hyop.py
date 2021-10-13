@@ -1,3 +1,11 @@
+"""Script to launch the optimization
+
+Todo:
+    - convert this to an argparse command line interface matching the other ones
+    - clean up the redudunant optimization info before and after the for loop
+    - format the print statement on the pressure so its a bit neater
+"""
+
 import os
 import sys
 import logging

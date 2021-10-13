@@ -1,15 +1,21 @@
-"""
-Connor Krill
-July 11, 2019
-Classes and Functions for hyades optimizer
+"""Functions for the Hyades Optimizer class
+
+Todo:
+    - does anyone have a copy of the display tabs or should I just assume the are gone forever
+    - rename with naming conventions
+    - add documentation to all the functions
+    - swap in the new cdf reader for all the plotting functions
+    - do we need that level of debugging
+    - should the experimental data have a different format? seems like a lot of work
+
 """
 import os
+import json
+import shutil
 import numpy as np
 import pandas as pd
-from scipy import interpolate #, optimize
-import shutil
 import matplotlib.pyplot as plt
-import json
+from scipy import interpolate
 from tools.hyop_class import HyadesOptimizer
 # from display_tabs import DisplayTabs
 

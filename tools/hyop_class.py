@@ -18,6 +18,8 @@ class HyadesOptimizer:
     Todo:
         * The shock velocity class needs to know the time in and out of materials
         * set up the logging
+        * Reformat the json saving to include more parameters and the velocity
+        * update the documenation on all the functions
 
     Massive class that will be fed into the SciPy optimization function to fit hyades data to experiment.
     This version does not match the temperature profile.
