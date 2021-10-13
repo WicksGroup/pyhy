@@ -22,12 +22,12 @@ def run_hyades(inf_name, quiet=False):
     """
     if quiet:
         txt_file = os.path.splitext(inf_name)[0] + '_hyades_terminal.txt'
-        command = ['hyades', inf_name, '>', txt_file]
+        command = f'hyades {inf_name} > {txt_file}'
     else:
-        command = ['hyades', inf_name]
+        command = f'hyades {inf_name}'
 
     t0 = time.time()
-    sp = subprocess.run(command)
+    os.system(command)
     t1 = time.time()
 
     if quiet:
@@ -38,7 +38,7 @@ def run_hyades(inf_name, quiet=False):
     run_name = os.path.basename(os.path.splitext(inf_name)[0])
     found_all = all([run_name + ext in os.listdir(os.path.dirname(inf_name))
                      for ext in file_extensions])
-    if found_all and sp.returncode == 0:
+    if found_all:
         log_string = f'Completed Hyades simulation of {os.path.basename(inf_name)} in {t1 - t0:.2f} seconds.'
     else:
         log_string = f'Failed to run Hyades simulation of {os.path.basename(inf_name)}.'
@@ -59,10 +59,10 @@ def otf2cdf(otf_name, quiet=False):
     """
     if quiet:
         txt_file = os.path.splitext(otf_name)[0] + '_PPF2NCDF_terminal.txt'
-        command = ['PPF2NCDF', os.path.splitext(otf_name)[0], '>', txt_file]
-
-    cmd = ['PPF2NCDF', os.path.splitext(otf_name)[0]]
-    sp = subprocess.run(cmd)
+        command = f'PPF2NCDF {os.path.splitext(otf_name)[0]} > {txt_file}'
+    else:
+        command = f'PPF2NCDF {os.path.splitext(otf_name)[0]}'
+    os.system(command)
 
     if quiet:
         if os.path.exists(txt_file):  # Delete the terminal output if it exists
@@ -70,7 +70,7 @@ def otf2cdf(otf_name, quiet=False):
 
     run_name = os.path.basename(os.path.splitext(otf_name)[0])
     found = run_name + '.cdf' in os.listdir(os.path.dirname(otf_name))
-    if found and sp.returncode == 0:
+    if found:
         log_string = 'Completed PPF2NCDF.'
     else:
         log_string = 'Failed PPF2NCDF.'

@@ -44,13 +44,13 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
     else:
         hyop = HyadesOptimizer(run_name, time_for_pressure, initial_pressure)
         laser_log_message, restart_log_message = '', ''
-        print('starting from scratch')
+        print('Starting from scratch')
         
     if use_shock_velocity:
-        print('Residual will be calculating using shock velocity')
+        print('Residual will be calculated using shock velocity')
         hyop.use_shock_velocity = use_shock_velocity
         
-    print(time_of_interest, delay)
+    print(f'Calculating the residual during {time_of_interest} ns, using a delay of {delay} ns on Hyades data.')
     hyop.read_experimental_data(exp_file_name, time_of_interest, delay)
     hyop.delay = delay
     # Set optimization parameters
@@ -73,7 +73,6 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
 
     ### Resolutions
     # hyop.__initTabs__()
-
     for resolution in (len(hyop.pres), 2*len(hyop.pres), 4*len(hyop.pres)):
         print('Current resolution', resolution)
         f = interpolate.interp1d(hyop.pres_time, hyop.pres)
