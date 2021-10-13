@@ -7,7 +7,11 @@ organizing the outputs, and visualizing the inputs and outputs.
 This repository assumes familiarity with Hyades simulations and basic terminal usage.
 Almost no Python knowledge is required.
 
+First Published: Month , Year  
+Last Updated: Month, Year
+
 ---
+#GUIs for:
 
 ### Creating Inputs
 `inf_GUI.py` is a GUI to help create the input files for Hyades.
@@ -25,7 +29,10 @@ Adding or Removing a material:
 * To add or remove a material as an option from the inf_GUI, edit the excel spreadsheet `inf_GUI_materials.xlsx`.
 Follow the formatting (using comma separated entries for materials with multiple elements) used in existing columns.
 
+### Viewing Data
+
 ---
+#Command Line Interfaces for:
 
 ### Running Hyades
 `run_hyades.py` is a command line interface to run multiple Hyades simulations.  

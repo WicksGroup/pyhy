@@ -24,12 +24,12 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
     delay = 5  # nanoseconds, does not matter for shock velocity
 
     use_shock_velocity = False  # True or False
-    use_laser_power = True  # True or False
+    use_laser_power = False  # True or False
     laser_spot_diameter = 1100  # microns, only matters if use_laser_power=True
 
-    number_of_points = 10  # generally use a small number to start, the optimizer will automatically increase this
+    number_of_points = 8  # generally use a small number to start, the optimizer will automatically increase this
     # initial_pressure only matters if NOT using laser power and NOT restarting
-    initial_pressure = [0, 75, 175, 200, 250, 200, 175, 150, 0, 0]
+    initial_pressure = [0, 100, 100, 100, 100, 100, 100, 100]
     time_for_pressure = np.linspace(0, 20, num=number_of_points, endpoint=True)
 
     restart_from_this_run = ''  # leave blank if no restart
@@ -52,7 +52,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
         print('Residual will be calculating using shock velocity')
         hyop.use_shock_velocity = use_shock_velocity
         
-    print(time_of_interest,delay)
+    print(time_of_interest, delay)
     hyop.read_experimental_data(exp_file_name, time_of_interest, delay)
     hyop.delay = delay
     # Set optimization parameters
@@ -74,7 +74,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
     #if restart_log_message: logging.info(restart_log_message)
 
     ### Resolutions
-    hyop.__initTabs__()
+    # hyop.__initTabs__()
 
     for resolution in (len(hyop.pres), 2*len(hyop.pres), 4*len(hyop.pres)):
         print('Current resolution', resolution)
@@ -90,7 +90,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
             sol = optimize.minimize(hyop.run, initial_pressure,
                                     method=optimization_algorithm,
                                     jac=jac, tol=tol,
-                                    bounds=optimize.Bounds(lb, ub, keep_feasible=True),
+                                    bounds=bounds,
                                     options=options)
         except ResolutionError:
             print("Increasing resolution from", resolution)
@@ -102,4 +102,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
 
 
 print(sys.argv)
-hyopfunction(sys.argv[1], (float(sys.argv[2]), float(sys.argv[3])), sys.argv[4])
+experimental_filename = sys.argv[1]
+time_of_interest = (float(sys.argv[2]), float(sys.argv[3]))
+run_name = sys.argv[4]
+hyopfunction(experimental_filename, time_of_interest, run_name)
