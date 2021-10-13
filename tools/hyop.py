@@ -19,7 +19,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
         time_of_interest:
         run_name:
     """
-    delay = 5  # nanoseconds, does not matter for shock velocity
+    delay = 2  # nanoseconds, does not matter for shock velocity
 
     use_shock_velocity = False  # True or False
     use_laser_power = False  # True or False

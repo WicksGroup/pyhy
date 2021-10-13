@@ -61,8 +61,8 @@ class HyadesOptimizer:
         pattern = '\[\w+!?\$?\]'
         self.materials = re.findall(pattern, contents)
 
-    def __initTabs__(self, initial_tabs=None):
-        self.plot1 = DynamicUpdate("t-up Optim vs Real")
+    # def __initTabs__(self, initial_tabs=None):
+    #     self.plot1 = DynamicUpdate("t-up Optim vs Real")
 
     def read_experimental_data(self, exp_file_name, time_of_interest, delay):
         """Load the experimental data into the class
@@ -137,16 +137,16 @@ class HyadesOptimizer:
     def simulate_inf(self):
         """Run the Hyades simulation of the last .inf written by this class"""
 
-        hyades_runner.batch_run_hyades(self.inf_path, self.path)
+        hyades_runner.batch_run_hyades(self.inf_path, self.path, quiet=True)
 
         # Setup a logging file
-        # filename   = 'hyop.log'
-        # log_format = '%(asctime)s %(levelname)s:%(message)s'
-        # datefmt    = '%Y-%m-%d %H:%M:%S'
-        # logging.basicConfig(filename=filename,
-        #                     format=log_format, datefmt=datefmt, level=logging.DEBUG)
-        # assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
-        # logging.info('Look at the optimizer go' +str(self.iter_count))
+        filename = 'hyop.log'
+        log_format = '%(asctime)s %(levelname)s:%(message)s'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        logging.basicConfig(filename=filename,
+                            format=log_format, datefmt=datefmt, level=logging.DEBUG)
+        assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
+        logging.info(f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}')
 
     def calculate_residual(self):
         """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment"""
@@ -244,7 +244,7 @@ class HyadesOptimizer:
                 continue  # do nothing, we want to keep these folders
             else:
                 delete_extensions = ('U.dat', 'Pres.dat', 'Te.dat', 'Rho.dat', 'Tr.dat', 'Ti.dat', 'sd1.dat',
-                                     '.ppf', '.tmf', '.inf', '.otf')
+                                     '.cdf', '.ppf', '.tmf', '.inf', '.otf')
                 for file in os.listdir(os.path.join(self.path, directory)):
                     check_extension = [file.endswith(ext) for ext in delete_extensions]
                     if any(check_extension):
@@ -276,7 +276,9 @@ class HyadesOptimizer:
         self.simulate_inf()
         self.calculate_residual()
         self.save_json()
-        
+
+        print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f} Pressure: {self.pres}')
+
         # self.myTabs.update_tab_info(str(self.iter_count).zfill(3), self.residual, self.pres)
         # self.myTabs.update_pressure_input(self.pres_time, self.pres, self.xs, self.ys)
         # self.myTabs.update_residual(self.residual)
@@ -288,11 +290,6 @@ class HyadesOptimizer:
         elif (self.residual < 15) and (len(self.pres_time) <= 20):
             print('RESIDUAL < 15 and RESOLUTION <= 20')
             raise ResolutionError('CONDITIONS MET - INCREASING RESOLUTION')
-
-        print('Iteration Number: ', str(self.iter_count).zfill(3))
-        print('Current Pressure: ', self.pres)
-        print('Current Residual: ', self.residual)
-        input('Press ENTER to continue.')
 
         return self.residual
 

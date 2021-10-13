@@ -8,20 +8,31 @@ import subprocess
 from tools.excel_writer import write_excel
 
 
-def run_hyades(inf_name):
+def run_hyades(inf_name, quiet=False):
     """Runs a single Hyades simulation.
 
     Args:
         inf_name (string): Name of the .inf
+        quiet (bool, optional): Toggle to save the terminal output to a text file instead of printing on screen.
+                                This text file is automatically deleted.
 
     Returns:
         log_string (string): Status and details of Hyades simulation
 
     """
+    if quiet:
+        txt_file = os.path.spiltext(inf_name)[0] + '_hyades_terminal.txt'
+        command = ['hyades', inf_name, '>', txt_file]
+    else:
+        command = ['hyades', inf_name]
+
     t0 = time.time()
-    command = ['hyades', inf_name]
     sp = subprocess.run(command)
     t1 = time.time()
+
+    if os.path.exists(txt_file):  # Delete the terminal output if it exists
+        os.remove(txt_file)
+
     file_extensions = ('.otf', '.ppf', '.tmf')
     run_name = os.path.basename(os.path.splitext(inf_name)[0])
     found_all = all([run_name + ext in os.listdir(os.path.dirname(inf_name))
@@ -34,18 +45,27 @@ def run_hyades(inf_name):
     return log_string
 
 
-def otf2cdf(otf_name):
+def otf2cdf(otf_name, quiet=False):
     """Runs the PPF2NCDF command to convert Hyades output (.otf) to a netcdf (.cdf) file
 
     Args:
         otf_name (string): Name of the .otf (should match name of .inf)
+        quiet (bool, optional): Toggle to save the terminal output to a text file instead of printing on screen
 
     Returns:
         log_string (string): status of the PPF2NCDF command
 
     """
+    if quiet:
+        txt_file = os.path.splitext(otf_name)[0] + '_PPF2NCDF_terminal.txt'
+        command = ['PPF2NCDF', os.path.splitext(otf_name)[0], '>', txt_file]
+
     cmd = ['PPF2NCDF', os.path.splitext(otf_name)[0]]
     sp = subprocess.run(cmd)
+
+    if os.path.exists(txt_file):  # Delete the terminal output if it exists
+        os.remove(txt_file)
+
     run_name = os.path.basename(os.path.splitext(otf_name)[0])
     found = run_name + '.cdf' in os.listdir(os.path.dirname(otf_name))
     if found and sp.returncode == 0:
@@ -56,13 +76,14 @@ def otf2cdf(otf_name):
     return log_string
 
 
-def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
+def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
     """Runs Hyades simulations of many .inf files and packages each output into its own folder.
 
     Args:
         inf_dir (string): Name of the directory containing .inf files
         out_dir (string): Destination directory where all the data will end up
         excel_variables (list, optional): List of abbreviated variable names to copy to excel file
+        quiet (bool, optional): Toggle to hide the terminal output during simulation
 
     Returns:
         None
@@ -85,9 +106,9 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[]):
         print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
         # Run Hyades
-        log_note = run_hyades(abs_path)
+        log_note = run_hyades(abs_path, quiet=quiet)
         # Run PPF2NCDF to create .cdf file and add note to log
-        log_note += ' ' + otf2cdf(abs_path)
+        log_note += ' ' + otf2cdf(abs_path, quiet=quiet)
 
         # Optionally convert .cdf as a human-readable excel file
         if excel_variables:
