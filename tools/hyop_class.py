@@ -155,11 +155,14 @@ class HyadesOptimizer:
         hyades_U = HyadesOutput(hyades_path, 'U')  # outside the if/else so can be passed into myTabs
                          
         if self.material_of_interest is None:
-            self.material_of_interest = hyades_U.material_of_interest
+            self.material_of_interest = hyades_U.moi
         if (self.shock_MOI is None) and ('shock_MOI' in vars(hyades_U)):
-            self.shockMOI = hyades_U.shock_MOI
+            self.shockMOI = hyades_U.shock_moi
                         
         if self.use_shock_velocity:
+            """
+            This is broken and I know it Oct 13th 2021
+            """
             # adjust the shock velocity timing so the shock MOI lines up with experimental data
             # calculate residual on the overlap between the adjusted time and experimental data
             # ie calculate from (beginning of experimental time) to (end of exp_time or shock leaves shock MOI)
@@ -285,6 +288,11 @@ class HyadesOptimizer:
         elif (self.residual < 15) and (len(self.pres_time) <= 20):
             print('RESIDUAL < 15 and RESOLUTION <= 20')
             raise ResolutionError('CONDITIONS MET - INCREASING RESOLUTION')
+
+        print('Iteration Number: ', str(self.iter_count).zfill(3))
+        print('Current Pressure: ', self.pres)
+        print('Current Residual: ', self.residual)
+        input('Press ENTER to continue.')
 
         return self.residual
 
