@@ -21,7 +21,7 @@ def run_hyades(inf_name, quiet=False):
 
     """
     if quiet:
-        txt_file = os.path.spiltext(inf_name)[0] + '_hyades_terminal.txt'
+        txt_file = os.path.splitext(inf_name)[0] + '_hyades_terminal.txt'
         command = ['hyades', inf_name, '>', txt_file]
     else:
         command = ['hyades', inf_name]
@@ -30,8 +30,9 @@ def run_hyades(inf_name, quiet=False):
     sp = subprocess.run(command)
     t1 = time.time()
 
-    if os.path.exists(txt_file):  # Delete the terminal output if it exists
-        os.remove(txt_file)
+    if quiet:
+        if os.path.exists(txt_file):  # Delete the terminal output if it exists
+            os.remove(txt_file)
 
     file_extensions = ('.otf', '.ppf', '.tmf')
     run_name = os.path.basename(os.path.splitext(inf_name)[0])
@@ -63,8 +64,9 @@ def otf2cdf(otf_name, quiet=False):
     cmd = ['PPF2NCDF', os.path.splitext(otf_name)[0]]
     sp = subprocess.run(cmd)
 
-    if os.path.exists(txt_file):  # Delete the terminal output if it exists
-        os.remove(txt_file)
+    if quiet:
+        if os.path.exists(txt_file):  # Delete the terminal output if it exists
+            os.remove(txt_file)
 
     run_name = os.path.basename(os.path.splitext(otf_name)[0])
     found = run_name + '.cdf' in os.listdir(os.path.dirname(otf_name))
