@@ -188,7 +188,7 @@ class HyadesOptimizer:
             idx = hyades_U.layers[self.material_of_interest]['Mesh Stop'] - 1
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
-            print(x, y)
+            # print(x, y)
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
@@ -199,8 +199,8 @@ class HyadesOptimizer:
         #                                    plot_time, plot_velocity,
         #                                    hyades_path, 0.0,
         #                                    use_shock_velocity=self.use_shock_velocity)
-        self.plot1.on_running(plot_time, plot_velocity, self.exp_time, self.exp_data)
-        self.plot1.figure.savefig(f'{self.run_name}_{self.iter_count}.png')
+        # self.plot1.on_running(plot_time, plot_velocity, self.exp_time, self.exp_data)
+        # self.plot1.figure.savefig(f'{self.run_name}_{self.iter_count}.png')
 
     def save_json(self):
         """Save the input pressure, timing, and residual to a JSON file"""
@@ -303,32 +303,32 @@ class ResolutionError(Exception):
 
 
 
-import matplotlib.pyplot as plt
-import random
-plt.ion()
-class DynamicUpdate():
-    def __init__(self, name):
-        #Set up plot
-        self.figure, self.ax = plt.subplots()
-        self.figure.suptitle(name)
-        self.lines, = self.ax.plot([], [])
-        self.line2, = self.ax.plot([], [])
-        # Autoscale on unknown axis and known lims on the other
-        self.ax.set_autoscaley_on(True)
-        # self.ax.set_xlim(self.min_x, self.max_x)
-        # Other stuff
-        self.ax.grid()
-
-    def on_running(self, xdata, ydata, xdata2=[], ydata2=[]):
-        # Update data (with the new _and_ the old points)
-        self.lines.set_xdata(xdata)
-        self.lines.set_ydata(ydata)
-        if xdata2 != [] and ydata2 != []:
-            self.line2.set_xdata(xdata2)
-            self.line2.set_ydata(ydata2)
-        # Need both of these in order to rescale
-        self.ax.relim()
-        self.ax.autoscale_view()
-        # We need to draw *and* flush
-        self.figure.canvas.draw()
-        self.figure.canvas.flush_events()
+# import matplotlib.pyplot as plt
+# import random
+# plt.ion()
+# class DynamicUpdate():
+#     def __init__(self, name):
+#         #Set up plot
+#         self.figure, self.ax = plt.subplots()
+#         self.figure.suptitle(name)
+#         self.lines, = self.ax.plot([], [])
+#         self.line2, = self.ax.plot([], [])
+#         # Autoscale on unknown axis and known lims on the other
+#         self.ax.set_autoscaley_on(True)
+#         # self.ax.set_xlim(self.min_x, self.max_x)
+#         # Other stuff
+#         self.ax.grid()
+#
+#     def on_running(self, xdata, ydata, xdata2=[], ydata2=[]):
+#         # Update data (with the new _and_ the old points)
+#         self.lines.set_xdata(xdata)
+#         self.lines.set_ydata(ydata)
+#         if xdata2 != [] and ydata2 != []:
+#             self.line2.set_xdata(xdata2)
+#             self.line2.set_ydata(ydata2)
+#         # Need both of these in order to rescale
+#         self.ax.relim()
+#         self.ax.autoscale_view()
+#         # We need to draw *and* flush
+#         self.figure.canvas.draw()
+#         self.figure.canvas.flush_events()
