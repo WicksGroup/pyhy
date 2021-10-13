@@ -140,13 +140,13 @@ class HyadesOptimizer:
         hyades_runner.batch_run_hyades(self.inf_path, self.path, quiet=True)
 
         # Setup a logging file
-        filename = 'hyop.log'
-        log_format = '%(asctime)s %(levelname)s:%(message)s'
-        datefmt = '%Y-%m-%d %H:%M:%S'
-        logging.basicConfig(filename=filename,
-                            format=log_format, datefmt=datefmt, level=logging.DEBUG)
-        assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
-        logging.info(f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}')
+        # filename = 'hyop.log'
+        # log_format = '%(asctime)s %(levelname)s:%(message)s'
+        # datefmt = '%Y-%m-%d %H:%M:%S'
+        # logging.basicConfig(filename=filename,
+        #                     format=log_format, datefmt=datefmt, level=logging.DEBUG)
+        # assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
+        # logging.info(f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}')
 
     def calculate_residual(self):
         """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment"""
