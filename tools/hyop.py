@@ -2,14 +2,12 @@ import os
 import sys
 import logging
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import interpolate, optimize
-from hyades_runner import runHyades, runHyadesPostProcess
 from tools.hyop_class import HyadesOptimizer
 from tools.hyop_class import ResolutionError
 from tools.hyop_functions import useLaserPower, restartFrom, plotXrayPressure
-#from display_tabs import DisplayTabs
+# from display_tabs import DisplayTabs
 plt.style.use('ggplot')
 
 
@@ -60,7 +58,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
     jac = None
     tol = 0.0001
     lb, ub = [0]*len(hyop.pres), [np.inf]*len(hyop.pres)
-    bounds = optimize.Bounds(lb, ub, keep_feasible=True),
+    bounds = optimize.Bounds(lb, ub, keep_feasible=True)
     options = {'disp': False, 'maxiter': 100000, 'eps': 10.0}  # eps is step size during jacobian approximation
     # Set up logging file
     filename = 'hyop.log'
@@ -83,9 +81,9 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
         new_pres = f(new_time)
         hyop.pres_time = new_time
         hyop.pres = new_pres
-        initial_pressure = new_pres
+        initial_pressure = hyop.pres
         lb, ub = [0]*len(hyop.pres), [np.inf]*len(hyop.pres)
-        bounds = optimize.Bounds(lb, ub, keep_feasible=True),
+        bounds = optimize.Bounds(lb, ub, keep_feasible=True)
         try:
             sol = optimize.minimize(hyop.run, initial_pressure,
                                     method=optimization_algorithm,

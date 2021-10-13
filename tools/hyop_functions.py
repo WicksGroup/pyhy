@@ -1,24 +1,17 @@
-'''
+"""
 Connor Krill
 July 11, 2019
 Classes and Functions for hyades optimizer
-'''
-
+"""
 import os
 import numpy as np
-import scipy
-import copy
 import pandas as pd
 from scipy import interpolate #, optimize
 import shutil
 import matplotlib.pyplot as plt
-import re
 import json
-from hyades_output_reader import createOutput
-#from hyades_runner import run_hyades, run_hyades_post
-from hyop_class import hyadesOptimizer
-
-#from display_tabs import DisplayTabs
+from tools.hyop_class import HyadesOptimizer
+# from display_tabs import DisplayTabs
 
 
 
@@ -104,7 +97,7 @@ def restartFrom(restart_folder, time_for_pressure, debug=0):
     ###
     run_name = new_folder
     initial_pressure = new_pres
-    hyop = hyadesOptimizer(run_name, time_for_pressure, initial_pressure)
+    hyop = HyadesOptimizer(run_name, time_for_pressure, initial_pressure)
     restart_log_message = f'Starting this optimization from {restart_folder}'
     ###
 

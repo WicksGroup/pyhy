@@ -55,6 +55,7 @@ class HyadesOptimizer:
         self.exp_time = np.array(())
         
         inf_filename = os.path.join(self.path, f'{self.run_name}_setup.inf')
+        print(f'Contents of {self.path}  are {os.listdir(self.path)}')
         with open(inf_filename) as fh:
             contents = fh.read()
         pattern = '\[\w+!?\$?\]'
@@ -125,12 +126,12 @@ class HyadesOptimizer:
         new = new.replace('TV_PRES', '\n'.join(pres_lines))
         
         # Write new .inf file for this iteration
-        try:
-            os.makedirs(self.inf_path + f'/{self.run_name}')
-        except:
-            print(f'A folder for {self.run_name} already exists.')
+        # try:
+        #     os.makedirs(self.inf_path + f'/{self.run_name}')
+        # except:
+        #     print(f'A folder for {self.run_name} already exists.')
         out_fname = setup_inf.replace('setup', str(self.iter_count).zfill(3))
-        with open(os.path.join(self.inf_path, self.run_name, out_fname), 'w') as f:
+        with open(os.path.join(self.inf_path, out_fname), 'w') as f:
             f.write(new)       
 
     def simulate_inf(self):
