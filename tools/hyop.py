@@ -27,7 +27,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
         time_of_interest:
         run_name:
     """
-    delay = 2  # nanoseconds, does not matter for shock velocity
+    delay = 0  # nanoseconds, does not matter for shock velocity
 
     use_shock_velocity = False  # True or False
     use_laser_power = False  # True or False
@@ -59,7 +59,7 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
         hyop.use_shock_velocity = use_shock_velocity
         
     print(f'Calculating the residual during {time_of_interest} ns, using a delay of {delay} ns on Hyades data.')
-    hyop.read_experimental_data(exp_file_name, time_of_interest, delay)
+    hyop.read_experimental_data(exp_file_name, time_of_interest)
     hyop.delay = delay
     # Set optimization parameters
     optimization_algorithm = 'L-BFGS-B' 
