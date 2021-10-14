@@ -76,7 +76,8 @@ class HyadesOptimizer:
         if not exp_file_name.endswith('.xlsx'):
             exp_file_name += '.xlsx'
         self.exp_file = f'../data/experimental/{exp_file_name}'
-        df = pd.read_excel(self.exp_file)
+        print('Loading experimental data from ', self.exp_file)
+        df = pd.read_excel(self.exp_file, sheet_name=0)
         df.loc[df[df.columns[1]] < 0.1, df.columns[1]] = 0  # set velocities below 0.1 to 0
         velocity_time = df[df.columns[0]]
         velocity = df[df.columns[1]]
