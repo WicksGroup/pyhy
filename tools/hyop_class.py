@@ -176,6 +176,8 @@ class HyadesOptimizer:
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
+            print('Hyades Time Range: ', hyades_U.time.min(), hyades_U.time.max(), 'Delay subtracted: ', self.delay)
+            print('Experimental Time Range: ', self.exp_time.min(), self.exp_time.max())
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
 
