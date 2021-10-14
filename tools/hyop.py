@@ -106,7 +106,6 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
         f.write(str(sol))
 
 
-print(sys.argv)
 experimental_filename = sys.argv[1]
 time_of_interest = (float(sys.argv[2]), float(sys.argv[3]))
 run_name = sys.argv[4]

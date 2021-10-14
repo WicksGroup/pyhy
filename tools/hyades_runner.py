@@ -105,7 +105,7 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
     logging.basicConfig(filename=filename, format=log_format, datefmt=date_format, level=logging.DEBUG)
 
     for inf in inf_files:
-        print(f'Starting Hyades {inf}')
+        # print(f'Starting Hyades {inf}')
         abs_path = os.path.join(inf_dir, inf)
         # Run Hyades
         log_note = run_hyades(abs_path, quiet=quiet)

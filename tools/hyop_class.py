@@ -53,7 +53,6 @@ class HyadesOptimizer:
         self.exp_time = np.array(())
         
         inf_filename = os.path.join(self.path, f'{self.run_name}_setup.inf')
-        print(f'Contents of {self.path}  are {os.listdir(self.path)}')
         with open(inf_filename) as fh:
             contents = fh.read()
         pattern = '\[\w+!?\$?\]'
@@ -76,7 +75,6 @@ class HyadesOptimizer:
         if not exp_file_name.endswith('.xlsx'):
             exp_file_name += '.xlsx'
         self.exp_file = f'../data/experimental/{exp_file_name}'
-        print('Loading experimental data from ', self.exp_file)
         df = pd.read_excel(self.exp_file, sheet_name=0)
         df.loc[df[df.columns[1]] < 0.1, df.columns[1]] = 0  # set velocities below 0.1 to 0
         velocity_time = df[df.columns[0]]
@@ -176,8 +174,6 @@ class HyadesOptimizer:
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
-            print('Hyades Time Range: ', hyades_U.time.min(), hyades_U.time.max(), 'Delay subtracted: ', self.delay)
-            print('Experimental Time Range: ', self.exp_time.min(), self.exp_time.max())
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
 
@@ -240,7 +236,7 @@ class HyadesOptimizer:
         # Remove unnecessary hyades folders
         directories = [f for f in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, f))]
         for directory in directories:
-            if ('000' in directory) or (json_data['best optimization']['name'] in directory) or (
+            if ('000' in directory) or (json_data['best']['number'] in directory) or (
                     str(self.iter_count).zfill(3) in directory):
                 continue  # do nothing, we want to keep these folders
             else:
