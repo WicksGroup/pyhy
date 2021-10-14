@@ -134,7 +134,7 @@ class HyadesOptimizer:
         datefmt = '%Y-%m-%d %H:%M:%S'
         logging.basicConfig(filename=filename, format=log_format, datefmt=datefmt, level=logging.DEBUG)
         assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
-        log = f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}'
+        log = f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual}'
         logging.info(log)
 
     def calculate_residual(self):
