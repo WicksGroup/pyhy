@@ -1,30 +1,37 @@
-"""Functions for the Hyades Optimizer class
+"""Functions for the HyadesOptimizer class.
 
-Todo:
-    - does anyone have a copy of the display tabs or should I just assume the are gone forever
-    - rename with naming conventions
-    - add documentation to all the functions
-    - swap in the new cdf reader for all the plotting functions
-    - do we need that level of debugging
-    - should the experimental data have a different format? seems like a lot of work
+use_laser_power and restart_from are both used during the setup of an optimization, not during.
+plot_xray_pressure is a function to handle some of the graphics during an optimization.
 
 """
 import os
 import json
-import shutil
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from tools.hyop_class import HyadesOptimizer
+from tools.hyades_reader import HyadesOutput
 # from display_tabs import DisplayTabs
 
 
+def use_laser_power(hyop, exp_file_name, laser_spot_diameter, debug=0):
+    """Estimate the initial pressure for hyop using the laser power in the experimental file.
 
-def useLaserPower(hyop, exp_file_name, laser_spot_diameter, debug=0):
-    '''
-    Estimate the initial pressure for hyop using the laser power in the experimental file
-    '''
+    Pressure is estimated using either the Diamond or CH (plastic) laser ablation pressure formula.
+    If the first material in the Hyades .inf is Diamond, the Diamond formula is used.
+    Otherwise the plastic formula is used.
+
+    Args:
+        hyop (HyadesOptimizer): Instance of the HyOp class to store calculated laser drive
+        exp_file_name (string): Name of the excel file containing the experimental data
+        laser_spot_diameter (float): diameter of the laser spot size, in millimeters
+        debug (int): Flag used to display additional data and plots
+
+    Returns:
+        HyOp (HyadesOptimizer), laser_log_message (string)
+
+    """
     df = pd.read_excel(exp_file_name)
     cols = df.columns
     time_column, velocity_column = cols[0], cols[1]
@@ -32,24 +39,23 @@ def useLaserPower(hyop, exp_file_name, laser_spot_diameter, debug=0):
     laser_time = df[laser_time_column]
     laser_power = df[laser_power_column]
     laser_power.loc[laser_power < 0] = 0
-    laser_spot_diameter = laser_spot_diameter / 1e4          # convert to centimeters
-    spot_area = np.pi * (laser_spot_diameter / 2)**2         # pi * r^2
+    laser_spot_diameter = laser_spot_diameter / 1e4  # convert to centimeters
+    spot_area = np.pi * (laser_spot_diameter / 2)**2  # pi * radius^2
     laser_intensity = laser_power / spot_area
-    if (hyop.materials[0] == 'Diamond'):
-        ablation_pressure = 42.0 * (laser_intensity ** 0.71) # diamond ablation pressure formula
-        if debug == 1:
+
+    if hyop.materials[0] == 'Diamond':
+        ablation_pressure = 42.0 * (laser_intensity ** 0.71)  # Diamond ablation pressure formula
+        if debug >= 1:
             print('Using diamond ablation pressure formula')
     else:
-        ablation_pressure = 46.5 * (laser_intensity ** 0.80) # CH ablation pressure formula. Ray said use this as default
-        if debug == 1:
+        ablation_pressure = 46.5 * (laser_intensity ** 0.80)  # CH ablation pressure formula
+        if debug >= 1:
             print('Using CH ablation pressure formula')
-    f_laser = interpolate.interp1d(laser_time, ablation_pressure) # Interpolate ablation pressure onto time scale
-    
-    ###
+    f_laser = interpolate.interp1d(laser_time, ablation_pressure)  # Interpolate ablation pressure onto time scale
     hyop.pres = f_laser(hyop.pres_time)
     laser_log_message = f'Estimated initial pressure using data from {os.path.basename(exp_file_name)!r}'
-    ###
-    if debug == 1:
+
+    if debug >= 1:
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
         ax1.plot(hyop.pres_time, hyop.pres, 'r', label='Hyades Pressure')
@@ -62,122 +68,100 @@ def useLaserPower(hyop, exp_file_name, laser_spot_diameter, debug=0):
     return hyop, laser_log_message
 
 
-def restartFrom(restart_folder, time_for_pressure, debug=0):
-    '''
-    Set the intial pressure in hyop using a previous optimization run
-    '''    
-    last_char = restart_folder[-1]
-    if last_char.isdigit():
-        new_folder = f'{restart_folder[:-1]}{int(last_char) + 1}' # add one to the last digit
-    else:
-        new_folder = restart_folder + '2'
-    if debug==1:
-        print(f'NEW FOLDER: {new_folder}')
-    
-    if not os.path.isdir(f'../data/{new_folder}'):
-        os.mkdir(f'../data/{new_folder}')
-    
-    for f in os.listdir(f'../data/{restart_folder}'):
-        if f.endswith('.inf'):
-            old_inf = f
-            break
-    if not 'old_inf' in locals():
-        raise Exception(f'Did not find .inf in {restart_folder}')
-    src = f'../data/{restart_folder}/{old_inf}'
-    dest = f'../data/{new_folder}/{new_folder}_setup.inf'
-    if debug==1:
-        print(f'SOURCE, DESTINATION: {src}, {dest}')
-    shutil.copy2(src, dest)    
-    
-    #OVERHAUL WITH JSON
+def restart_from(restart_folder, time_for_pressure, debug=0):
+    """Set the initial pressure in HyOp using a previous optimization run
+
+    Args:
+        restart_folder (string): Name of the previously run Hyades optimization
+        time_for_pressure (list): Timing of the initial pressure. The pressure is pulled from the old optimization
+        debug (int, optional): Flag to display extra data and plots
+
+    Returns:
+        HyOp (HyadesOptimizer), restart_log_message (string)
+
+    """
+    # Load previous optimization data from json
     json_name = f'../data/{restart_folder}/{restart_folder}_optimization.json'
     with open(json_name) as f:
         json_data = json.load(f)
-    
-    previous_pres = json_data['best optimization']['pres']
-    previous_pres_time = json_data['best optimization']['pres_time']
+    previous_pres = json_data['best']['pressure']
+    previous_pres_time = json_data['best']['time pressure']
+    f = interpolate.interp1d(previous_pres_time, previous_pres, 'Cubic')
+    new_pressure = f(time_for_pressure)
 
-    f = interpolate.interp1d(previous_pres_time, previous_pres)
-    new_pres = f(time_for_pressure)
+    run_name = os.path.basename(restart_folder)
+    last_iteration = max([int(n) for n in json_data['iterations'].keys()])
+    hyop = HyadesOptimizer(run_name, time_for_pressure, new_pressure)
+    hyop.iter_count = last_iteration + 1
+    hyop.delay = json_data['parameters']['delay']
 
-    ###
-    run_name = new_folder
-    initial_pressure = new_pres
-    hyop = HyadesOptimizer(run_name, time_for_pressure, initial_pressure)
-    restart_log_message = f'Starting this optimization from {restart_folder}'
-    ###
+    restart_log_message = f'Starting this optimization from {restart_folder}. Starting at iteration {hyop.iter_count}.'
 
-    plt.plot(previous_pres_time, previous_pres, 'o', label='old')
-    plt.plot(time_for_pressure, new_pres,       '+', label='new')
-    plt.setp(plt.gca(), title='New and Old Optimization Timing',
-            xlabel='Time (ns)', ylabel='Pressure (GPa)')
-    plt.legend()
-    plt.show()
+    if debug >= 1:  # Optional plot to compare old and new pressures
+        plt.plot(previous_pres_time, previous_pres, 'o', label='Old')
+        plt.plot(time_for_pressure, new_pressure, 'x', label='New')
+        plt.setp(plt.gca(), title='New and Old Optimization Timing',
+                 xlabel='Time (ns)', ylabel='Pressure (GPa)')
+        plt.legend()
+        plt.show()
     
     return hyop, restart_log_message
 
 
-def plotXrayPressure(path, direct_path=False, show_average=True):
-    '''
-    Create a two axis figure, the first axis is a pcolor X-t image of the pressure
-    the second is the average pressure in the material_of_pressure over time
-    '''
-    if direct_path:
-        hyades = createOutput(path, 'Pres')
-    else:
-        json_file = os.path.join(path, f'{os.path.basename(os.path.normpath(path))}_optimization.json')
-        with open(json_file) as f:
-            json_data = json.load(f)
+def plot_xray_pressure(path, show_average=True):
+    """Plot the pressure as an XT Diagram and the average pressure in the material of interest
 
-        hyades_file = [f for f in os.listdir(path) if (json_data['best optimization']['name'] in f)
-                                                   and os.path.isdir(os.path.join(path,f))]
-        hyades_file = hyades_file[0]
-        hyades = createOutput(os.path.join(path, hyades_file, hyades_file), 'Pres')
+    Formatted for display_tabs.py.
+
+    Args:
+        path (string): Path to the Hyades cdf
+        show_average (bool, optional): Toggle to show the average pressure in the material of interest
+
+    Returns:
+        fig (matplotlib figure): figure containing the graphics
+        ax_array (tuple): Tuple of (ax0, ax1) the two axis on the figure
+
+    """
+    hyades = HyadesOutput(path, 'Pres')
         
     if show_average:
         # Plot pressure as t-X pcolormesh
-        fig, (ax1, ax2) = plt.subplots(figsize=(10,8), nrows=2, ncols=1, sharex=True)
-        cmap = plt.cm.viridis #hot # plasma, inferno
-        im = ax1.pcolormesh(hyades.time, hyades.X, hyades.output[:len(hyades.X),:], cmap=cmap)
+        fig, (ax1, ax2) = plt.subplots(figsize=(10, 8), nrows=2, ncols=1, sharex=True)
+        cmap = plt.cm.inferno  # hot, plasma, inferno
+        im = ax1.pcolormesh(hyades.time, hyades.x, hyades.output, cmap=cmap)
         plt.subplots_adjust(hspace=0.1)
-
-        # colorbar
+        # Colorbar
         cb = fig.colorbar(im, ax=(ax1, ax2), orientation="horizontal",
                           pad=0, aspect=10, shrink=0.2, anchor=(0.02, 7.75))
         cb.set_label('Pressure (GPa)', color='w')
         cbytick_hyades = plt.getp(cb.ax.axes, 'xticklabels')
         plt.setp(cbytick_hyades, color='w')
-
-        # hoizontal dashed lines for materials
-        for mat in hyades.material_properties:
-            distance = hyades.material_properties[mat]['startX']
-            y = (hyades.material_properties[mat]['startX'] + hyades.material_properties[mat]['endX']) / 2
-            ax1.axhline(distance, color='w', linestyle='dashed', linewidth=1)
+        # Add vertical lines for material interfaces, horizontal lines for x-ray times
+        for mat in hyades.layers:
+            distance = hyades.layers[mat]['X Start']
+            y = (hyades.layers[mat]['X Start'] + hyades.layers[mat]['X Stop']) / 2
+            ax1.axvline(distance, color='w', linestyle='dashed', linewidth=1)
             ax1.text(0.99 * ax2.get_xlim()[1], y, mat, fontsize=12, color='w', ha='right')
-
-        for time in hyades.xray_probe_time:
-            ax1.axvline(time, color='w', linestyle='dashed', linewidth=1)
-
-        x = (hyades.xray_probe_time[1] + hyades.xray_probe_time[0]) / 2
-        y = ax1.get_ylim()[1] * 0.85
-        ax1.text(x, y, 'X-Ray\nWindow', color='w', ha='center')
-
+        for time in hyades.xray_probe:
+            ax1.axhline(time, color='w', linestyle='dashed', linewidth=1)
+        x = hyades.x.max() * 0.02
+        y = (hyades.xray_probe[1] + hyades.xray_probe[0]) / 2
+        ax1.text(x, y, 'X-Ray Window', color='w', ha='left')
         # Plot mean and standard deviation
-        ix_dist = (hyades.material_properties[hyades.material_of_interest]['startMesh'],
-                   hyades.material_properties[hyades.material_of_interest]['endMesh'])
-
-        mean    = np.mean(hyades.output[ix_dist[0]:ix_dist[1], :], axis=0)
+        ix_dist = (hyades.layers[hyades.moi]['Mesh Start'],
+                   hyades.layers[hyades.moi]['Mesh Stop'])
+        mean = np.mean(hyades.output[ix_dist[0]:ix_dist[1], :], axis=0)
         std_dev = np.std(hyades.output[ix_dist[0]:ix_dist[1], :], axis=0) 
         ax2.plot(hyades.time, mean, label='Average')
         ax2.fill_between(hyades.time, mean+std_dev, mean-std_dev, alpha=0.25, label='Std Dev')
         for t in hyades.xray_probe_time:
             ax2.axvline(t, color='k', linestyle='dashed', linewidth=1)
 
-        # final figure formatting
+        # Final figure formatting
         ax1.set_title(f'{os.path.basename(path)} Pressure History')
         sz = 12
         ax1.set_ylabel('Lagranian Position (um)', fontsize=sz)
-        ax2.set_title(f'Average Pressure in {hyades.material_of_interest}', fontsize=12)
+        ax2.set_title(f'Average Pressure in {hyades.moi}', fontsize=12)
         ax2.set_xlabel('Time (ns)', fontsize=sz)
         ax2.set_ylabel('Mean Pressure (GPa)', fontsize=sz)
         ax2.set_xlim(0, hyades.time.max())
@@ -185,31 +169,31 @@ def plotXrayPressure(path, direct_path=False, show_average=True):
         ax1.tick_params(axis='y', labelsize=sz)
         ax2.tick_params(axis='both', labelsize=sz)
         ax2.legend(loc=2, fontsize='medium')
-        return fig, (ax1, ax2)
-    else:
-        # Plot pressure as t-X pcolormesh
-        fig, ax1 = plt.subplots(figsize=(10,8))
-        cmap = plt.cm.viridis #hot # plasma, inferno
-        im = ax1.pcolormesh(hyades.time, hyades.X, hyades.output[:len(hyades.X),:], cmap=cmap)
 
-        # colorbar
-        cb = fig.colorbar(im, ax=ax1, )#orientation="horizontal",
-                          #pad=0, aspect=10, shrink=0.2,)# anchor=(0.02, 7.75))
+        return fig, (ax1, ax2)
+
+    else:
+        # Plot pressure as x-t pcolormesh
+        fig, ax1 = plt.subplots(figsize=(10, 8))
+        cmap = plt.cm.viridis  # hot, plasma, inferno
+        im = ax1.pcolormesh(hyades.time, hyades.x, hyades.output, cmap=cmap)
+
+        cb = fig.colorbar(im, ax=ax1)
         cb.set_label('Pressure (GPa)', color='w')
         cbytick_hyades = plt.getp(cb.ax.axes, 'xticklabels')
         plt.setp(cbytick_hyades, color='w')
 
-        # hoizontal dashed lines for materials
-        for mat in hyades.material_properties:
-            distance = hyades.material_properties[mat]['startX']
-            y = (hyades.material_properties[mat]['startX'] + hyades.material_properties[mat]['endX']) / 2
-            ax1.axhline(distance, color='w', linestyle='dashed', linewidth=1)
+        # Add vertical dashed lines for material interfaces
+        for mat in hyades.layers:
+            distance = hyades.layers[mat]['X Start']
+            y = (hyades.layers[mat]['X Start'] + hyades.layers[mat]['X Stop']) / 2
+            ax1.axvline(distance, color='w', linestyle='dashed', linewidth=1)
             ax1.text(0.99 * ax1.get_xlim()[1], y, mat, fontsize=12, color='w', ha='right')
         
-        # final figure formatting
-        ax1.set_title(f'{os.path.basename(path)} Pressure History',fontsize=18)
+        # Final figure formatting
+        ax1.set_title(f'{os.path.basename(path)} Pressure History', fontsize=18)
         sz = 12
-        ax1.set_ylabel('Lagranian Position (um)', fontsize=sz)
+        ax1.set_ylabel('Lagrangian Position (um)', fontsize=sz)
         ax1.set_xlabel('Time (ns)', fontsize=sz)
         ax1.set_xlim(0, hyades.time.max())
         ax1.tick_params(axis='both', labelsize=sz)

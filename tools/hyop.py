@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate, optimize
 from tools.hyop_class import HyadesOptimizer
 from tools.hyop_class import ResolutionError
-from tools.hyop_functions import useLaserPower, restartFrom, plotXrayPressure
+from tools.hyop_functions import use_laser_power, restart_from, plot_xray_pressure
 # from display_tabs import DisplayTabs
 plt.style.use('ggplot')
 
@@ -43,11 +43,11 @@ def hyopfunction(exp_file_name, time_of_interest, run_name):
     assert number_of_points == len(time_for_pressure), f'There must be {number_of_points} entries in time_for_pressure'
 
     if restart_from_this_run:
-        hyop, restart_log_message = restartFrom(restart_from_this_run, time_for_pressure)
+        hyop, restart_log_message = restart_from(restart_from_this_run, time_for_pressure)
         laser_log_message = ''
     elif use_laser_power:
         hyop = HyadesOptimizer(run_name, time_for_pressure, initial_pressure)
-    # hyop, laser_log_message = useLaserPower(hyop, '../data/experimental/s22262_Us.xlsx',laser_spot_diameter, debug=1)
+    # hyop, laser_log_message = use_laser_power(hyop, '../data/experimental/s22262_Us.xlsx',laser_spot_diameter, debug=1)
         restart_log_message = ''
     else:
         hyop = HyadesOptimizer(run_name, time_for_pressure, initial_pressure)

@@ -9,17 +9,14 @@ import pandas as pd
 from scipy import interpolate
 from tools.hyades_reader import HyadesOutput, ShockVelocity
 from tools import hyades_runner
-# from display_tabs import DisplayTabs
 
 
 class HyadesOptimizer:
-    """Class used to fit a Hyades simulation to experimental data
+    """Class used to fit a Hyades simulated velocity to experimentally measured VISAR
 
     Todo:
         * The shock velocity class needs to know the time in and out of materials
         * set up the logging
-        * Reformat the json saving to include more parameters and the velocity
-        * update the documenation on all the functions
 
     Massive class that will be fed into the SciPy optimization function to fit hyades data to experiment.
     This version does not match the temperature profile.
@@ -29,15 +26,14 @@ class HyadesOptimizer:
 
     """
     
-    def __init__(self, run_name, t0, x0, use_shock_velocity=False, initial_tabs=None):
+    def __init__(self, run_name, t0, x0, use_shock_velocity=False):
         """Constructor method to initialize Hyades parameters and simulation hyperparameters
 
         Args:
-            run_name:
-            t0:
-            x0:
-            use_shock_velocity:
-            initial_tabs:
+            run_name (string): Name of the folder and setup file for the optimization
+            t0 (list): timing of the initial pressure
+            x0 (list): initial guess of the pressure drive
+            use_shock_velocity (bool, optional): Toggle to optimize shock velocity instead of particle velocity
         """
         self.run_name = run_name
         self.pres_time = np.array(t0)
@@ -51,9 +47,9 @@ class HyadesOptimizer:
         
         self.iter_count = 0
         self.material_of_interest = None
-        self.shock_MOI = None
+        self.shock_moi = None
         self.residual = np.array(())
-        self.exp_data = np.array(())  # updated before optimization is run
+        self.exp_data = np.array(())  # Experimental variables must be updated once before optimization is run
         self.exp_time = np.array(())
         
         inf_filename = os.path.join(self.path, f'{self.run_name}_setup.inf')
@@ -66,7 +62,7 @@ class HyadesOptimizer:
     # def __initTabs__(self, initial_tabs=None):
     #     self.plot1 = DynamicUpdate("t-up Optim vs Real")
 
-    def read_experimental_data(self, exp_file_name, time_of_interest, delay):
+    def read_experimental_data(self, exp_file_name, time_of_interest):
         """Load the experimental data into the class
 
         Assigns self.exp_file, self.exp_time, and self.exp_data
@@ -76,7 +72,6 @@ class HyadesOptimizer:
         Args:
             exp_file_name (string): Name of the excel sheet containing the experimental data
             time_of_interest (tuple): Tuple of (start_time, stop_time) where the residual is calculated
-            delay (float): A time delay, in nanoseconds, to shift the experimental data so it lines up with Hyades
         """
         if not exp_file_name.endswith('.xlsx'):
             exp_file_name += '.xlsx'
@@ -88,10 +83,6 @@ class HyadesOptimizer:
         f_velocity = scipy.interpolate.interp1d(velocity_time, velocity)
         self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], num=50)
         self.exp_data = f_velocity(self.exp_time)
-
-        # Add delay to experimental time
-        # self.delay = delay
-        # self.exp_time += self.delay
 
     def update_variables(self, var_vec):
         """Take apart the single vector from the optimizer into the component parts
@@ -126,12 +117,7 @@ class HyadesOptimizer:
         
         assert 'TV_PRES' in new, f'Did not find "TV_PRES" in {new}'
         new = new.replace('TV_PRES', '\n'.join(pres_lines))
-        
-        # Write new .inf file for this iteration
-        # try:
-        #     os.makedirs(self.inf_path + f'/{self.run_name}')
-        # except:
-        #     print(f'A folder for {self.run_name} already exists.')
+
         out_fname = setup_inf.replace('setup', str(self.iter_count).zfill(3))
         with open(os.path.join(self.inf_path, out_fname), 'w') as f:
             f.write(new)       
@@ -142,13 +128,13 @@ class HyadesOptimizer:
         hyades_runner.batch_run_hyades(self.inf_path, self.path, quiet=True)
 
         # Setup a logging file
-        # filename = 'hyop.log'
-        # log_format = '%(asctime)s %(levelname)s:%(message)s'
-        # datefmt = '%Y-%m-%d %H:%M:%S'
-        # logging.basicConfig(filename=filename,
-        #                     format=log_format, datefmt=datefmt, level=logging.DEBUG)
-        # assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
-        # logging.info(f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}')
+        filename = 'hyop.log'
+        log_format = '%(asctime)s %(levelname)s:%(message)s'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        logging.basicConfig(filename=filename, format=log_format, datefmt=datefmt, level=logging.DEBUG)
+        assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
+        log = f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}'
+        logging.info(log)
 
     def calculate_residual(self):
         """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment"""
@@ -158,9 +144,9 @@ class HyadesOptimizer:
                          
         if self.material_of_interest is None:
             self.material_of_interest = hyades_U.moi
-        if (self.shock_MOI is None) and ('shock_MOI' in vars(hyades_U)):
-            self.shockMOI = hyades_U.shock_moi
-                        
+        if (self.shock_moi is None) and ('shock_moi' in vars(hyades_U)):
+            self.shock_moi = hyades_U.shock_moi
+
         if self.use_shock_velocity:
             """
             This is broken and I know it Oct 13th 2021
@@ -181,60 +167,70 @@ class HyadesOptimizer:
             interp_time = np.linspace(self.exp_time.min(), max_interp_time, num=50)
             interp_hyades = f_Us(interp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
-                         
-            plot_time = adjusted_shock_time
-            plot_velocity = shock.Us
+
         else:
             if self.material_of_interest is None:
                 self.material_of_interest = hyades_U.moi
             idx = hyades_U.layers[self.material_of_interest]['Mesh Stop'] - 1
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
-            # print(x, y)
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
-            plot_time = x
-            plot_velocity = y
-        # print('Hyades time limits:', hyades_U.time.min(), hyades_U.time.max())
+
         # self.myTabs.update_velocity_output(self.exp_time, self.exp_data,
         #                                    plot_time, plot_velocity,
         #                                    hyades_path, 0.0,
         #                                    use_shock_velocity=self.use_shock_velocity)
-        # self.plot1.on_running(plot_time, plot_velocity, self.exp_time, self.exp_data)
-        # self.plot1.figure.savefig(f'{self.run_name}_{self.iter_count}.png')
 
     def save_json(self):
         """Save the input pressure, timing, and residual to a JSON file"""
         json_name = os.path.join(self.path, f'{self.run_name}_optimization.json')
-        # format the data from this run
-        data = {'pres_time': list(self.pres_time),
-                'pres': list(self.pres),
-                'residual': self.residual,
-                'delay': self.delay
-                }
-        # Initialize json file if not in current directory, else load in json file
-        if not os.path.basename(json_name) in os.listdir(self.path):
-            json_data = {'iterations': {},
-                         'experimental': None,
-                         'best optimization': data,
-                         'run name': self.run_name}
-            json_data['best optimization']['name'] = str(self.iter_count).zfill(3)
+
+        hyades_file = f'{self.run_name}_{str(self.iter_count).zfill(3)}'
+        hyades_path = os.path.join(self.path, hyades_file, hyades_file)
+        hyades = HyadesOutput(hyades_path, 'U')
+        i = hyades.layers[hyades.moi]['Mesh Stop'] - 1
+
+        # Format the data from this iteration
+        iteration_data = {'time pressure': list(self.pres_time),
+                          'pressure': list(self.pres),
+                          'time velocity': list(hyades.time),
+                          'velocity': list(hyades.output[:, i]),
+                          'residual': self.residual,
+                          }
+        # Initialize json file if it doesn't exist, else load in json file
+        if not os.path.exists(json_name):
+            parameters = {'delay': self.delay,
+                          'time of interest': [self.exp_time.min(), self.exp_time.max()],
+                          'moi': self.material_of_interest,
+                          'shock moi': self.shock_moi,
+                          'path': self.path
+                          }
             experimental = {'time': list(self.exp_time),
                             'velocity': list(self.exp_data),
                             'file': self.exp_file
                             }
-            json_data['experimental'] = experimental
+
+            json_data = {'run name': self.run_name,
+                         'data path': self.path,
+                         'best': iteration_data,
+                         'experimental': experimental,
+                         'iterations': {},
+                         'parameters': parameters
+                         }
+            json_data['best']['number'] = str(self.iter_count).zfill(3)
         else:
             with open(json_name) as f:
                 json_data = json.load(f)
+
         # Check if this run has a lower residual than the best residual
-        if self.residual < json_data['best optimization']['residual']:
-            json_data['best optimization'] = data
-            json_data['best optimization']['name'] = str(self.iter_count).zfill(3)
+        if self.residual < json_data['best']['residual']:
+            json_data['best'] = iteration_data
+            json_data['best']['number'] = str(self.iter_count).zfill(3)
 
         # Write this data to the run
-        json_data['iterations'][str(self.iter_count).zfill(3)] = data
+        json_data['iterations'][str(self.iter_count).zfill(3)] = iteration_data
         with open(json_name, "w") as write_file:
             json.dump(json_data, write_file)
 
@@ -245,8 +241,7 @@ class HyadesOptimizer:
                     str(self.iter_count).zfill(3) in directory):
                 continue  # do nothing, we want to keep these folders
             else:
-                delete_extensions = ('U.dat', 'Pres.dat', 'Te.dat', 'Rho.dat', 'Tr.dat', 'Ti.dat', 'sd1.dat',
-                                     '.cdf', '.ppf', '.tmf', '.inf', '.otf')
+                delete_extensions = ('.cdf', '.ppf', '.tmf', '.inf', '.otf')
                 for file in os.listdir(os.path.join(self.path, directory)):
                     check_extension = [file.endswith(ext) for ext in delete_extensions]
                     if any(check_extension):
@@ -254,7 +249,7 @@ class HyadesOptimizer:
                 try:
                     os.rmdir(os.path.join(self.path, directory))
                 except:
-                    print(f'Failed to delete the directory {directory} - Check remaining contents')
+                    print(f'Failed to delete the directory {directory} - Check remaining contents:')
                     print(os.listdir(os.path.join(self.path, directory)))
 
     def run(self, var_vec):
@@ -271,7 +266,7 @@ class HyadesOptimizer:
             var_vec (numpy array): The pressure drive of the Hyades simulation
 
         Returns:
-
+            residual (float): The sum of least squares residual between Hyades and experimental velocity
         """
         self.update_variables(var_vec)
         self.write_inf()
@@ -279,7 +274,8 @@ class HyadesOptimizer:
         self.calculate_residual()
         self.save_json()
 
-        print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f} Pressure: {self.pres}')
+        pretty_pressure = ', '.join([f'{p:.2f}' for p in self.pres])
+        print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f} Pressure: {pretty_pressure}')
 
         # self.myTabs.update_tab_info(str(self.iter_count).zfill(3), self.residual, self.pres)
         # self.myTabs.update_pressure_input(self.pres_time, self.pres, self.xs, self.ys)
@@ -299,35 +295,3 @@ class HyadesOptimizer:
 class ResolutionError(Exception):
     """Custom error used to stop the optimization and restart it at a higher resolution"""
     pass
-
-
-
-# import matplotlib.pyplot as plt
-# import random
-# plt.ion()
-# class DynamicUpdate():
-#     def __init__(self, name):
-#         #Set up plot
-#         self.figure, self.ax = plt.subplots()
-#         self.figure.suptitle(name)
-#         self.lines, = self.ax.plot([], [])
-#         self.line2, = self.ax.plot([], [])
-#         # Autoscale on unknown axis and known lims on the other
-#         self.ax.set_autoscaley_on(True)
-#         # self.ax.set_xlim(self.min_x, self.max_x)
-#         # Other stuff
-#         self.ax.grid()
-#
-#     def on_running(self, xdata, ydata, xdata2=[], ydata2=[]):
-#         # Update data (with the new _and_ the old points)
-#         self.lines.set_xdata(xdata)
-#         self.lines.set_ydata(ydata)
-#         if xdata2 != [] and ydata2 != []:
-#             self.line2.set_xdata(xdata2)
-#             self.line2.set_ydata(ydata2)
-#         # Need both of these in order to rescale
-#         self.ax.relim()
-#         self.ax.autoscale_view()
-#         # We need to draw *and* flush
-#         self.figure.canvas.draw()
-#         self.figure.canvas.flush_events()
