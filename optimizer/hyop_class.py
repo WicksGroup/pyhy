@@ -26,7 +26,7 @@ class HyadesOptimizer:
 
     """
     
-    def __init__(self, run_name, t0, x0, use_shock_velocity=False):
+    def __init__(self, run_name, t0, x0, delay=0, use_shock_velocity=False):
         """Constructor method to initialize Hyades parameters and simulation hyperparameters
 
         Args:
@@ -38,7 +38,7 @@ class HyadesOptimizer:
         self.run_name = run_name
         self.pres_time = np.array(t0)
         self.pres = np.array(x0)
-        self.delay = 0.0
+        self.delay = delay
         self.use_shock_velocity = use_shock_velocity
         
         self.exp_file = ''
@@ -61,7 +61,7 @@ class HyadesOptimizer:
     # def __initTabs__(self, initial_tabs=None):
     #     self.plot1 = DynamicUpdate("t-up Optim vs Real")
 
-    def read_experimental_data(self, exp_file_name, time_of_interest):
+    def read_experimental_data(self, exp_file_name, time_of_interest=None):
         """Load the experimental data into the class
 
         Assigns self.exp_file, self.exp_time, and self.exp_data
@@ -72,14 +72,21 @@ class HyadesOptimizer:
             exp_file_name (string): Name of the excel sheet containing the experimental data
             time_of_interest (tuple): Tuple of (start_time, stop_time) where the residual is calculated
         """
+
         if not exp_file_name.endswith('.xlsx'):
             exp_file_name += '.xlsx'
         self.exp_file = f'../data/experimental/{exp_file_name}'
         df = pd.read_excel(self.exp_file, sheet_name=0)
         df.loc[df[df.columns[1]] < 0.1, df.columns[1]] = 0  # set velocities below 0.1 to 0
+
         velocity_time = df[df.columns[0]]
         velocity = df[df.columns[1]]
         f_velocity = scipy.interpolate.interp1d(velocity_time, velocity)
+
+        if not time_of_interest:
+            time_of_interest = (np.ceil(min(velocity_time)),
+                                np.floor(max(velocity_time)))
+
         self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], num=50)
         self.exp_data = f_velocity(self.exp_time)
 
@@ -162,7 +169,7 @@ class HyadesOptimizer:
             # interpolate from the beginning of exp_time
             # to the end of exp_time or the shock leaves the sample, whichever comes first
             f_Us = interpolate.interp1d(adjusted_shock_time, shock.Us)
-            max_interp_time = min(self.exp_time.max(), time_stop)# + delay)
+            max_interp_time = min(self.exp_time.max(), time_stop)
             interp_time = np.linspace(self.exp_time.min(), max_interp_time, num=50)
             interp_hyades = f_Us(interp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))

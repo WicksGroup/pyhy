@@ -10,12 +10,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import interpolate
-from tools.hyop_class import HyadesOptimizer
+from optimizer.hyop_class import HyadesOptimizer
 from tools.hyades_reader import HyadesOutput
 # from display_tabs import DisplayTabs
 
 
-def use_laser_power(hyop, exp_file_name, laser_spot_diameter, debug=0):
+def calculate_laser_pressure(hyop, laser_spot_diameter, debug=0):
     """Estimate the initial pressure for hyop using the laser power in the experimental file.
 
     Pressure is estimated using either the Diamond or CH (plastic) laser ablation pressure formula.
@@ -24,15 +24,14 @@ def use_laser_power(hyop, exp_file_name, laser_spot_diameter, debug=0):
 
     Args:
         hyop (HyadesOptimizer): Instance of the HyOp class to store calculated laser drive
-        exp_file_name (string): Name of the excel file containing the experimental data
         laser_spot_diameter (float): diameter of the laser spot size, in millimeters
-        debug (int): Flag used to display additional data and plots
+        debug (int, optional): Flag used to display additional data and plots
 
     Returns:
-        HyOp (HyadesOptimizer), laser_log_message (string)
+        ablation_pressure (Numpy Array), laser_log_message (string)
 
     """
-    df = pd.read_excel(exp_file_name)
+    df = pd.read_excel(hyop.exp_file)
     cols = df.columns
     time_column, velocity_column = cols[0], cols[1]
     laser_time_column, laser_power_column = cols[2], cols[3]
@@ -43,17 +42,18 @@ def use_laser_power(hyop, exp_file_name, laser_spot_diameter, debug=0):
     spot_area = np.pi * (laser_spot_diameter / 2)**2  # pi * radius^2
     laser_intensity = laser_power / spot_area
 
-    if hyop.materials[0] == 'Diamond':
-        ablation_pressure = 42.0 * (laser_intensity ** 0.71)  # Diamond ablation pressure formula
+    if hyop.materials[0] == 'Diamond':  # Use Diamond ablation pressure formula
+        ablation_pressure = 42.0 * (laser_intensity ** 0.71)
         if debug >= 1:
             print('Using diamond ablation pressure formula')
-    else:
-        ablation_pressure = 46.5 * (laser_intensity ** 0.80)  # CH ablation pressure formula
+    else:  # Use plastic (AKA CH) ablation pressure formula
+        ablation_pressure = 46.5 * (laser_intensity ** 0.80)
         if debug >= 1:
             print('Using CH ablation pressure formula')
     f_laser = interpolate.interp1d(laser_time, ablation_pressure)  # Interpolate ablation pressure onto time scale
-    hyop.pres = f_laser(hyop.pres_time)
-    laser_log_message = f'Estimated initial pressure using data from {os.path.basename(exp_file_name)!r}'
+
+    ablation_pressure = f_laser(hyop.pres_time)
+    laser_log_message = f'Estimated initial pressure using data from {os.path.basename(hyop.exp_file)}'
 
     if debug >= 1:
         fig, ax1 = plt.subplots()
@@ -65,7 +65,8 @@ def use_laser_power(hyop, exp_file_name, laser_spot_diameter, debug=0):
         ax1.legend(loc=2)
         ax2.legend(loc=4)
         plt.show()
-    return hyop, laser_log_message
+
+    return ablation_pressure, laser_log_message
 
 
 def restart_from(restart_folder, time_for_pressure, debug=0):
