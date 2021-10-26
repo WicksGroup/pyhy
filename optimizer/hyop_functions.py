@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from optimizer.hyop_class import HyadesOptimizer
 from tools.hyades_reader import HyadesOutput
-# from display_tabs import DisplayTabs
 
 
 def calculate_laser_pressure(hyop, laser_spot_diameter, debug=0):
@@ -46,7 +45,7 @@ def calculate_laser_pressure(hyop, laser_spot_diameter, debug=0):
         ablation_pressure = 42.0 * (laser_intensity ** 0.71)
         if debug >= 1:
             print('Using diamond ablation pressure formula')
-    else:  # Use plastic (AKA CH) ablation pressure formula
+    else:  # Use plastic ablation pressure formula
         ablation_pressure = 46.5 * (laser_intensity ** 0.80)
         if debug >= 1:
             print('Using CH ablation pressure formula')
@@ -124,7 +123,7 @@ def plot_xray_pressure(path, show_average=True):
 
     """
     hyades = HyadesOutput(path, 'Pres')
-        
+
     if show_average:
         # Plot pressure as t-X pcolormesh
         fig, (ax1, ax2) = plt.subplots(figsize=(10, 8), nrows=2, ncols=1, sharex=True)

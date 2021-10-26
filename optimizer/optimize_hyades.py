@@ -6,6 +6,9 @@ Todo:
     - implement restart from. I don't think this should make a new folder
 """
 import os
+import sys
+sys.path.append('../')
+import argparse
 import configparser
 import numpy as np
 from scipy import interpolate, optimize
@@ -86,3 +89,28 @@ def run_optimizer(run_name):
 
     return sol
 
+
+description = '''A command line interface to run the optimizer'''
+epilog = '''
+                      ___      _  _      
+                     | _ \_  _| || |_  _ 
+                     |  _/ || | __ | || |
+                     |_|  \_, |_||_|\_, |
+                          |__/      |__/ 
+               Developed by the Wicks Lab at JHU
+'''
+
+parser = argparse.ArgumentParser(prog='optimize_hyades.py',
+                                 formatter_class=argparse.RawDescriptionHelpFormatter,
+                                 description=description,
+                                 epilog=epilog
+                                 )
+
+parser.add_argument('filename', type=str,
+                    help='Name of the Hyades run to be optimized.')
+
+args = parser.parse_args()
+# End parser
+if args.filename:
+    sol = run_optimizer(args.filename)
+    print(sol)
