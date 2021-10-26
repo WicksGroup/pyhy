@@ -85,7 +85,7 @@ def run_optimizer(run_name):
                                     bounds=bounds,
                                     options={'disp': config.getboolean('Optimization', 'disp'),
                                              'maxiter': config.getint('Optimization', 'maxiter'),
-                                             'eps': config.getfloat('Optimization', 'eps')
+                                             'eps': float(config.get('Optimization', 'eps'))
                                              }
                                     )
         except ResolutionError:
@@ -120,4 +120,13 @@ parser.add_argument('filename', type=str,
 args = parser.parse_args()
 # End parser
 if args.filename:
+    run_name = args.filename
+    run_path = f'../data/{run_name}'
+
+    config_filename = os.path.join(run_path, f'{run_name}.cfg')
+    config = configparser.ConfigParser()
+    config.read(config_filename)
+    eps = float(config.get('Optimization', 'eps'))
+    print(type(eps), eps)
     sol = run_optimizer(args.filename)
+
