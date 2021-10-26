@@ -77,6 +77,8 @@ def run_optimizer(run_name):
         hyop.pres = new_pres
         lb, ub = [0]*len(hyop.pres), [np.inf]*len(hyop.pres)
         bounds = optimize.Bounds(lb, ub, keep_feasible=True)
+        eps = 10.0
+        print(type(eps), eps)
         try:
             sol = optimize.minimize(hyop.run, hyop.pres,
                                     method=config.get('Optimization', 'method'),
@@ -84,8 +86,8 @@ def run_optimizer(run_name):
                                     tol=config.get('Optimization', 'tol'),
                                     bounds=bounds,
                                     options={'disp': config.getboolean('Optimization', 'disp'),
-                                             'maxiter': config.getint('Optimization', 'maxiter'),
-                                             'eps': 10
+                                             'maxfun': config.getint('Optimization', 'maxiter'),
+                                             'eps': eps
                                              }
                                     )
         except ResolutionError:
