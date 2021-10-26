@@ -42,11 +42,13 @@ def run_optimizer(run_name):
     config.read(config_filename)
 
     # Get Setup config and initialize HyadesOptimizer
-    delay = config.get('Setup', 'delay',
-                       fallback=0)
-    use_shock_velocity = config.get('Setup', 'use_shock_velocity',
-                                    fallback=False)
-    hyop = HyadesOptimizer(run_name, config.get('Setup', 'time'), config.get('Setup', 'Pressure'),
+    delay = config.getfloat('Setup', 'delay',
+                            fallback=0)
+    use_shock_velocity = config.getboolean('Setup', 'use_shock_velocity',
+                                           fallback=False)
+    time = [float(i) for i in config.get('Setup', 'time').split(',')]
+    pressure = [float(i) for i in config.get('Setup', 'pressure').split(',')]
+    hyop = HyadesOptimizer(run_name, time, pressure,
                            delay=delay, use_shock_velocity=use_shock_velocity)
     # Get experimental config and load experimental data into hyop instance
     experimental_filename = config.get('Experimental', 'filename',
@@ -55,10 +57,12 @@ def run_optimizer(run_name):
         experimental_filename = run_name
     time_of_interest = config.get('Experimental', 'time_of_interest',
                                   fallback=None)
+    if time_of_interest:
+        time_of_interest = [float(i) for i in time_of_interest.split(',')]
     hyop.read_experimental_data(experimental_filename, time_of_interest=time_of_interest)
     # Optionally use laser ablation pressure as first pressure guess
-    laser_spot_diameter = config.get('Experimental', 'laser_spot_diameter',
-                                     fallback=0)
+    laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
+                                          fallback=0)
     if laser_spot_diameter != 0:
         ablation_pressure, laser_log_message = calculate_laser_pressure(hyop, laser_spot_diameter)
         hyop.pres = ablation_pressure
@@ -112,5 +116,17 @@ parser.add_argument('filename', type=str,
 args = parser.parse_args()
 # End parser
 if args.filename:
-    sol = run_optimizer(args.filename)
-    print(sol)
+
+    run_name = args.filename
+    run_path = f'../data/{run_name}'
+
+    config_filename = os.path.join(run_path, f'{run_name}.cfg')
+    config = configparser.ConfigParser()
+    config.read(config_filename)
+    toi = config.get('Experimental', 'time_of_interest')
+    print(type(toi), toi, len(toi))
+    p = config.get('Setup', 'pressure')
+    print(type(p), p, len(p))
+    print([float(i) for i in p.split(',')])
+    # sol = run_optimizer(args.filename)
+    # print(sol)
