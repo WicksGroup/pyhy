@@ -77,17 +77,19 @@ def run_optimizer(run_name):
         hyop.pres = new_pres
         lb, ub = [0]*len(hyop.pres), [np.inf]*len(hyop.pres)
         bounds = optimize.Bounds(lb, ub, keep_feasible=True)
-        eps = 10.0
-        print(type(eps), eps)
+        jac = config.get('Optimization', 'jac',
+                         fallback=None)
+        if jac == 'None':
+            jac = None
         try:
             sol = optimize.minimize(hyop.run, hyop.pres,
                                     method=config.get('Optimization', 'method'),
-                                    jac=config.get('Optimization', 'jac'),
-                                    tol=config.get('Optimization', 'tol'),
+                                    jac=jac,
+                                    tol=config.getfloat('Optimization', 'tol'),
                                     bounds=bounds,
                                     options={'disp': config.getboolean('Optimization', 'disp'),
-                                             'maxfun': config.getint('Optimization', 'maxiter'),
-                                             'eps': eps
+                                             'maxfun': config.getint('Optimization', 'maxfun'),
+                                             'eps': config.getfloat('Optimization', 'eps')
                                              }
                                     )
         except ResolutionError:
@@ -121,14 +123,16 @@ parser.add_argument('filename', type=str,
 
 args = parser.parse_args()
 # End parser
-if args.filename:
-    run_name = args.filename
-    run_path = f'../data/{run_name}'
 
-    config_filename = os.path.join(run_path, f'{run_name}.cfg')
-    config = configparser.ConfigParser()
-    config.read(config_filename)
-    eps = float(config.get('Optimization', 'eps'))
-    print(type(eps), eps)
+if args.filename:
+    # run_name = args.filename
+    # run_path = f'../data/{run_name}'
+    #
+    # config_filename = os.path.join(run_path, f'{run_name}.cfg')
+    # config = configparser.ConfigParser()
+    # config.read(config_filename)
+    # jac = config.get('Optimization', 'jac')
+    # if jac == 'None': jac=None
+    # print(type(jac), jac)
     sol = run_optimizer(args.filename)
 
