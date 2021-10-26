@@ -85,7 +85,7 @@ def run_optimizer(run_name):
                                     bounds=bounds,
                                     options={'disp': config.getboolean('Optimization', 'disp'),
                                              'maxiter': config.getint('Optimization', 'maxiter'),
-                                             'eps': float(config.get('Optimization', 'eps'))
+                                             'eps': 10
                                              }
                                     )
         except ResolutionError:
