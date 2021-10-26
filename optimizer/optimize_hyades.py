@@ -83,7 +83,11 @@ def run_optimizer(run_name):
                                     jac=config.get('Optimization', 'jac'),
                                     tol=config.get('Optimization', 'tol'),
                                     bounds=bounds,
-                                    options=config.get('Optimization', 'options'))
+                                    options={'disp': config.getboolean('Optimization', 'disp'),
+                                             'maxiter': config.getint('Optimization', 'maxiter'),
+                                             'eps': config.getfloat('Optimization', 'eps')
+                                             }
+                                    )
         except ResolutionError:
             print("INCREASING RESOLUTION")
 
@@ -123,10 +127,10 @@ if args.filename:
     config_filename = os.path.join(run_path, f'{run_name}.cfg')
     config = configparser.ConfigParser()
     config.read(config_filename)
-    toi = config.get('Experimental', 'time_of_interest')
-    print(type(toi), toi, len(toi))
-    p = config.get('Setup', 'pressure')
+    # toi = config.get('Experimental', 'time_of_interest')
+    # print(type(toi), toi, len(toi))
+    p = config.get('Optimization', 'options')
     print(type(p), p, len(p))
-    print([float(i) for i in p.split(',')])
+    # print([float(i) for i in p.split(',')])
     # sol = run_optimizer(args.filename)
     # print(sol)
