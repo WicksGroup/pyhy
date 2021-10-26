@@ -83,7 +83,7 @@ class HyadesOptimizer:
         velocity = df[df.columns[1]]
         f_velocity = scipy.interpolate.interp1d(velocity_time, velocity)
 
-        if not time_of_interest:
+        if (not time_of_interest) or (time_of_interest == 'None'):
             time_of_interest = (np.ceil(min(velocity_time)),
                                 np.floor(max(velocity_time)))
 

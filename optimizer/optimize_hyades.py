@@ -53,7 +53,7 @@ def run_optimizer(run_name):
     # Get experimental config and load experimental data into hyop instance
     experimental_filename = config.get('Experimental', 'filename',
                                        fallback=run_name)
-    if not experimental_filename:
+    if experimental_filename == 'None':
         experimental_filename = run_name
     time_of_interest = config.get('Experimental', 'time_of_interest',
                                   fallback=None)
