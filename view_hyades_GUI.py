@@ -1,6 +1,6 @@
 """tkinter GUI to view the data output from Hyades simulations.
 
-Run with $python data_viewer_GUI.py
+Run with $python view_hyades_GUI.py
 
 """
 import os
@@ -30,7 +30,7 @@ class App:
 
     Example:
         Start the script with::
-            $ python data_viewer_GUI.py
+            $ python view_hyades_GUI.py
 
     """
     def __init__(self, master):

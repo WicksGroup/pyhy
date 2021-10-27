@@ -11,9 +11,11 @@ sys.path.append('../')
 import argparse
 import configparser
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy import interpolate, optimize
 from optimizer.hyop_class import HyadesOptimizer, ResolutionError
 from optimizer.hyop_functions import calculate_laser_pressure
+from graphics import optimizer_graphics
 
 
 def run_optimizer(run_name):
@@ -102,7 +104,7 @@ def run_optimizer(run_name):
     return sol
 
 
-description = '''A command line interface to run the optimizer'''
+description = '''A command line interface to run the optimizer and plot the output.'''
 epilog = '''
                       ___      _  _      
                      | _ \_  _| || |_  _ 
@@ -117,22 +119,24 @@ parser = argparse.ArgumentParser(prog='optimize_hyades.py',
                                  description=description,
                                  epilog=epilog
                                  )
-
 parser.add_argument('filename', type=str,
                     help='Name of the Hyades run to be optimized.')
-
+parser.add_argument('-r', '--run', action='store_true',
+                    help='Run the optimizer. Assumes experimental data, setup.inf, and .cfg are set up.')
+parser.add_argument('-g', '--histogram', action='store_true',
+                    help='Plot a pressure histogram of the best run from a completed optimization.')
+parser.add_argument('-v', '--velocity', action='store_true',
+                    help='Plot a comparison of the optimized and experimental velocities.')
 args = parser.parse_args()
 # End parser
 
-if args.filename:
-    # run_name = args.filename
-    # run_path = f'../data/{run_name}'
-    #
-    # config_filename = os.path.join(run_path, f'{run_name}.cfg')
-    # config = configparser.ConfigParser()
-    # config.read(config_filename)
-    # jac = config.get('Optimization', 'jac')
-    # if jac == 'None': jac=None
-    # print(type(jac), jac)
+if args.run:
     sol = run_optimizer(args.filename)
 
+if args.histogram:
+    fig, ax = optimizer_graphics.best_histogram(args.filename)
+
+if args.velocity:
+    fig, ax = optimizer_graphics.iteration_velocities(args.filename)
+
+plt.show()

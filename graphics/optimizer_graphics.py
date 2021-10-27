@@ -55,39 +55,70 @@ def compare_velocities(run_name, show_drive=True):
     return fig, ax
 
 
-def scrolling_plot(run_name):
-    """Compares the experimental and optimized velocities. Use the arrow keys and b to scroll through optimization
+def iteration_velocities(run_name):
+    """Compares the experimental and optimized velocities
 
     Note:
-        Use the arrow keys to move through the iterations in the optimizer. b jumps straight to the best optimization
-
-    Todo:
-        - I think I need to add the delay somewhere
-        - make sure iterations stays between 0 and the max in the json file
+        Use the arrow keys to move through the iterations in the optimizer. b jumps straight to the best optimization.
 
     Args:
-        run_name:
+        run_name: Name of the optimization run to be plotted. Does not require path
 
     Returns:
+        fig (matplotlib figure), ax (matplotlib axis)
 
     """
     json_name = f'../data/{run_name}/{run_name}_optimization.json'
     with open(json_name) as f:
-        jd = json.load(f)  # jd stands for json_data
+        jd = json.load(f)  # load json data from optimization
 
     fig, ax = plt.subplots()
-    ax.plot(jd['experimental']['time'], jd['experimental']['velocity'], label='Experiment')
-    x = jd['iterations']['000']['time velocity']
+    # Plot experimental velocity
+    x_experiment = jd['experimental']['time']
+    y_experiment = jd['experimental']['velocity']
+    ax.plot(x_experiment, y_experiment, color='tab:orange', label='Experiment', zorder=2)
+    # Plot simulated velocity at iteration 000
+    x = np.array(jd['iterations']['000']['time velocity']) - jd['parameters']['delay']
     y = jd['iterations']['000']['velocity']
-    line, = ax.plot(x, y, label='Simulation')
-
+    line, = ax.plot(x, y, color='tab:blue', label='Simulation', zorder=3)
+    # Add text for residual
+    x_txt = (jd['parameters']['time of interest'][0] + jd['parameters']['time of interest'][1]) / 2
+    txt = ax.text(x_txt, ax.get_ylim()[1] * 0.9,
+                  f'Residual: {jd["iterations"]["000"]["residual"]:.2f}',
+                  ha='center')
+    # Fill window where residual was calculated
+    old_ylim = ax.get_ylim()
+    x = (jd['parameters']['time of interest'][0], jd['parameters']['time of interest'][0],
+         jd['parameters']['time of interest'][1], jd['parameters']['time of interest'][1])
+    y = (ax.get_ylim()[0], ax.get_ylim()[1],
+         ax.get_ylim()[1], ax.get_ylim()[0])
+    ax.fill(x, y, color='tab:gray', alpha=0.4, zorder=1)
+    ax.set_ylim(old_ylim)
+    # Formatting
     iteration = 0
-    ax.set_title(f'Optimization of {run_name}: {iteration} / {max([int(i) for i in jd["iterations"].keys()])}')
+    ax.set_title(f'Optimization Progress of {run_name}: {iteration} / {max([int(i) for i in jd["iterations"].keys()])}')
     ax.set(xlabel='Time (ns)', ylabel='Velocity (km/s)')
-    ax.legend()
+    ax.legend(loc='upper left')
+    # Display instructions on screen
+    instruction_txt = ax.text(ax.get_xlim()[0] + 0.5, ax.get_ylim()[1] * 0.5,
+                              'Use the Left/Right arrow keys to move 1 iteration. '
+                              '\nUse the Up/Down arrow keys to move 10 iterations.'
+                              '\nPress b to jump to the best run in the optimization.'
+                              '\nPress any key to remove these instructions.')
 
     def update(event):
-        nonlocal iteration
+        """Function to bind key presses to updating the figure
+
+        Args:
+            event (key_press_event): event passed from matplotlib when a key is pressed
+
+        Returns:
+
+        """
+        if instruction_txt.get_text():  # Remove instructions if they're still on screen
+            instruction_txt.set_text('')
+
+        nonlocal iteration  # Define actions on key presses
         if event.key == 'left':
             iteration -= 1
         if event.key == 'right':
@@ -99,17 +130,95 @@ def scrolling_plot(run_name):
         if event.key == 'b':
             iteration = int(jd['best']['number'])
 
+        if iteration < 0:  # Put bounds on how high and low the iteration count can go
+            iteration = 0
+        if iteration > max([int(i) for i in jd['iterations'].keys()]):
+            iteration = max([int(i) for i in jd['iterations'].keys()])
+        # Update simulated velocity line
         i = str(iteration).zfill(3)
-        x = jd['iterations'][i]['time velocity']
+        x = np.array(jd['iterations'][i]['time velocity']) - jd['parameters']['delay']
         y = jd['iterations'][i]['velocity']
         line.set_data(x, y)
-        ax.set_title(f'Optimization of {run_name}: {iteration} / {max([int(i) for i in jd["iterations"].keys()])}')
+        # Update formatting
+        ax.set_title(f'Optimization Progress of {run_name}: {iteration} / {max([int(i) for i in jd["iterations"].keys()])}')
+        upper_ylim = max(max(y), max(jd['experimental']['velocity'])) * 1.025
+        ax.set(ylim=(ax.get_ylim()[0], upper_ylim))
+        # Update text
+        txt.set_text(f'Residual: {jd["iterations"][i]["residual"]:.2f}')
+        txt.set_y(ax.get_ylim()[1] * 0.9)
+
         fig.canvas.draw_idle()
 
     fig.canvas.mpl_connect('key_press_event', update)
 
+    return fig, ax
+
+
+def best_histogram(run_name):
+    """Plots a pressure histogram of the best run from an optimization
+
+    Args:
+        run_name: Name of the optimization run to be plotted
+
+    Returns:
+        fig (matplotlib figure), ax (matplotlib axis)
+
+    """
+    # Load optimization and Hyades data
+    json_name = f'../data/{run_name}/{run_name}_optimization.json'
+    with open(json_name) as f:
+        jd = json.load(f)
+    best_run = run_name + '_' + jd['best']['number']
+    hyades_name = os.path.join('../data', run_name, best_run)
+    hyades = HyadesOutput(hyades_name, 'Pres')
+    x_start = hyades.layers[hyades.moi]['Mesh Start']
+    x_stop = hyades.layers[hyades.moi]['Mesh Stop'] - 1
+    print('xray probe time', hyades.xray_probe)
+    if hyades.xray_probe:
+        t_start = np.argmin(abs(hyades.time - hyades.xray_probe[0]))
+        t_stop = np.argmin(abs(hyades.time - hyades.xray_probe[1]))
+        pressure_slice = hyades.output[t_start:t_stop, x_start:x_stop]
+    else:
+        pressure_slice = hyades.output[:, x_start:x_stop]
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    # Plot histogram
+    bins = np.linspace(pressure_slice.min(), pressure_slice.max(), num=20, endpoint=True)
+    ax.hist(pressure_slice.reshape((-1,)), bins=bins,
+            ec='white')
+    # Add average as vertical line
+    ax.axvline(np.mean(pressure_slice), color='black', label=f'Mean: {np.mean(pressure_slice):.2f} GPa')
+    # Shade in the middle 50th percentile
+    p25 = np.percentile(pressure_slice, 25)
+    p75 = np.percentile(pressure_slice, 75)
+    x = (p25, p25, p75, p75)
+    y = (ax.get_ylim()[0], ax.get_ylim()[1], ax.get_ylim()[1], ax.get_ylim()[0])
+    ax.fill(x, y,
+            label='Middle 50%', color='tab:gray', alpha=0.4)
+    # Format title and labels
+    ax.set_title(f'Pressure Distribution of {hyades.layers[hyades.moi]["Name"]} in {run_name}')
+    ax.set(xlabel='Pressure (GPa)', ylabel='Counts')
+    ax.legend(loc='upper left')
+    # Add a footnote below and to the right side of the chart
+    if hyades.xray_probe:
+        xray_text = f'Pressures shown are in {hyades.layers[hyades.moi]["Name"]}' \
+                    f' during X-Ray probe time {hyades.xray_probe[0]} - {hyades.xray_probe[1]} ns'
+    else:
+        xray_text = f'Pressures shown are in {hyades.layers[hyades.moi]["Name"]} over all times'
+
+    ax.annotate(f'{xray_text}'
+                f'\nPressures shown are from optimization iteration {jd["best"]["number"]} of {run_name}',
+                xy=(1.0, -0.2),
+                xycoords='axes fraction',
+                ha='right',
+                va="center",
+                fontsize=10)
+    fig.tight_layout()
+
+    return fig, ax
+
 
 if __name__ == '__main__':
-    run_name = 's77742'
-    scrolling_plot(run_name)
+    run_name = 's76624'
+    fig, ax = best_histogram(run_name)
     plt.show()

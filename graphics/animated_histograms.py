@@ -9,6 +9,9 @@ plt.style.use('ggplot')
 def histogram_animation(inf_name, var):
     """Animate the distribution of a variable over time
 
+    Todo:
+        - update json references
+
     Note:
         Click the screen to pause/play the animation
 
