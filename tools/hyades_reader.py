@@ -34,7 +34,7 @@ class HyadesOutput:
         long_name (string): Full name of var according to Hyades
         units (string): SI units for the variable of interest
         layers (dict): Dictionary of the layers and their properties specified by the mesh line in the .inf
-        moi (string): Material of interestif one is selected, otherwise None
+        moi (string): Material of interest if one is selected, otherwise None
         shock_moi (string): Shock material of interest if one is selected, otherwise None
         tv (dict): Dictionary of all drives in the inf. May include each of Pressure, Temperature, Laser drives.
         xray_probe (tuple): Tuple of (xray_start_time, xray_stop_time) if specified, otherwise None

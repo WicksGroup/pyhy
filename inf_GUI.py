@@ -69,7 +69,7 @@ class InputGUI:
         self.save_excel.set(0)
 
         # set up the window and root of all the widgets
-        root.title('Hyades Input File GUI')
+        root.title('PyHy Input File GUI')
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
 
@@ -78,10 +78,10 @@ class InputGUI:
 
         row = 1
         # Add titles
-        Label(self.parent, text='Hyades Input File GUI',
-              font=('Arial', 16),).grid(column=1, row=row, columnspan=4, pady=(5, 0))
+        Label(self.parent, text='PyHy Input File GUI',
+              font=('Arial', 14)).grid(column=1, row=row, columnspan=4, pady=(5, 0))
         row += 1
-        ttk.Label(self.parent, text='* are required',).grid(column=1, row=row, columnspan=4, pady=(0, 5))
+        ttk.Label(self.parent, text='★ are required',).grid(column=1, row=row, columnspan=4, pady=(0, 5))
         row += 1
 
         def simulate():
@@ -102,53 +102,6 @@ class InputGUI:
             elif messagebox.askyesno(title, message):
                 hyades_runner.batch_run_hyades(inf_path, final_destination, excel_variables=excel_variables)
 
-        # time_max and time_step entries
-        ttk.Label(self.parent, text='*Simulation Time (ns)').grid(row=row, column=1, sticky='NW')
-        ttk.Entry(self.parent, textvariable=self.time_max, width=7).grid(row=row, column=2, sticky='NW')
-        # Run hyades button
-        ttk.Button(self.parent, text='Run Hyades', command=simulate).grid(row=row, column=3, sticky='NW')
-
-        # Entry for visar for optimizer
-        ttk.Label(self.parent, text='Visar Data Filename').grid(row=row, column=4, sticky='NW')
-        ttk.Entry(self.parent, textvariable=self.exp_file_name, width=15).grid(row=row, column=5, sticky='NW')
-        row += 1
-
-        # Post Processor time step
-        ttk.Label(self.parent, text='*Time Step (ns)').grid(row=row, column=1, sticky='NW')
-        ttk.Entry(self.parent, textvariable=self.time_step, width=7).grid(row=row, column=2, sticky='NW')
-        # Write the .inf button
-        ttk.Button(self.parent, text='Write inf', command=self.write_out_props).grid(row=row, column=3, sticky='NW')
-        # Time of interest
-        ttk.Label(self.parent, text='Time of Interest Start (ns)').grid(row=row, column=4, sticky='NW')
-        # ttk.Label(self.parent, text='start:').grid(row=row, column=6, sticky='NW')
-        ttk.Entry(self.parent, textvariable=self.time_of_interestS, width=7).grid(row=row, column=5, sticky='NW')
-        row += 1
-
-        # out_fname entry
-        ttk.Label(self.parent, text='*Output inf Name: ').grid(row=row, column=1, sticky='NW')
-        ttk.Entry(self.parent, textvariable=self.out_fname, width=24).grid(row=row, column=2, columnspan=2, sticky='NW')
-
-        # Time of interest end
-        ttk.Label(self.parent, text='Time of Interest End (ns)').grid(row=row, column=4, sticky='NW')
-        ttk.Entry(self.parent, textvariable=self.time_of_interestE, width=7).grid(row=row, column=5, sticky='NW')
-        row += 1
-
-        # Checkbutton to save a copy of all the hyades data as an excel sheet. Default False.
-        ttk.Checkbutton(self.parent, text="Save Excel copy of output",
-                        variable=self.save_excel).grid(row=row, column=2, sticky="NW")
-
-        # Run Optimizer button
-        ttk.Button(root, text='Run optimizer', command=self.run_optimizer).grid(row=row, column=4, sticky='NW')
-        row += 1
-
-        # Add the number of layers entry and button
-        pad_y = (5, 0)
-        ttk.Label(self.parent, text='*Number of layers').grid(column=1, row=row, sticky='NW', pady=pad_y)
-        ttk.Entry(self.parent, textvariable=self.n_layers, width=7).grid(column=2, row=row, sticky='NW', pady=pad_y)
-        ttk.Button(self.parent, text='Generate layers',
-                   command=self.generate_layers).grid(column=3, row=row, sticky='NW', pady=pad_y)
-
-        '''functions for the tv file and directory selection'''
         def select_pres_file():
             pres_filename = filedialog.askopenfilename(initialdir='../data', title='Select Pressure Profile')
             self.pres_fname.set(pres_filename)
@@ -168,63 +121,98 @@ class InputGUI:
             out_dir = filedialog.askdirectory(initialdir='../data/inf', title='Select .inf destination')
             self.out_dir.set(out_dir)
 
-        row += 10
-
-        ttk.Label(self.parent, text='Everything below is optional').grid(column=1, row=row, columnspan=4,
-                                                                         sticky='N', pady=(5, 5))
+        # out_fname entry
+        pad_y = (0, 2)
+        ttk.Label(self.parent, text='★Output inf Name ').grid(row=row, column=1,
+                                                              sticky='NE', pady=pad_y)
+        ttk.Entry(self.parent, textvariable=self.out_fname).grid(row=row, column=2, columnspan=2,
+                                                                 sticky='NWE', pady=pad_y)
         row += 1
+        # Optionally select directory for inf
+        pad_y = (0, 0)
+        self.out_dir.set('./data/inf')
+        ttk.Button(root, text='Select .inf destination', command=select_dir).grid(row=row, column=2,
+                                                                                  sticky='NWE', pady=pad_y)
+        Label(root, textvariable=self.out_dir).grid(row=row, column=3, sticky='NW', pady=pad_y)
+        row += 1
+
+        # time_max and time_step entries
+        ttk.Label(self.parent, text='★Simulation Time (ns) ').grid(row=row, column=1, sticky='NE')
+        ttk.Entry(self.parent, textvariable=self.time_max, width=7).grid(row=row, column=2, sticky='NW')
+        # Run hyades button
+        ttk.Button(self.parent, text='Run Hyades', command=simulate).grid(row=row, column=3, sticky='NWE')
+        # Checkbutton to save a copy of all the hyades data as an excel sheet. Default False.
+        ttk.Checkbutton(self.parent, text="Save Excel copy",
+                        variable=self.save_excel).grid(row=row, column=4, sticky="NW")
+        row += 1
+
+        # Post Processor time step
+        ttk.Label(self.parent, text='★Time Step (ns) ').grid(row=row, column=1, sticky='NE')
+        ttk.Entry(self.parent, textvariable=self.time_step, width=7).grid(row=row, column=2, sticky='NW')
+        # Write the .inf button
+        ttk.Button(self.parent, text='Write inf', command=self.write_out_props).grid(row=row, column=3, sticky='NWE')
+        row += 1
+
+        # Add the number of layers entry and button
+        pad_y = (0, 0)
+        ttk.Label(self.parent, text='★Number of Layers ').grid(column=1, row=row, sticky='NE', pady=pad_y)
+        ttk.Entry(self.parent, textvariable=self.n_layers, width=7).grid(column=2, row=row, sticky='NW', pady=pad_y)
+        ttk.Button(self.parent, text='Generate Layers',
+                   command=self.generate_layers).grid(column=3, row=row, sticky='NWE', pady=pad_y)
+        row += 10
 
         # Optional X-ray probe time
         pad_y = (0, 0)
-        Label(self.parent, text='X-Ray Start Time (ns)').grid(row=row, column=1, sticky='NE', pady=pad_y)
+        Label(self.parent, text='X-Ray Start Time (ns) ').grid(row=row, column=1, sticky='NE', pady=pad_y)
         ttk.Entry(self.parent, textvariable=self.xray_probe_start, width=7).grid(row=row, column=2, sticky='NW')
-        Label(self.parent, text='X-Ray Stop Time (ns)').grid(row=row, column=3, sticky='NE', pady=pad_y)
+        Label(self.parent, text='X-Ray Stop Time (ns) ').grid(row=row, column=3, sticky='NE', pady=pad_y)
         ttk.Entry(self.parent, textvariable=self.xray_probe_stop, width=7).grid(row=row, column=4, sticky='NW')
         row += 1
 
         # Select tv inputs from two column .txt files
         self.source_multiplier.set(1.0)
-        Label(root, text='Source Multiplier').grid(row=row, column=1, sticky='NW',)
+        Label(root, text='Source Multiplier ').grid(row=row, column=1, sticky='NE',)
         ttk.Entry(root, textvariable=self.source_multiplier, width=7).grid(row=row, column=2, sticky='NW')
-        Label(root, text='Source Multiplier applies to all inputs').grid(row=row, column=3, columnspan=2, sticky='NW')
+        Label(root, text='Source Multiplier scales all inputs').grid(row=row, column=3, columnspan=2, sticky='NW')
         row += 1
+
         self.temp_label_variable = StringVar()
         self.temp_label_variable.set('None selected')
-        Label(root, textvariable=self.temp_label_variable).grid(row=row, column=2, sticky='NW', pady=(5, 0))
-        ttk.Button(root, text='Pick Temperature', command=select_temp_file).grid(row=row, column=1,
-                                                                                 sticky='NW', pady=(5, 0))
+        Label(root, textvariable=self.temp_label_variable).grid(row=row, column=2, sticky='NW')
+        ttk.Button(root, text='Select Temperature', command=select_temp_file).grid(row=row, column=1,
+                                                                                   sticky='NWE', padx=(7, 0))
         row += 1
+
         self.pres_label_variable = StringVar()
         self.pres_label_variable.set('None selected')
-        Label(root, textvariable=self.pres_label_variable).grid(row=row, column=2, sticky='NW', pady=(0, 0))
-        ttk.Button(root, text='Pick Pressure', command=select_pres_file).grid(row=row, column=1,
-                                                                              sticky='NW', pady=(0, 0))
+        Label(root, textvariable=self.pres_label_variable).grid(row=row, column=2, sticky='NW')
+        ttk.Button(root, text='Select Pressure', command=select_pres_file).grid(row=row, column=1,
+                                                                                sticky='NWE', padx=(7, 0))
 
         self.is_optimize_pressure = IntVar()  # 0/1 for False/True
         ttk.Checkbutton(root, text='Set Pressure for Optimization',
                         variable=self.is_optimize_pressure).grid(column=3, columnspan=2, row=row, sticky='NW')
         row += 1
+
         self.laser_label_variable = StringVar()
         self.laser_label_variable.set('None selected')
-        Label(root, textvariable=self.laser_label_variable).grid(row=row, column=2, sticky='NW', pady=(0, 0))
-        ttk.Button(root, text='Pick Laser', command=select_laser_file).grid(row=row, column=1, sticky='NW', pady=(0, 0))
+        Label(root, textvariable=self.laser_label_variable).grid(row=row, column=2, sticky='NW')
+        ttk.Button(root, text='Select Laser', command=select_laser_file).grid(row=row, column=1,
+                                                                              sticky='NWE', padx=(7, 0))
         row += 1
-        # Additional Laser Parameters - these will be known from experiment
+        # Additional Laser Parameters - these are from experiment
         Label(root, text='Laser Wavelength (nm)').grid(row=row, column=1, sticky='NE',)
         ttk.Entry(root, textvariable=self.laser_wavelength, width=7).grid(row=row, column=2, sticky='NW')
         Label(root, text='Laser Spot Diameter (mm)').grid(row=row, column=3, sticky='NE')
         ttk.Entry(root, textvariable=self.laser_spot_diameter, width=7).grid(row=row, column=4, sticky='NW')
         row += 1
 
-        # Optionally select directory for inf
-        pad_y = (5, 5)
-        self.out_dir.set('./data/inf')
-        Label(root, textvariable=self.out_dir).grid(row=row, column=2, sticky='NW', pady=pad_y)
-        ttk.Button(root, text='Select .inf destination', command=select_dir).grid(row=row, column=1,
-                                                                                  sticky='NW', pady=pad_y)
-        row += 1
-
     def run_optimizer(self):
+        """DOES NOT WORK
+
+        Returns:
+
+        """
         print(self.exp_file_name.get(), self.time_of_interestE.get(), self.time_of_interestS.get())
         inf_path = 'data/inf/'
         files = [f for f in os.listdir(inf_path) if f.endswith('_setup.inf')]
@@ -243,7 +231,7 @@ class InputGUI:
         """Generate the layer options inside the GUI"""
         self.tabs = []  # reset layers so they do not keep appending
         notebook = ttk.Notebook(self.parent)  # reset the notebook
-        notebook.grid(column=1, row=8, columnspan=9, sticky='NWE')
+        notebook.grid(column=1, row=9, columnspan=9, sticky='NWE', padx=(7, 7))
         for i in range(self.n_layers.get()):
             frame = ttk.Frame(notebook)
             tab = LayerTab(frame)
@@ -346,11 +334,16 @@ class InputGUI:
                 out_dir = './'
         else:
             out_dir = self.out_dir.get()
+        # If there isn't a directory for pyhy/data/inf, then make one
+        if (out_dir == './data/inf') and (not os.path.exists(out_dir)):
+            os.mkdir(out_dir)
 
         writer.write_out(os.path.join(out_dir, self.out_fname.get()))
 
 
 if __name__ == "__main__":
     root = Tk()
+    style = ttk.Style(root)
+    style.theme_use('xpnative')  # xpnative, clam, winnative, vista
     GUI = InputGUI(root)
     root.mainloop()

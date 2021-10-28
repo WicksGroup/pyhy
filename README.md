@@ -42,8 +42,7 @@ Examples of inputs can be found under `pyhy/data/tvInputs`
 **You do not need Hyades installed for the `Write Inf` button to work.**
 * Click the button to run Hyades. **You must have Hyades installed locally for the `Run Hyades` button to work.**
 
-Adding or Removing a material:  
-* To add or remove a material as an option from the inf_GUI, edit the excel spreadsheet `pyhy/tools/inf_GUI_materials.xlsx`.
+To add or remove a material as an option from the inf_GUI, edit the excel spreadsheet `pyhy/tools/inf_GUI_materials.xlsx`.
 Follow the formatting (using comma separated entries for materials with multiple elements) used in existing columns.
 
 ### Viewing Data  

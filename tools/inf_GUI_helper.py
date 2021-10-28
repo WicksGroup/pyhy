@@ -42,9 +42,9 @@ class LayerTab:
     def quick_label(self, string):
         """Easily label a feature in the GUI. Short cut to save typing this line out."""
         if '*' in string:
-            Label(self.parent, text=string).grid(column=1, row=self.row, stick='NW')
+            Label(self.parent, text=string).grid(column=1, row=self.row, stick='NE')
         else:
-            ttk.Label(self.parent, text=string).grid(column=1, row=self.row, stick='NW')
+            ttk.Label(self.parent, text=string).grid(column=1, row=self.row, stick='NE')
         
     def add_props(self):
         """Adds all the GUI widgets with appropriate labels and styles
@@ -62,69 +62,70 @@ class LayerTab:
         # Drop down menu to select one of the materials from inf_GUI_materials.xlsx
         ttk.Combobox(self.parent, textvariable=self.material,
                      values=material_options).grid(column=2, row=self.row, sticky='NW')
-        self.quick_label('*Material')
+        self.quick_label('★Material ')
 
         # Option to set custom EOS.
         self.custom_eos.set('Default')
-        ttk.Label(self.parent, text='Custom EOS').grid(column=3, row=self.row, sticky='NSE')
+        ttk.Label(self.parent, text='Custom EOS ').grid(column=3, row=self.row, sticky='NE')
         ttk.Entry(self.parent, textvariable=self.custom_eos,
-                  width=7).grid(column=4, row=self.row, sticky='NW')
+                  width=10).grid(column=4, row=self.row, sticky='NW')
         
         self.row += 1
         
         # Input the material thickness in microns (float)
         ttk.Entry(self.parent, textvariable=self.thickness,
                   width=7).grid(column=2, row=self.row, sticky='NW')
-        self.quick_label('*Thickness (um)')
+        self.quick_label('★Thickness (µm) ')
         self.row += 1       
         
         # Input the number of mesh points (integer)
         ttk.Entry(self.parent, textvariable=self.n_mesh, width=7).grid(column=2, row=self.row, sticky='NW')
-        self.quick_label('*Num Mesh Points')
+        self.quick_label('★Num Mesh Points ')
         self.row += 1
         
         # Settings for the increment for each layer
         # While the increment in the Hyades .inf is a float, we use a string to allow for the fast / accurate defaults
         self.increment.set('Custom')
-        self.quick_label('*Increment')
-        ttk.Entry(self.parent, textvariable=self.increment, width=7).grid(column=4, row=self.row, sticky='NW')
+        self.quick_label('★Increment ')
+        ttk.Entry(self.parent, textvariable=self.increment, width=10).grid(column=4, row=self.row, sticky='NW')
         ttk.Radiobutton(self.parent, text='Fast', value='fast',
                         variable=self.increment).grid(row=self.row, column=2, sticky='NW')
         ttk.Radiobutton(self.parent, text='Accurate', value='accurate',
                         variable=self.increment).grid(row=self.row, column=3, sticky='NW')
         self.row += 1
 
-        ttk.Label(self.parent, text='Everything below is optional'
-                  ).grid(row=self.row, column=1, columnspan=4, pady=(5, 5))
-        self.row += 1
+        # ttk.Label(self.parent, text='Everything below is optional'
+        #           ).grid(row=self.row, column=1, columnspan=4, pady=(5, 5))
+        # self.row += 1
 
         # Optionally set the material of interest
-        ttk.Label(self.parent, text='Set one Material of Interest if optimizing').grid(column=1, columnspan=2,
-                                                                                       row=self.row, stick='NW')
         ttk.Checkbutton(self.parent, text='Set as Material of Interest',
-                        variable=self.is_material_of_interest).grid(column=3, columnspan=2, row=self.row, sticky='NW')
+                        variable=self.is_material_of_interest).grid(column=1, row=self.row, sticky='NW')
+        ttk.Label(self.parent, text='Set one Material of Interest if optimizing').grid(column=2, columnspan=2,
+                                                                                       row=self.row, stick='NW')
+
         self.row += 1
         
-        # Optionally set one material as shock material of interest # binary 0/1 for False/ True
-        ttk.Checkbutton(self.parent, text='Set as Shock MOI',
-                        variable=self.is_shock_material_of_interest).grid(column=3, columnspan=2,
-                                                                          row=self.row, sticky='NW')
-        ttk.Label(self.parent, text='Set one Shock MOI if optimizing shock velocity').grid(column=1, columnspan=2,
+        # Optionally set one material as shock material of interest using binary 0/1 for False/True
+        ttk.Checkbutton(self.parent, text='Set as Shock MoI',
+                        variable=self.is_shock_material_of_interest).grid(column=1, row=self.row, sticky='NW')
+        ttk.Label(self.parent, text='Set one Shock MoI if optimizing shock velocity').grid(column=2, columnspan=2,
                                                                                            row=self.row, sticky='NW')
         self.row += 1
         
         # Drop down menu for thermal model, float input for multiplier on thermal model
         # float input for constant thermal conductivity
         # float input for temperature threshold on constant thermal conductivity
-        self.thermal_model_multiplier.set(1.0)  # set the default value, the user can change this
+        self.thermal_model_multiplier.set(1.0)
         thermal_model_combobox = ttk.Combobox(self.parent, textvariable=self.thermal_model,
                                               values=('Default (Lee-More)', 'Purgatorio', 'Sesame'))
         thermal_model_combobox.current(0)
         thermal_model_combobox.grid(column=2, row=self.row, stick='NW')
-        self.quick_label('Thermal Model')
+        self.quick_label('Thermal Model ')
+        ttk.Label(self.parent, text='Thermal Multiplier ').grid(row=self.row, column=3, sticky='NE')
         ttk.Entry(self.parent, textvariable=self.thermal_model_multiplier,
-                  width=7).grid(column=3, row=self.row, sticky='NW')
-        ttk.Label(self.parent, text='Thermal Multiplier').grid(row=self.row, column=4, sticky='NW')
+                  width=7).grid(column=4, row=self.row, sticky='NW')
+
         self.row += 1
 
         self.thermal_conductivity.set("Default to Model")
@@ -132,7 +133,7 @@ class LayerTab:
         ttk.Label(self.parent, text="Thermal Conductivity (W/mK)").grid(row=self.row, column=1, sticky="NW")
         ttk.Entry(self.parent, textvariable=self.thermal_conductivity,
                   width=16).grid(row=self.row, column=2, sticky="NW")
-        ttk.Label(self.parent, text="Below Temps (K)").grid(row=self.row, column=3, sticky="NW")
+        ttk.Label(self.parent, text="Below Temps (K) ").grid(row=self.row, column=3, sticky="NE")
         ttk.Entry(self.parent, textvariable=self.thermal_conductivity_temp_cutoff,
                   width=16).grid(row=self.row, column=4, sticky="NW")
         self.row += 1
@@ -143,10 +144,11 @@ class LayerTab:
                                                     'Temp Depend 1', 'Temp Depend 2'])
         shear_model_combobox.current(0)
         shear_model_combobox.grid(column=2, row=self.row, sticky='NW')
-        self.quick_label('Shear Model')
+        self.quick_label('Shear Model ')
+        ttk.Label(self.parent, text='Shear Modulus (GPa) ').grid(column=3, row=self.row, sticky='NE')
         ttk.Entry(self.parent, textvariable=self.shear_modulus,
-                  width=7).grid(column=3, row=self.row, sticky='NW')
-        ttk.Label(self.parent, text='Shear Modulus (GPa)').grid(column=4, row=self.row, sticky='NW')
+                  width=7).grid(column=4, row=self.row, sticky='NW')
+
         self.row += 1
 
         # Drop down menu for yield model
@@ -157,10 +159,11 @@ class LayerTab:
                                                     'Preston-Tonks-Wallace'])
         yield_model_combobox.current(0)
         yield_model_combobox.grid(column=2, row=self.row, sticky='NW')
-        self.quick_label('Yield Model')
+        self.quick_label('Yield Model ')
+        ttk.Label(self.parent, text='Yield Modulus (GPa) ').grid(column=3, row=self.row, sticky='NE')
         ttk.Entry(self.parent, textvariable=self.yield_modulus,
-                  width=7).grid(column=3, row=self.row, sticky='NW')
-        ttk.Label(self.parent, text='Yield Modulus (GPa)').grid(column=4, row=self.row, sticky='NW')
+                  width=7).grid(column=4, row=self.row, sticky='NW')
+
         self.row += 1
         # Not adding in the Spall Model as Ray said he never had it working well in Hyades
 
@@ -324,7 +327,7 @@ class InfWriter:
                                  f'sourcem {sim_props["sourceMultiplier"]}']
             self.inf['LASER'] += sim_props['tvLaser']  # extends the list, not a numerical addition
 
-        self.inf['PARM'] = ['pparray r u acc rho te ti tr pres zbar sd1',
+        self.inf['PARM'] = ['pparray r u acc rho te ti tr pres zbar sd1 eelc eion',
                             'parm nstop 5000000',
                             'parm IRDTRN 0',
                             f'parm tstop {sim_props["time_max"] * 1e-9:.2e}',
