@@ -122,7 +122,11 @@ parser = argparse.ArgumentParser(prog='optimize_hyades.py',
 parser.add_argument('filename', type=str,
                     help='Name of the Hyades run to be optimized.')
 parser.add_argument('-r', '--run', action='store_true',
-                    help='Run the optimizer. Assumes experimental data, setup.inf, and .cfg are set up.')
+                    help='Run the optimizer. Assumes experimental data, filename_setup.inf, '
+                         'and filename.cfg are set up in the folder pyhy/data/filename.')
+parser.add_argument('-b', '--best', action='store_true',
+                    help='Plot the best velocity from a completed optimization, '
+                         'experimental velocity, and pressure drive all on a single figure.')
 parser.add_argument('-g', '--histogram', action='store_true',
                     help='Plot a pressure histogram of the best run from a completed optimization.')
 parser.add_argument('-v', '--velocity', action='store_true',
@@ -132,6 +136,9 @@ args = parser.parse_args()
 
 if args.run:
     sol = run_optimizer(args.filename)
+
+if args.best:
+    fig, ax = optimizer_graphics.compare_velocities(args.filename)
 
 if args.histogram:
     fig, ax = optimizer_graphics.best_histogram(args.filename)

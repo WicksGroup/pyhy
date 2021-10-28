@@ -12,6 +12,7 @@ First Published: Month , Year
 Last Updated: Month, Year
 
 ---
+
 # Goals
 The primary goal of this repository is lower the barrier to entry of the Hyades hydrocode by 
 automating the tedious parts of the most common uses.
@@ -24,7 +25,7 @@ as callable classes and functions that you can use in your own Python scripts. `
 handle all the data output from Hyades, and `pyhy/graphics/static_graphics.py` provides many examples of how the 
 `HyadesOutput` class can be used to plot the data in many different ways.
 ___
-#GUIs for:
+# GUIs for:
 
 ### Creating Inputs
 `inf_GUI.py` is a GUI to help create the input files for Hyades.
@@ -32,11 +33,11 @@ Gives user easy control over many, but not all, options for Hyades input.
  
 Use:
 * Launch the GUI from terminal with the command `python inf_GUI.py`
-* Set the simulation parameters, such as length of the simulation and time step in the output
+* Set the simulation parameters, such as length of the simulation and time step in the output.
 * Input the number of layers and click `generate layers`.
 This will bring up more settings to be specified for each layer.  
 * Set the Pressure, Temperature, and/or Laser drives by specifying the two-column text file to be used.
-Examples of inputs can be found under `data/tvInputs`
+Examples of inputs can be found under `pyhy/data/tvInputs`
 * Click the button to write the file, which will be created in `pyhy/data/inf` by default.
 **You do not need Hyades installed for the `Write Inf` button to work.**
 * Click the button to run Hyades. **You must have Hyades installed locally for the `Run Hyades` button to work.**
@@ -46,14 +47,14 @@ Adding or Removing a material:
 Follow the formatting (using comma separated entries for materials with multiple elements) used in existing columns.
 
 ### Viewing Data  
-`view_hyades_GUI.py` is a GUI to explore the output of a Hyades simulation. Launch it with 'python view_hyades_GUI.py'
+`view_hyades_GUI.py` is a GUI to explore the output of a Hyades simulation. Launch it with `python view_hyades_GUI.py`
 and use the onscreen buttons to load a file and view different variables.
-There are options for viewing lineouts, running simple animations and saving data.
+There are options for viewing lineouts, creating simple animations, and saving data. See the section on Plotting Hyades under Command Line Interfaces for more graphics.
 The options to save static figures and export a .csv of the data on screen are built into the GUI.
 Saving animations requires ffmpeg installed.
 
 ---
-#Command Line Interfaces for:
+# Command Line Interfaces for:
 
 ### Running Hyades
 `run_hyades.py` is a command line interface to run multiple Hyades simulations.  
@@ -81,7 +82,7 @@ the following would need to be set up inside a directory `pyhy/data/demo`:
 1. `pyhy/data/demo/demo_setup.inf` **The filename format `demo_setup.inf` must be used.** 
 This a Hyades .inf file with the phrase `TV_PRES` inserted where the tv pressure values would go. 
 This can be done for you by selecting `Set Pressure for Optimization` while using `inf_GUI.py`. 
-Additionally inside `inf_GUI.py` you must set a Material of Interest, 
+Additionally, inside `inf_GUI.py` you must set a Material of Interest, 
 which leaves a comment in the .inf file indicating which layer should be used for velocity calculations.
 2. `pyhy/data/experimental/exerimental_demo.xlsx` an excel file containing the experimental data. 
 **Any filename can be used, as long as it is specified in the .cfg**. 

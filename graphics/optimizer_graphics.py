@@ -4,7 +4,6 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from tools.hyades_reader import HyadesOutput
-from graphics.static_graphics import xt_diagram
 plt.style.use('ggplot')
 
 
@@ -12,45 +11,53 @@ def compare_velocities(run_name, show_drive=True):
     """A static graph comparing the experimental and optimized velocities
 
     Args:
-        run_name:
-        show_drive:
+        run_name (string): Name of the optimization to be plotted
+        show_drive (bool, optional): Toggle to show the pressure input
 
     Returns:
+        fig (matplotlib figure), ax (matplotlib axis)
 
     """
-    json_name = f'../data/{run_name}/{run_name}_optimization.json'
+    # Load simulated and experimental data
+    json_name = f'./data/{run_name}/{run_name}_optimization.json'
     with open(json_name) as f:
-        jd = json.load(f)  # jd stands for json_data
-
-    experimental_x = jd['experimental']['time']
-    experimental_y = jd['experimental']['velocity']
-
-    best_run = run_name + '_' + jd['best optimization']['name']
-    hyades_name = os.path.join('../data', run_name, best_run)
-    hyades = HyadesOutput(hyades_name, 'U')
-    i = hyades.layers[hyades.moi]['Mesh Stop'] - 1
-    print('MOI INDEX', i, hyades.x[i])
+        jd = json.load(f)
 
     fig, ax = plt.subplots()
+    # Plot experimental data
+    experimental_x = jd['experimental']['time']
+    experimental_y = jd['experimental']['velocity']
     experimental_label = os.path.basename(jd['experimental']['file'])
     ax.plot(experimental_x, experimental_y, label=experimental_label, color='orange')
-    simulated_x = hyades.time - jd['best optimization']['delay']
-    simulated_y = hyades.output[:, i]
-    ax.plot(simulated_x, simulated_y, label=best_run, color='blue')
+    # Plot best iteration from optimized data
+    simulated_x = np.array(jd['best']['time velocity']) - jd['parameters']['delay']
+    simulated_y = jd['best']['velocity']
+    ax.plot(simulated_x, simulated_y, label=f'{run_name}_{jd["best"]["number"]}', color='blue')
 
+    # Load Hyades data for xray_probe time
+    hyades_name = f'{run_name}_{jd["best"]["number"]}'
+    hyades = HyadesOutput(os.path.join('./data', run_name, hyades_name), 'U')
+    if hyades.xray_probe:
+        old_ylim = ax.get_ylim()
+        x = (hyades.xray_probe[0], hyades.xray_probe[0], hyades.xray_probe[1], hyades.xray_probe[1])
+        y = (ax.get_ylim()[0], ax.get_ylim()[1], ax.get_ylim()[1], ax.get_ylim()[0])
+        ax.fill(x, y, color='tab:gray', alpha=0.4, label='X-Ray Probe Time')
+        ax.set_ylim(old_ylim)
+
+    # Figure formatting
     ax.set_title('Result of optimization ' + run_name)
     ax.set(xlabel='Time (ns)', ylabel='Particle Velocity (km/s)')
     ax.legend()
 
-    if show_drive:
-        x = np.array(jd['best optimization']['pres_time']) - jd['best optimization']['delay']
-        y = jd['best optimization']['pres']
+    if show_drive:  # Optionally plot the pressure drive on the same figure
+        x = np.array(jd['best']['time pressure']) - jd['parameters']['delay']
+        y = jd['best']['pressure']
         ax2 = ax.twinx()
         ax2.plot(x, y, linestyle='--', label='Pressure Drive', color='black')
-
         ax2.set_ylabel('Pressure (GPa)')
         ax2.legend(loc='lower right')
         ax2.grid(b=False, axis='y', which='both')
+        return fig, (ax, ax2)
 
     return fig, ax
 
@@ -68,7 +75,7 @@ def iteration_velocities(run_name):
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
-    json_name = f'../data/{run_name}/{run_name}_optimization.json'
+    json_name = f'./data/{run_name}/{run_name}_optimization.json'
     with open(json_name) as f:
         jd = json.load(f)  # load json data from optimization
 
@@ -92,7 +99,7 @@ def iteration_velocities(run_name):
          jd['parameters']['time of interest'][1], jd['parameters']['time of interest'][1])
     y = (ax.get_ylim()[0], ax.get_ylim()[1],
          ax.get_ylim()[1], ax.get_ylim()[0])
-    ax.fill(x, y, color='tab:gray', alpha=0.4, zorder=1)
+    ax.fill(x, y, color='tab:gray', alpha=0.4, zorder=1, label='Residual Window')
     ax.set_ylim(old_ylim)
     # Formatting
     iteration = 0
@@ -158,22 +165,21 @@ def best_histogram(run_name):
     """Plots a pressure histogram of the best run from an optimization
 
     Args:
-        run_name: Name of the optimization run to be plotted
+        run_name (string): Name of the optimization run to be plotted
 
     Returns:
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
     # Load optimization and Hyades data
-    json_name = f'../data/{run_name}/{run_name}_optimization.json'
+    json_name = f'./data/{run_name}/{run_name}_optimization.json'
     with open(json_name) as f:
         jd = json.load(f)
     best_run = run_name + '_' + jd['best']['number']
-    hyades_name = os.path.join('../data', run_name, best_run)
+    hyades_name = os.path.join('./data', run_name, best_run)
     hyades = HyadesOutput(hyades_name, 'Pres')
     x_start = hyades.layers[hyades.moi]['Mesh Start']
     x_stop = hyades.layers[hyades.moi]['Mesh Stop'] - 1
-    print('xray probe time', hyades.xray_probe)
     if hyades.xray_probe:
         t_start = np.argmin(abs(hyades.time - hyades.xray_probe[0]))
         t_stop = np.argmin(abs(hyades.time - hyades.xray_probe[1]))
@@ -196,7 +202,7 @@ def best_histogram(run_name):
     ax.fill(x, y,
             label='Middle 50%', color='tab:gray', alpha=0.4)
     # Format title and labels
-    ax.set_title(f'Pressure Distribution of {hyades.layers[hyades.moi]["Name"]} in {run_name}')
+    ax.set_title(f'Pressure Distribution of {hyades.layers[hyades.moi]["Name"]} in {run_name}_{jd["best"]["number"]}')
     ax.set(xlabel='Pressure (GPa)', ylabel='Counts')
     ax.legend(loc='upper left')
     # Add a footnote below and to the right side of the chart
@@ -205,9 +211,7 @@ def best_histogram(run_name):
                     f' during X-Ray probe time {hyades.xray_probe[0]} - {hyades.xray_probe[1]} ns'
     else:
         xray_text = f'Pressures shown are in {hyades.layers[hyades.moi]["Name"]} over all times'
-
-    ax.annotate(f'{xray_text}'
-                f'\nPressures shown are from optimization iteration {jd["best"]["number"]} of {run_name}',
+    ax.annotate(xray_text,
                 xy=(1.0, -0.2),
                 xycoords='axes fraction',
                 ha='right',
@@ -216,9 +220,3 @@ def best_histogram(run_name):
     fig.tight_layout()
 
     return fig, ax
-
-
-if __name__ == '__main__':
-    run_name = 's76624'
-    fig, ax = best_histogram(run_name)
-    plt.show()
