@@ -77,20 +77,23 @@ or show the lineout of any variable over time. See `python animate_hyades.py --h
 
 ### Optimizing Hyades
 `optimize_hyades.py` is a command line script to fit a Hyades simulated velocity to a VISAR measured velocity.
-To run the optimizer, three things must be set up before hand. To run an optimization named 'demo', 
-the following would need to be set up inside a directory `pyhy/data/demo`:
-1. `pyhy/data/demo/demo_setup.inf` **The filename format `demo_setup.inf` must be used.** 
+To run the optimizer, three things must be set up before hand. This repository includes an example to run an optimization
+for the experimental data `pyhy/data/experimental/FeSi_s77742.xlsx`. 
+This experimental data is from [Crystal structure and equation of state of Fe-Si alloys 
+at super-Earth core conditions (Wicks et al., 2018)](https://www.osti.gov/pages/biblio/1634289). 
+To run this optimization, the following would need to be set up inside a directory `pyhy/data/FeSi_s77742`:
+1. `pyhy/data/FeSi_s77742/FeSi_s77742_setup.inf` **The filename format `FeSi_s77742_setup.inf` must be used.** 
 This a Hyades .inf file with the phrase `TV_PRES` inserted where the tv pressure values would go. 
 This can be done for you by selecting `Set Pressure for Optimization` while using `inf_GUI.py`. 
 Additionally, inside `inf_GUI.py` you must set a Material of Interest, 
 which leaves a comment in the .inf file indicating which layer should be used for velocity calculations.
-2. `pyhy/data/experimental/exerimental_demo.xlsx` an excel file containing the experimental data. 
+2. `pyhy/data/experimental/FeSi_s77742.xlsx` an excel file containing the experimental data. 
 **Any filename can be used, as long as it is specified in the .cfg**. 
-See an existing experimental data file for formatting.
-3. `pyhy/data/demo/demo.cfg` a short text file with parameters for the optimization. 
-**The filename format `demo.cfg` must be used.** See `pyhy/optimizer/example.cfg` for formatting and further details.
+See `pyhy/data/experimental/FeSi_s77742.xlsx` for formatting.
+3. `pyhy/data/FeSi_s77742/FeSi_s77742.cfg` a short text file with parameters for the optimization. 
+**The filename format `FeSi_s77742.cfg` must be used.** See `pyhy/optimizer/example.cfg` for formatting and further details.
 
-Once these three things are set up, the optimization can be run with `python optimize_hyades.py demo --run`.
+Once these three things are set up, the optimization can be run with `python optimize_hyades.py FeSi_s77742 --run`.
 The iteration number, residual, and pressure drive will be printed in the terminal.
 The optimization can be stopped at any time by pressing `control + C` or `control + Z`.
 Once completed, the optimization output can be plotted and compared to experiment.
