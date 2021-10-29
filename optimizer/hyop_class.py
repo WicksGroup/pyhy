@@ -14,10 +14,6 @@ from tools import hyades_runner
 class HyadesOptimizer:
     """Class used to fit a Hyades simulated velocity to experimentally measured VISAR
 
-    Todo:
-        * The shock velocity class needs to know the time in and out of materials
-        * set up the logging
-
     Massive class that will be fed into the SciPy optimization function to fit hyades data to experiment.
     This version does not match the temperature profile.
 

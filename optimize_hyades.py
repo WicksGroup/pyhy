@@ -1,7 +1,6 @@
 """The newest version of how to control the optimizer with a configuration file and configparser
 
 Todo:
-    - add an argparser to run from command line
     - implement shock velocity
     - implement restart from. I don't think this should make a new folder
 """

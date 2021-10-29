@@ -21,8 +21,6 @@ Examples:
 
     $ python plot_hyades.py diamond_decay -lo Pres 1 2 3 5 9
 
-Todo:
-    * Add the twin axis plot type
 """
 import os
 import argparse

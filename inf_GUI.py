@@ -11,6 +11,7 @@ Example:
 import os
 import pathlib
 import matplotlib
+import numpy as np
 import pandas as pd
 from tkinter import ttk
 from tkinter import filedialog
@@ -18,10 +19,6 @@ from tkinter import messagebox
 from tkinter import *
 from tools.inf_GUI_helper import Layer, InfWriter, LayerTab
 from tools import hyades_runner
-
-
-import numpy as np
-os.chdir(pathlib.Path(__file__).parent.absolute())
 matplotlib.use("TkAgg")
 
 
@@ -68,12 +65,12 @@ class InputGUI:
         self.save_excel = IntVar()
         self.save_excel.set(0)
 
-        # set up the window and root of all the widgets
+        # Set up the window and root of all the widgets
         root.title('PyHy Input File GUI')
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
 
-        # parent most widgets will use
+        # Parent most widgets will use
         self.parent = ttk.Frame(root, padding=' 3 3 12 12').grid(column=0, row=0, sticky='NW')
 
         row = 1
@@ -188,7 +185,6 @@ class InputGUI:
         Label(root, textvariable=self.pres_label_variable).grid(row=row, column=2, sticky='NW')
         ttk.Button(root, text='Select Pressure', command=select_pres_file).grid(row=row, column=1,
                                                                                 sticky='NWE', padx=(7, 0))
-
         self.is_optimize_pressure = IntVar()  # 0/1 for False/True
         ttk.Checkbutton(root, text='Set Pressure for Optimization',
                         variable=self.is_optimize_pressure).grid(column=3, columnspan=2, row=row, sticky='NW')

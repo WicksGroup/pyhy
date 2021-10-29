@@ -1,11 +1,12 @@
 """tkinter GUI to view the data output from Hyades simulations.
 
-Run with $python view_hyades_GUI.py
+Run with $ python view_hyades_GUI.py
 
 """
 import os
 import tkinter
 from tkinter import *
+from tkinter import ttk
 from tkinter import filedialog, messagebox
 import numpy as np
 import pandas as pd
@@ -16,7 +17,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tools.hyades_reader import HyadesOutput, ShockVelocity
 matplotlib.use("TkAgg")
-plt.style.use('seaborn')
+plt.style.use('ggplot')
 
 
 class App:
@@ -35,78 +36,62 @@ class App:
     """
     def __init__(self, master):
         """Constructor method that creates and formats the entire GUI"""
-        root.title('Hyades Data Viewer GUI')
+        root.title('PyHy Data Viewer GUI')
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
 
         row = 1
-        # Big title at the top
-        my_label = Label(root, text='Hyades Data Viewer')
-        my_label.grid(row=row, column=1, columnspan=3, sticky='NEW', padx=(100, 0), pady=(10, 0))
-        my_label.config(font=('Arial', 16))
-        row += 1
+        left_pad = 130
         
         # Select the data from a folder
         self.select_fname = StringVar()
         self.select_fname.set('No file selected')
-        Button(root, text='Select file', command=self.select_dir).grid(row=row, column=1, sticky='NW',
-                                                                       padx=(100, 0), pady=(10, 0))
+        Button(root, text='Select file', command=self.select_dir).grid(row=row, column=1, sticky='NWE',
+                                                                       padx=(left_pad, 0), pady=(10, 0))
         self.file_label = StringVar()
         self.file_label.set('Use button to select a folder to view')
         Label(root, textvariable=self.file_label).grid(row=row, column=2, sticky='NW', pady=(10, 0))
         row += 1
-        
-        Label(root, text='_'*100).grid(row=row, column=1, columnspan=3, sticky='NEW', padx=(100, 0))
+
+        # Dropdown menu to select variables for the X and Y axis
+        self.var = StringVar()
+        self.var.set('Pressure')
+        Label(root, text='Select Y-axis variable').grid(row=row, column=1,
+                                                        sticky='NW', padx=(left_pad, 0), pady=(10, 0))
+        self.x_mode = StringVar()
+        self.x_mode.set('Distance')
+
+        Label(root, text='Select X-axis Variable').grid(row=row, column=2, sticky='NW', pady=(10, 0), padx=(0, 0))
         row += 1
-        
+
+        y_var_options = ['Pressure', 'Density', 'Particle Velocity', 'Shock Velocity',
+                         'Temperature', 'Radiation Temperature', 'Ion Temperature']
+        y_var_cb = ttk.Combobox(root, textvariable=self.var, values=y_var_options, state="readonly")
+        y_var_cb.grid(row=row, column=1, sticky='NW', padx=(left_pad, 0))
+        y_var_cb.bind('<<ComboboxSelected>>', self.update_variable)
+
+        x_mode_options = ['Distance', 'Time']
+        x_var_cb = ttk.Combobox(root, textvariable=self.x_mode, values=x_mode_options, state='readonly')
+        x_var_cb.grid(row=row, column=2, sticky='NW')
+        x_var_cb.bind('<<ComboboxSelected>>', self.update_x_mode)
+        row += 1
+
         # Animation Controls
         self.ix = IntVar()
-        Label(root, text='Click Play to start the animation').grid(row=row, column=1, sticky='NW', padx=(100, 5))
-        Label(root, text='[space bar] - pause/play').grid(row=row, column=2, sticky='NW')
-        row += 1
         Button(root, text='Play Animation', command=self.play_animation).grid(row=row, column=1,
-                                                                              sticky='NW', padx=(100, 5))
-        Label(root, text='[L/R arrow keys] - move one frame').grid(row=row, column=2, sticky='NW')
+                                                                              sticky='NWE',
+                                                                              padx=(left_pad, 5), pady=(10, 0))
+        Label(root, text='[space bar] - pause/play\n[L/R arrow keys] - move one frame').grid(row=row, column=2,
+                                                                                             sticky='NW', pady=(10, 0))
         row += 1
         self.ix_scale = Scale(master, from_=0, to=142,  # len(self.hyades.time)-1,
                               var=self.ix, command=self.update_index,
                               length=250, orient='horizontal')
-        self.ix_scale.grid(row=row, column=1, sticky='NWE', columnspan=3, padx=(100, 10))
+        self.ix_scale.grid(row=row, column=1, sticky='NWE', columnspan=2, padx=(left_pad, 10))
         row += 1
-        Label(root, text='User slider to move through sample').grid(row=row, column=1, sticky='NW', padx=(100, 5))
-        row += 1
-        
-        padx = (100, 5)
-        
-        Label(root, text='_'*100).grid(row=row, column=1, columnspan=3, sticky='NEW', padx=padx)
-        row += 1
-        
-        # Radio buttons to select variables for the X and Y axis
-        self.var = StringVar()
-        self.var.set('Pressure')
-        Label(root, text='Select Y-axis variable').grid(row=row, column=1,
-                                                        columnspan=2, sticky='NEW', padx=(100, 0), pady=(10, 0))
-        for i, op in enumerate(['Pressure', 'Density', 'Particle Velocity', 'Shock Velocity']):
-            Radiobutton(root, text=op,
-                        value=op, variable=self.var,
-                        command=self.update_variable).grid(row=row + i + 1, column=1, sticky='NW', padx=(100, 0))
-        
-        for i, op in enumerate(['Temperature', 'Radiation Temperature', 'Ion Temperature']):
-            Radiobutton(root, text=op,
-                        value=op, variable=self.var,
-                        command=self.update_variable).grid(row=row + i + 1, column=2, sticky='NW')
-        
-        self.x_mode = StringVar()
-        self.x_mode.set('Distance')
-        x_mode_options = ['Distance', 'Time']
-        Label(root, text='Select X-axis Variable').grid(row=row, column=3, sticky='NW', pady=(10, 0))
-        for i, mode in enumerate(x_mode_options):
-            Radiobutton(root, text=mode,
-                        value=mode, variable=self.x_mode,
-                        command=self.update_x_mode).grid(row=row + i + 1, column=3, sticky='NW')
-            
+
         # Initial plotting and labels
-        self.fig = Figure()
+        self.fig = Figure(figsize=(6, 4))
         self.ax = self.fig.add_subplot(111)
         self.df = pd.read_csv('graphics/DatasaurusDozen.csv')
         self.datasaur = self.ax.scatter([], [])
@@ -114,7 +99,6 @@ class App:
                     xlabel='X Label', ylabel='Y Label',
                     xlim=(0, 100), ylim=(0, 100))
 
-#
         # Initialize some variables to hold text but do not display them yet
         label_text_time = self.ax.text(self.ax.get_xlim()[1]*0.95, self.ax.get_ylim()[1]*0.9, 'Material', ha='right')
         self.label_text_time = label_text_time
@@ -135,7 +119,6 @@ class App:
         
         # creating sub menus in the root menu
         file_menu = tkinter.Menu(root_menu)  # it initializes a new su menu in the root menu
-        # file_menu.add_command(label = "New file.....", command = function)
         root_menu.add_cascade(label='File', menu=file_menu)  # it creates the name of the sub menu
         file_menu.add_command(label='Open file', command=self.select_dir)
         file_menu.add_separator()  # it adds a horizontal line to separate options
@@ -374,7 +357,7 @@ class App:
             old_x = x
         self.canvas.draw()
 
-    def update_x_mode(self):
+    def update_x_mode(self, *args):
         """Update plot, x limits, text._x"""
         self.ix_scale.set(0)
         ix = self.ix_scale.get()
@@ -408,7 +391,7 @@ class App:
             self.label_text_time._y = self.ax.get_ylim()[1] * 0.9
         self.canvas.draw()
 
-    def update_variable(self):
+    def update_variable(self, *args):
         """Update the variable when a new Pres, Rho, Temp, Up is selected"""
         if 'line' in vars(self):
             self.line.remove()
@@ -459,23 +442,6 @@ class App:
                 L.remove()
                 T.remove()  # remove the labels while we still have access to them
             self.label_lines, self.label_text = [], []
-            # add the material labels - calculated in Shock Velocity based on changes in density
-            # y = 0.85
-            # old_x = -100
-            # for mat in shock.layers:
-            #     label_line = self.ax.axvline(shock.layers[mat]['timeIn'],
-            #                                  color='k', linestyle='dashed', linewidth=1, alpha=0.5)
-            #
-            #     x = (shock.layers[mat]['timeIn'] + shock.layers[mat]['timeOut']) / 2
-            #     # if the new label would be placed closer than 10% of the window width, lower it
-            #     if (x - old_x) < ((self.ax.get_xlim()[1] - self.ax.get_xlim()[0]) * 0.1):
-            #         y -= 0.05
-            #     else:
-            #         y = 0.85
-            #     label_text = self.ax.text(x, self.ax.get_ylim()[1] * y, mat, ha='center')
-            #     self.label_lines.append(label_line)
-            #     self.label_text.append(label_text)
-            #     old_x = x
         else:
             # turn the slider back on
             self.ix_scale.config(state="normal")
@@ -555,5 +521,7 @@ class App:
 
 if __name__ == '__main__':
     root = tkinter.Tk()
+    style = ttk.Style(root)
+    style.theme_use('xpnative')  # xpnative, clam, winnative, vista
     app = App(root)
     root.mainloop()
