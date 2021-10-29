@@ -54,9 +54,6 @@ class HyadesOptimizer:
         pattern = '\[\w+!?\$?\]'
         self.materials = re.findall(pattern, contents)
 
-    # def __initTabs__(self, initial_tabs=None):
-    #     self.plot1 = DynamicUpdate("t-up Optim vs Real")
-
     def read_experimental_data(self, exp_file_name, time_of_interest=None):
         """Load the experimental data into the class
 
@@ -97,7 +94,6 @@ class HyadesOptimizer:
         """Write an .inf file based on the current class parameters
 
         Uses PCHIP interpolation to improve resolution on the Pressure drive
-
         """
         # Interpolate the Pressure drive onto a high resolution time
         pchip = interpolate.PchipInterpolator(self.pres_time, self.pres)
@@ -179,11 +175,6 @@ class HyadesOptimizer:
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
-
-        # self.myTabs.update_velocity_output(self.exp_time, self.exp_data,
-        #                                    plot_time, plot_velocity,
-        #                                    hyades_path, 0.0,
-        #                                    use_shock_velocity=self.use_shock_velocity)
 
     def save_json(self):
         """Save the input pressure, timing, and residual to a JSON file"""
@@ -279,10 +270,6 @@ class HyadesOptimizer:
         pretty_pressure = ', '.join([f'{p:.2f}' for p in self.pres])
         print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f} Pressure: {pretty_pressure}')
 
-        # self.myTabs.update_tab_info(str(self.iter_count).zfill(3), self.residual, self.pres)
-        # self.myTabs.update_pressure_input(self.pres_time, self.pres, self.xs, self.ys)
-        # self.myTabs.update_residual(self.residual)
-                         
         self.iter_count += 1
         if (self.residual < 30) and (len(self.pres_time) <= 10):
             print('RESIDUAL < 30 and RESOLUTION <= 10')
