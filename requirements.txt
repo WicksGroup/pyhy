@@ -1,2 +1,5 @@
-dash>=1.2.0
-dash-daq>=0.1.7
+numpy~=1.18.1
+pandas~=1.2.4
+matplotlib~=3.2.2
+scipy~=1.5.0
+plotly~=3.6.1

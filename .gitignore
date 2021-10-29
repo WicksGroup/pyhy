@@ -1,0 +1,8 @@
+./data/*
+!./data/inf
+!./data/tvInputs
+./data/tvInputs/FeSi*
+
+./data/experimental/
+!./data/experimental
+
