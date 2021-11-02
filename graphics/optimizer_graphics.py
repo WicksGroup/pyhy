@@ -28,11 +28,11 @@ def compare_velocities(run_name, show_drive=True):
     experimental_x = jd['experimental']['time']
     experimental_y = jd['experimental']['velocity']
     experimental_label = os.path.basename(jd['experimental']['file'])
-    ax.plot(experimental_x, experimental_y, label=experimental_label, color='orange')
+    ax.plot(experimental_x, experimental_y, label=experimental_label, color='tab:orange')
     # Plot best iteration from optimized data
     simulated_x = np.array(jd['best']['time velocity']) - jd['parameters']['delay']
     simulated_y = jd['best']['velocity']
-    ax.plot(simulated_x, simulated_y, label=f'{run_name}_{jd["best"]["number"]}', color='blue')
+    ax.plot(simulated_x, simulated_y, label=f'{run_name}_{jd["best"]["number"]}', color='tab:blue')
 
     # Load Hyades data for xray_probe time
     hyades_name = f'{run_name}_{jd["best"]["number"]}'

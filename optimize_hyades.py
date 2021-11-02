@@ -75,7 +75,7 @@ def run_optimizer(run_name):
         hyop.pres = ablation_pressure
 
     # Run a loop over each of the resolutions
-    for resolution in (len(hyop.pres), 2*len(hyop.pres), 3*len(hyop.pres)):
+    for resolution in (len(hyop.pres), 2*len(hyop.pres), 4*len(hyop.pres)):
         print('Current resolution: ', resolution)
         f = interpolate.interp1d(hyop.pres_time, hyop.pres)
         new_time = np.linspace(hyop.pres_time.min(), hyop.pres_time.max(), num=resolution)
