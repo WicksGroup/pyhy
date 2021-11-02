@@ -40,6 +40,10 @@ def run_optimizer(run_name):
 
     config_filename = os.path.join(run_path, f'{run_name}.cfg')
     config = configparser.ConfigParser()
+    if not os.path.exists(config_filename):
+        error_string = f'Could not find {run_name}.cfg in {run_path}.' \
+                       f'\nContents of {run_path} are :{os.listdir(run_path)}'
+        raise Exception(error_string)
     config.read(config_filename)
 
     # Get Setup config and initialize HyadesOptimizer
