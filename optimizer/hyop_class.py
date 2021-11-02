@@ -272,11 +272,11 @@ class HyadesOptimizer:
         print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f} Pressure: {pretty_pressure}')
 
         self.iter_count += 1
-        if (self.residual < 30) and (len(self.pres_time) <= 10):
-            print('RESIDUAL < 30 and RESOLUTION <= 10')
+        if (self.residual < 50) and (len(self.pres_time) <= 10):
+            print('RESIDUAL < 50 and RESOLUTION <= 10')
             raise ResolutionError('CONDITIONS MET - INCREASING RESOLUTION')
         elif (self.residual < 15) and (len(self.pres_time) <= 20):
-            print('RESIDUAL < 15 and RESOLUTION <= 20')
+            print('RESIDUAL < 20 and RESOLUTION <= 20')
             raise ResolutionError('CONDITIONS MET - INCREASING RESOLUTION')
 
         return self.residual
