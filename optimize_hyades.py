@@ -53,6 +53,8 @@ def run_optimizer(run_name):
                                            fallback=False)
     time = [float(i) for i in config.get('Setup', 'time').split(',')]
     pressure = [float(i) for i in config.get('Setup', 'pressure').split(',')]
+    if len(time) == 3 and len(pressure) != 3:  # If time is in the format: start, stop, num
+        time = [i for i in np.linspace(time[0], time[1], num=int(time[2]), endpoint=True)]
     hyop = HyadesOptimizer(run_name, time, pressure,
                            delay=delay, use_shock_velocity=use_shock_velocity)
     # Get experimental config and load experimental data into hyop instance
