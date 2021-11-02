@@ -38,8 +38,8 @@ class HyadesOptimizer:
         self.use_shock_velocity = use_shock_velocity
         
         self.exp_file = ''
-        self.path = f'../data/{self.run_name}/'
-        self.inf_path = os.path.abspath('../data/inf/')
+        self.path = f'./data/{self.run_name}/'
+        self.inf_path = os.path.abspath('./data/inf/')
         
         self.iter_count = 0
         self.material_of_interest = None
@@ -68,7 +68,7 @@ class HyadesOptimizer:
 
         if not exp_file_name.endswith('.xlsx'):
             exp_file_name += '.xlsx'
-        self.exp_file = f'../data/experimental/{exp_file_name}'
+        self.exp_file = f'./data/experimental/{exp_file_name}'
         df = pd.read_excel(self.exp_file, sheet_name=0)
         df.loc[df[df.columns[1]] < 0.1, df.columns[1]] = 0  # set velocities below 0.1 to 0
 
@@ -126,11 +126,10 @@ class HyadesOptimizer:
         hyades_runner.batch_run_hyades(self.inf_path, self.path, quiet=True)
 
         # Setup a logging file
-        filename = 'hyop.log'
+        filename = './optimizer/hyop.log'
         log_format = '%(asctime)s %(levelname)s:%(message)s'
         datefmt = '%Y-%m-%d %H:%M:%S'
         logging.basicConfig(filename=filename, format=log_format, datefmt=datefmt, level=logging.DEBUG)
-        assert filename in os.listdir(os.getcwd()), f'{filename!r} not in current directory {os.getcwd()!r}'
         log = f'Run Name: {self.run_name} Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual}'
         logging.info(log)
 
