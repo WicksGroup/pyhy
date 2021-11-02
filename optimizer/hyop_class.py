@@ -80,7 +80,7 @@ class HyadesOptimizer:
             time_of_interest = (np.ceil(min(velocity_time)),
                                 np.floor(max(velocity_time)))
 
-        self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], less =50)
+        self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], num=50)
         self.exp_data = f_velocity(self.exp_time)
 
     def update_variables(self, var_vec):
