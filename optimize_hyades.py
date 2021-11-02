@@ -36,7 +36,7 @@ def run_optimizer(run_name):
         sol (scipy.optimize.OptimizeResult): The solution to the optimization
 
     """
-    run_path = f'../data/{run_name}'
+    run_path = f'./data/{run_name}'
 
     config_filename = os.path.join(run_path, f'{run_name}.cfg')
     config = configparser.ConfigParser()

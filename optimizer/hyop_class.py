@@ -80,7 +80,7 @@ class HyadesOptimizer:
             time_of_interest = (np.ceil(min(velocity_time)),
                                 np.floor(max(velocity_time)))
 
-        self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], num=50)
+        self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], less =50)
         self.exp_data = f_velocity(self.exp_time)
 
     def update_variables(self, var_vec):
@@ -165,13 +165,15 @@ class HyadesOptimizer:
             interp_time = np.linspace(self.exp_time.min(), max_interp_time, num=50)
             interp_hyades = f_Us(interp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
-
         else:
             if self.material_of_interest is None:
                 self.material_of_interest = hyades_U.moi
             idx = hyades_U.layers[self.material_of_interest]['Mesh Stop'] - 1
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
+            if self.iter_count < 5:
+                print('EXPERIMENT TIME LIMITS: ', self.exp_time.min(), self.exp_time.max())
+                print('HYADES TIME LIMITS: ', hyades_U.time.min(), hyades_U.time.max(), 'DELAY: ', self.delay)
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
