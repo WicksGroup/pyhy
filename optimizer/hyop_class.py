@@ -74,7 +74,14 @@ class HyadesOptimizer:
 
         velocity_time = df[df.columns[0]]
         velocity = df[df.columns[1]]
-        if any(np.isnan(velocity)):
+        # Excel adds NaN rows to Velocity Time and Velocity if the other columns in the sheet are longer
+        # This drops all rows from velocity and time if the first instance of NaN till the end of the file is NaN
+        index_of_first_nan = min(np.where(velocity.isna()))
+        if all(velocity_time[index_of_first_nan:].isna()):
+            velocity_time = velocity_time[:index_of_first_nan]
+            velocity = velocity[:index_of_first_nan]
+
+        if any(velocity.isna()) or any(velocity_time.isna()):
             raise ValueError(f'Found NaN (Not-a-Number) in experimental velocity file {self.exp_file}')
         f_velocity = scipy.interpolate.interp1d(velocity_time, velocity)
 
