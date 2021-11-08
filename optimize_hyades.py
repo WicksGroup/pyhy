@@ -72,7 +72,7 @@ def run_optimizer(run_name, restart=0):
         error_string = f'Tried to restart, but could not find {previous_optimization_json} in {run_path}' \
                        f'\nContents of {run_path} are: {os.listdir(run_path)}'
         assert os.path.exists(os.path.join(run_path, previous_optimization_json)), error_string
-        with open(previous_optimization_json) as f:
+        with open(os.path.join(run_path, previous_optimization_json)) as f:
             jd = json.load(f)
         hyop.residual = jd['best']['residual']
         hyop.iter_count = max([int(i) for i in jd['iterations'].keys()])
@@ -83,6 +83,8 @@ def run_optimizer(run_name, restart=0):
         new_pres = f(new_time)
         hyop.pres_time = new_time
         hyop.pres = new_pres
+        print('Previous Best Iteration: ', jd['best']['number'], 'Residual: ', jd['best']['residual'])
+
 
     # Get experimental config and load experimental data into hyop instance
     experimental_filename = config.get('Experimental', 'filename',
