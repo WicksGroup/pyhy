@@ -1,4 +1,9 @@
-"""Useful plots of Hyades inputs and outputs"""
+"""Useful plots of Hyades inputs and outputs
+
+Todo:
+    - add feature to export data from graphs
+    - add option to plot in eulerian coordinates
+"""
 
 import os
 import matplotlib

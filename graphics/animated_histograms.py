@@ -60,7 +60,7 @@ def histogram_animation(inf_name, var):
         ax.text(x_text, ax.get_ylim()[1] * 0.9, f'Time {hyades.time[i]:.2f} ns', fontsize='large')
         ax_in = ax.inset_axes([0.7, 0.65, 0.25, 0.25])
         ax_in.plot(hyades.x, hyades.output[i, :])
-        ax_in.set_title(f'Pressure at {hyades.time[i]:.2f} ns', fontsize='small')
+        ax_in.set_title(f'{hyades.long_name} at {hyades.time[i]:.2f} ns', fontsize='small')
         ax_in.set_xlabel('Position (µm)', fontsize='small')
         ax_in.set_ylabel('Pressure (GPa)', fontsize='small')
         ax_in.set(ylim=(0, hyades.output.max()))

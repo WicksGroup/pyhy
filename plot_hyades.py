@@ -2,8 +2,6 @@
 
 Notes:
     See --help for usage.
-    Oct 6, 2021 lineouts, XT, target, save, quiet all work on lab iMac
-        Did not try shock bc of insufficient data
     
 Examples:
     If you already ran a Hyades simulation named `diamond_decay`, the following would generate XT Diagrams for 
@@ -35,6 +33,7 @@ def is_float(string):
         return True
     except ValueError:
         return False
+
 
 description = '''A command line interface to plot common types of Hyades graphics.
                                  
@@ -86,8 +85,8 @@ parser.add_argument('-t', '--target', action='store_true',
                     help='Toggle to plot the target design. Works best on targets with wide layers.')
 parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'Cubic', 'all'], nargs='+',
                     help='Toggle to plot the Shock Velocity.'
-                         ' Must select how to index the Particle Velocity with L, R, Avg (Average), All, Difference (L - R).')
-
+                         ' Must select how to index the Particle Velocity.'
+                         '\nMultiple selections are allowed and will be plotted on a single figure')
 parser.add_argument('--title', type=str, nargs='+',
                     help='Sets a custom title on *all* figures. Recommended use when only one plot is specified.')
 parser.add_argument('-s', '--save', action='store_true',

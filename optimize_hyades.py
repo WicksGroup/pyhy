@@ -1,12 +1,13 @@
 """The newest version of how to control the optimizer with a configuration file and configparser
 
 Todo:
-    - implement shock velocity
-    - implement restart from. I don't think this should make a new folder
+    - Implement shock velocity
+    - Does the start function need to clear any hyades data after the best one?
 """
-import os
 import sys
 sys.path.append('../')
+import os
+import json
 import argparse
 import configparser
 import numpy as np
@@ -17,7 +18,7 @@ from optimizer.hyop_functions import calculate_laser_pressure
 from graphics import optimizer_graphics
 
 
-def run_optimizer(run_name):
+def run_optimizer(run_name, restart=0):
     """Starts an optimization to fit Hyades simulated Velocity to experimental VISAR.
 
     This function is mostly formatting the variables specified in the .cfg to work with the Hyades Optimizer class.
@@ -31,6 +32,7 @@ def run_optimizer(run_name):
 
     Args:
         run_name (string):
+        restart (int):
 
     Returns:
         sol (scipy.optimize.OptimizeResult): The solution to the optimization
@@ -51,12 +53,37 @@ def run_optimizer(run_name):
                             fallback=0)
     use_shock_velocity = config.getboolean('Setup', 'use_shock_velocity',
                                            fallback=False)
+
     time = [float(i) for i in config.get('Setup', 'time').split(',')]
     pressure = [float(i) for i in config.get('Setup', 'pressure').split(',')]
     if len(time) == 3 and len(pressure) != 3:  # If time is in the format: start, stop, num
         time = [i for i in np.linspace(time[0], time[1], num=int(time[2]), endpoint=True)]
     hyop = HyadesOptimizer(run_name, time, pressure,
                            delay=delay, use_shock_velocity=use_shock_velocity)
+
+    laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
+                                          fallback=0)
+    if laser_spot_diameter != 0:  # Update initial pressure using laser ablation pressure
+        ablation_pressure, laser_log_message = calculate_laser_pressure(hyop, laser_spot_diameter)
+        hyop.pres = ablation_pressure
+
+    if restart:  # Try to continue the optimization from a previous run
+        previous_optimization_json = f'{run_name}_optimization.json'
+        error_string = f'Tried to restart, but could not find {previous_optimization_json} in {run_path}' \
+                       f'\nContents of {run_path} are: {os.listdir(run_path)}'
+        assert os.path.exists(os.path.join(run_path, previous_optimization_json)), error_string
+        with open(previous_optimization_json) as f:
+            jd = json.load(f)
+        hyop.residual = jd['best']['residual']
+        hyop.iter_count = max([int(i) for i in jd['iterations'].keys()])
+        best_time = np.array(jd['best']['time pressure'])
+        best_pressure = np.array(jd['best']['pressure'])
+        f = interpolate.interp1d(best_time, best_pressure, 'cubic')
+        new_time = np.linspace(min(best_time), max(best_time), num=restart, endpoint=True)
+        new_pres = f(new_time)
+        hyop.pres_time = new_time
+        hyop.pres = new_pres
+
     # Get experimental config and load experimental data into hyop instance
     experimental_filename = config.get('Experimental', 'filename',
                                        fallback=run_name)
@@ -67,12 +94,6 @@ def run_optimizer(run_name):
     if time_of_interest:
         time_of_interest = [float(i) for i in time_of_interest.split(',')]
     hyop.read_experimental_data(experimental_filename, time_of_interest=time_of_interest)
-    # Optionally use laser ablation pressure as first pressure guess
-    laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
-                                          fallback=0)
-    if laser_spot_diameter != 0:
-        ablation_pressure, laser_log_message = calculate_laser_pressure(hyop, laser_spot_diameter)
-        hyop.pres = ablation_pressure
 
     # Run a loop over each of the resolutions
     for resolution in (len(hyop.pres), 2*len(hyop.pres), 4*len(hyop.pres)):
@@ -109,7 +130,27 @@ def run_optimizer(run_name):
     return sol
 
 
-description = '''A command line interface to run the optimizer and plot the output.'''
+description = '''A command line interface to run the optimizer and plot the output.
+
+To start any optimization it is  assumed that filename_setup.inf, 
+filename.cfg, and filename.xlsx have been created, which are the 
+Hyades .inf template, optimization config, and experimental data.
+
+Examples:
+    Start an optimization with
+        $ python optimize_hyades.py filename --start
+    The iteration number, residual, and pressure drive are displayed.
+    Press Control + Z or Control + C to stop the optimizer at any time.
+    
+    To plot the best velocity and pressure distribution of a completed optimization
+        $ python optimize_hyades.py filename --best --histogram
+    
+    To restart an optimization you must specify the number of pressure points.
+        $ python optimize_hyades.py filename --restart 32
+    Takes the best pressure drive from filename_optimization.json and interpolates
+    32 points onto it, then restarts the optimization from the interpolated pressure.
+    The restarted optimization appends data to the previously created .json file.
+'''
 epilog = '''
                       ___      _  _      
                      | _ \_  _| || |_  _ 
@@ -118,17 +159,18 @@ epilog = '''
                           |__/      |__/ 
                Developed by the Wicks Lab at JHU
 '''
-
 parser = argparse.ArgumentParser(prog='optimize_hyades.py',
-                                 formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description=description,
-                                 epilog=epilog
+                                 epilog=epilog,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter
                                  )
 parser.add_argument('filename', type=str,
                     help='Name of the Hyades run to be optimized.')
-parser.add_argument('-r', '--run', action='store_true',
-                    help='Run the optimizer. Assumes experimental data, filename_setup.inf, '
-                         'and filename.cfg are set up in the folder pyhy/data/filename.')
+command_group = parser.add_mutually_exclusive_group()
+command_group.add_argument('-s', '--start', action='store_true',
+                           help='Start the optimization from the parameters in the .cfg file.')
+command_group.add_argument('-r', '--restart', type=int,
+                           help='Continue a previous optimization with specified number of pressure points.')
 parser.add_argument('-b', '--best', action='store_true',
                     help='Plot the best velocity from a completed optimization, '
                          'experimental velocity, and pressure drive all on a single figure.')
@@ -139,15 +181,16 @@ parser.add_argument('-v', '--velocity', action='store_true',
 args = parser.parse_args()
 # End parser
 
-if args.run:
+print(args.filename, 'START: ', args.start)
+print(args.filename, 'RESTART: ', args.restart)
+if args.start:
     sol = run_optimizer(args.filename)
-
+if args.restart:
+    sol = run_optimizer(args.filename, restart=args.restart)
 if args.best:
     fig, ax = optimizer_graphics.compare_velocities(args.filename)
-
 if args.histogram:
     fig, ax = optimizer_graphics.best_histogram(args.filename)
-
 if args.velocity:
     fig, ax = optimizer_graphics.iteration_velocities(args.filename)
 

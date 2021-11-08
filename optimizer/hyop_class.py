@@ -15,7 +15,6 @@ class HyadesOptimizer:
     """Class used to fit a Hyades simulated velocity to experimentally measured VISAR
 
     Massive class that will be fed into the SciPy optimization function to fit hyades data to experiment.
-    This version does not match the temperature profile.
 
     Note:
         See HyadesOptimizer.run(), the last function, for a summary of how this class works
@@ -63,7 +62,8 @@ class HyadesOptimizer:
             This function should only be called once before the optimizer is run
         Args:
             exp_file_name (string): Name of the excel sheet containing the experimental data
-            time_of_interest (tuple): Tuple of (start_time, stop_time) where the residual is calculated
+            time_of_interest (tuple): Tuple of (start_time, stop_time) where the residual is calculated.
+                                      Defaults to using all times in the experimental data
         """
 
         if not exp_file_name.endswith('.xlsx'):
@@ -77,8 +77,7 @@ class HyadesOptimizer:
         f_velocity = scipy.interpolate.interp1d(velocity_time, velocity)
 
         if (not time_of_interest) or (time_of_interest == 'None'):
-            time_of_interest = (np.ceil(min(velocity_time)),
-                                np.floor(max(velocity_time)))
+            time_of_interest = (min(velocity_time), max(velocity_time))
 
         self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], num=50)
         self.exp_data = f_velocity(self.exp_time)
@@ -86,13 +85,17 @@ class HyadesOptimizer:
     def update_variables(self, var_vec):
         """Take apart the single vector from the optimizer into the component parts
 
-        If we ever optimize more than one variable at a time this will be useful.
+        Note:
+            If we ever optimize more than one variable at a time this will be useful.
         """
         self.pres = var_vec
 
     def write_inf(self):
         """Write an .inf file based on the current class parameters
 
+        This function does *not* create an .inf from scratch. It looks for a file named {run_name}_setup.inf
+        and replaces the keyword TV_PRES with the current pressure drive.
+        The new file is named {run_name}_{iter_count}.inf
         Uses PCHIP interpolation to improve resolution on the Pressure drive
         """
         # Interpolate the Pressure drive onto a high resolution time
@@ -137,7 +140,7 @@ class HyadesOptimizer:
         """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment"""
         hyades_file = f'{self.run_name}_{str(self.iter_count).zfill(3)}'
         hyades_path = os.path.join(self.path, hyades_file, hyades_file)
-        hyades_U = HyadesOutput(hyades_path, 'U')  # outside the if/else so can be passed into myTabs
+        hyades_U = HyadesOutput(hyades_path, 'U')
                          
         if self.material_of_interest is None:
             self.material_of_interest = hyades_U.moi
@@ -170,9 +173,6 @@ class HyadesOptimizer:
             idx = hyades_U.layers[self.material_of_interest]['Mesh Stop'] - 1
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
-            if self.iter_count < 5:
-                print('EXPERIMENT TIME LIMITS: ', self.exp_time.min(), self.exp_time.max())
-                print('HYADES TIME LIMITS: ', hyades_U.time.min(), hyades_U.time.max(), 'DELAY: ', self.delay)
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             self.residual = sum(np.square(self.exp_data - interp_hyades))
@@ -249,12 +249,22 @@ class HyadesOptimizer:
     def run(self, var_vec):
         """The function called by the SciPy optimization routine.
 
-        1. Updates Hyades Pressure drive based on var_vec
-        2. Writes new .inf file
-        3. Simulates new .inf file
-        4. Calculates residual between simulation and experimental data
-        5. Saves Pressure drive and residual to a json file
-        6. Increases iteration count by 1
+        Outline of this function:
+            1. Updates Hyades Pressure drive based on var_vec
+            2. Writes new .inf file
+            3. Simulates new .inf file
+            4. Calculates residual between simulation and experimental data
+            5. Saves pressure drive, Hyades velocity, and residual to a json file
+            6. Increases iteration count by 1
+
+        Note:
+            To speed up optimization routines that use numerical derivatives, this function will raise the exception
+            ResolutionError if both the number of points on the pressure drive is small and the residual is small.
+            The thrown ResolutionError is caught by optimize_hyades.py and used to restart the optimization routine
+            with a higher resolution on the pressure drive. The conditions for the size of the resolution drive and
+            residual can be adjusted, but throwing a first error at resolution < 50 and number of pressure points <= 10,
+            then a second ResolutionError at resolution < 20 and number of pressure points <= 20 has qualitatively
+            worked well for the L-BFGS-B method within scipy.optimize.minimize.
 
         Args:
             var_vec (numpy array): The pressure drive of the Hyades simulation
