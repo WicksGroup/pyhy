@@ -74,6 +74,8 @@ class HyadesOptimizer:
 
         velocity_time = df[df.columns[0]]
         velocity = df[df.columns[1]]
+        if any(np.isnan(velocity)):
+            raise ValueError(f'Found NaN (Not-a-Number) in experimental velocity file {self.exp_file}')
         f_velocity = scipy.interpolate.interp1d(velocity_time, velocity)
 
         if (not time_of_interest) or (time_of_interest == 'None'):
@@ -173,8 +175,12 @@ class HyadesOptimizer:
             idx = hyades_U.layers[self.material_of_interest]['Mesh Stop'] - 1
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
+            if any(np.isnan(y)):
+                raise ValueError(f'Found NaN in HyadesOuput {hyades_path}')
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
+            if any(np.isnan(interp_hyades)):
+                raise ValueError(f'Found NaN in interpolated HyadesOutput {hyades_path}')
             self.residual = sum(np.square(self.exp_data - interp_hyades))
 
     def save_json(self):
