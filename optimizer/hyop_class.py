@@ -76,7 +76,7 @@ class HyadesOptimizer:
         velocity = df[df.columns[1]]
         # Excel adds NaN rows to Velocity Time and Velocity if the other columns in the sheet are longer
         # This drops all rows from velocity and time if the first instance of NaN till the end of the file is NaN
-        index_of_first_nan = min(np.where(velocity.isna()))
+        index_of_first_nan = min(np.where(velocity.isna())[0])
         if all(velocity_time[index_of_first_nan:].isna()):
             velocity_time = velocity_time[:index_of_first_nan]
             velocity = velocity[:index_of_first_nan]
