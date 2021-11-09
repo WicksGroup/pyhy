@@ -85,7 +85,6 @@ def run_optimizer(run_name, restart=0):
         hyop.pres = new_pres
         print('Previous Best Iteration: ', jd['best']['number'], 'Residual: ', jd['best']['residual'])
 
-
     # Get experimental config and load experimental data into hyop instance
     experimental_filename = config.get('Experimental', 'filename',
                                        fallback=run_name)

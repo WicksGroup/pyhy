@@ -1,24 +1,96 @@
 """Useful plots of Hyades inputs and outputs
 
 Todo:
-    - add feature to export data from graphs
     - add option to plot in eulerian coordinates
 """
-
+import sys
+sys.path.append('../')
 import os
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
-from scipy.io import netcdf
-import sys
-sys.path.append(os.getcwd())
-from tools.hyades_reader import ShockVelocity, HyadesOutput
 plt.style.use('ggplot')
+plt.rcParams['toolbar'] = 'toolmanager'
+from matplotlib.backend_tools import ToolBase
+import datetime
+import numpy as np
+import pandas as pd
+from scipy.io import netcdf
+from tools.hyades_reader import ShockVelocity, HyadesOutput
+
+
+class SaveTools(ToolBase):
+    """Matplotlib Tool to save the data on screen to a .csv"""
+    default_keymap = 'd'
+    description = 'Save data to a .csv'
+
+    def __init__(self, *args, data_dictionary, header, filename, **kwargs):
+        """Constructor method to initialize the tool
+
+        Args:
+            data_dictionary:
+            header:
+            filename:
+        """
+        self.data_dictionary = data_dictionary
+        prefix = f'Data created using plot_shock_velocity in pyhy/graphics/static_graphics.py ' \
+                 f'on {datetime.date.today().strftime("%Y-%m-%d")}\n'
+        self.header = prefix + header
+        if not self.header.endswith('\n'):
+            self.header += '\n'
+        self.filename = filename
+        super().__init__(*args, **kwargs)
+
+    def trigger(self, *args, **kwargs):
+        """Function for the matplotlib button to save data on screen to csv
+
+        Note:
+            pandas.DataFrame can only initialize if every column is the same length.
+            Since the velocity can be a different length than the other variables,
+             the try except blocks attempts to sneak past the pandas.DataFrame limitation
+             by continually appending data, which can handle varying lengths.
+        """
+        out_filename = self.get_filename()
+        try:
+            df = pd.DataFrame(self.data_dictionary)
+        except ValueError as e:
+            keys = list(self.data_dictionary.keys())
+            first_key = keys[0]
+            df = pd.DataFrame({first_key: list(self.data_dictionary[first_key])})
+            print(first_key, type(self.data_dictionary[first_key]))
+            for k in keys[1:]:
+                print(k, len(self.data_dictionary[k]), self.data_dictionary[k][:10])
+                additional_df = pd.DataFrame({k: list(self.data_dictionary[k])})
+                df = pd.concat([df, additional_df], axis=1)
+
+        with open(out_filename, 'w', newline='\n') as f:
+            f.write(self.header)
+            df.to_csv(f, index=False, float_format='%.4f')
+        print('Saved ', out_filename)
+
+    def get_filename(self):
+        """Creates a new filename with a numerical extension to prevent writing over old data
+
+        Returns:
+            new_filename (string): The original filename with the lowest unused numerical extension
+        """
+        filename_with_extension = os.path.basename(self.filename)
+        directory = os.path.dirname(self.filename)
+        if filename_with_extension not in os.listdir(directory):
+            return self.filename
+        else:
+            base_name, extension = os.path.splitext(filename_with_extension)
+            i = 2
+            while f'{base_name}_{i}{extension}' in os.listdir(directory):
+                i += 1
+            new_filename_with_extension = f'{base_name}_{i}{extension}'
+            return os.path.join(directory, new_filename_with_extension)
 
 
 def xt_diagram(filename, var, show_layers: bool = True, show_shock_front: bool = False):
     """Plot a colored XT diagram for a Hyades variable
 
+    ToDo:
+        - add the SavePlot tool to the toolbar. I can use my excel writer!!!
     Args:
         filename (string): Name of the .cdf
         var (string): Abbreviated name of variable of interest - one of Pres, Rho, U, Te, Ti, Tr, R
@@ -53,17 +125,6 @@ def xt_diagram(filename, var, show_layers: bool = True, show_shock_front: bool =
 
     if show_layers:
         ax = add_layers(hyades, ax, color='white')
-        # for material in hyades.layers:
-        #     x_start = hyades.layers[material]['X Start']
-        #     x_stop = hyades.layers[material]['X Stop']
-        #     if x_stop < hyades.x.max():
-        #         ax.vlines(x_stop, hyades.time.min(), hyades.time.max(),
-        #                   color='white', linestyles='solid', lw=1, alpha=0.7)
-        #     text_x = x_start + ((x_stop - x_start) / 2)
-        #     text_y = hyades.time.max() * 0.9
-        #     label = f"{hyades.layers[material]['Name']}\n{hyades.layers[material]['EOS']}"
-        #     ax.text(text_x, text_y, label,
-        #             color='white', ha='center')
 
     if show_shock_front:
         shock = ShockVelocity(filename, 'left')
@@ -192,34 +253,56 @@ def plot_shock_velocity(filename, mode):
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
+    save_dictionary = {}  # Dictionary to hold x, y data that can be written to .csv
     if isinstance(mode, list):  # Plot multiple shock velocities
+        save_dictionary['Time (ns)'] = ShockVelocity(filename, 'Cubic').time
         fig, ax = plt.subplots()
         for m in mode:
             shock = ShockVelocity(filename, m)
             ax.plot(shock.time, shock.Us, label=m)
+            save_dictionary[f'{m} Us (km/s)'] = shock.Us
         ax.legend()
         ax.set_title(f'Comparing Us of {os.path.basename(filename)}')
+        comment = f'Comparing the {", ".join(mode)}-indexed Shock Velocities of {shock.run_name}'
     elif mode.lower() == 'all':  # Plot Shock Velocity using Left, Right, and Average Particle Velocity
+        save_dictionary['Time (ns)'] = ShockVelocity(filename, 'Cubic').time
         fig, ax = plt.subplots()
-        for m in ('left', 'right', 'average'):
+        for m in ('left', 'right', 'average', 'cubic'):
             shock = ShockVelocity(filename, m)
             ax.plot(shock.time, shock.Us, label=m)
+            save_dictionary[f'{m} Us (km/s)'] = shock.Us
             ax.legend()
-        ax.set_title(f'Comparison of L, R, Avg Us for {shock.run_name}')
+        ax.set_title(f'Comparison of L, R, Avg, Cubic Us for {shock.run_name}')
+        comment = ax.get_title()
     elif mode.lower() == 'difference':  # Plot the difference between the left and right indexed shock velocities
         L_shock = ShockVelocity(filename, 'left')
         R_shock = ShockVelocity(filename, 'right')
         assert (L_shock.time == R_shock.time).all(), 'Left and Right shock timings do not agree'
         fig, ax = plt.subplots()
         ax.plot(L_shock.time, L_shock.Us - R_shock.Us, label='Left - Right')
+        save_dictionary['Time (ns)'] = L_shock.time
+        save_dictionary['L - R Us (km/s)'] = L_shock.Us - R_shock.Us
         ax.legend()
         ax.set_title(f'Comparing L and R Us for {L_shock.run_name}')
+        comment = f'A comparison of the Left and Right indexed shock velocities of {L_shock.run_name}'
     else:
         shock = ShockVelocity(filename, mode=mode)
         fig, ax = plt.subplots()
         ax.plot(shock.time, shock.Us)
+        save_dictionary['Time (ns)'] = shock.time
+        save_dictionary[f'{mode} Us (km/s)'] = shock.Us
         ax.set_title(f'Shock Velocity ({mode}) of {shock.run_name}')
+        comment = f'{mode}-indexed Shock Velocity of {shock.run_name}'
     ax.set(xlabel='Time (ns)', ylabel='Shock Velocity (km/s)')
+
+    run_name = ShockVelocity(filename, 'Cubic').run_name
+    out_fname = os.path.join('data', run_name, f'{run_name}_Us.csv')
+    fig.canvas.manager.toolmanager.add_tool('Save Data', SaveTools,
+                                            data_dictionary=save_dictionary,
+                                            header=comment,
+                                            filename=out_fname)
+    fig.canvas.manager.toolbar.add_tool('Save Data', 'foo')
+
     return fig, ax
 
 
@@ -229,7 +312,7 @@ def lineout(filename, var, times, show_layers: bool = True):
     Note:
         Hyades uses oddly sized time steps, so your time may not be in the data.
         This script plots the times closest to the input ones.
-        The correct time is the one in the legend **not** the one you input.
+        The correct time is the one in the legend *not* the one you input.
 
     Args:
         filename (string): Name of the .cdf
@@ -241,15 +324,18 @@ def lineout(filename, var, times, show_layers: bool = True):
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
+    save_dictionary = {}
     colors = matplotlib.cm.copper(np.linspace(0, 1, num=len(times)))
     if len(var) == 1:  # One variable plots on a single axis
         var = var[0]
         hyades = HyadesOutput(filename, var)
+        save_dictionary['Lagrangian Position (um)'] = hyades.x
         fig, ax = plt.subplots()
         for t, c in zip(times, colors):  # Plot a line for each time
             i = np.argmin(abs(hyades.time - t))
             ax.plot(hyades.x, hyades.output[i, :],
                     color=c, label=f'{hyades.time[i]:.2f} ns')
+            save_dictionary[f'{hyades.time[i]:.2f} ns'] = hyades.output[i, :]
         if show_layers:  # Add material names and interfaces
             ax = add_layers(hyades, ax)
         if var == 'Rho':  # If plotting density, add horizontal lines for each layer ambient density
@@ -261,17 +347,21 @@ def lineout(filename, var, times, show_layers: bool = True):
         ax.grid(b=True, which='minor', axis='both', lw=0.5, alpha=0.5)
         ax.minorticks_on()
         ax.legend()
-
-        return fig, ax
-
-    else:  # Multiple variables plot on stacked axis
+        out_filename = f'{hyades.run_name} {var}.csv'
+        comment = f'{hyades.long_name} of {hyades.run_name} at various times. ' \
+                  f'Lagrangian Positions are in microns. {hyades.long_name} are in {hyades.units}'
+    else:  # Multiple variables plot on stacked axes
+        comment = 'Lagrangian Positions are in microns. '
         fig, ax_arr = plt.subplots(nrows=len(var), ncols=1, sharex=True)
         for v, ax in zip(var, ax_arr):  # Each variable gets its own axis
             hyades = HyadesOutput(filename, v)
+            save_dictionary[f'{hyades.long_name} Position (um)'] = hyades.x
+            comment += f'{hyades.long_name} are in {hyades.units}. '
             for t, c in zip(times, colors):  # Plot a line for each time
                 i = np.argmin(abs(hyades.time - t))
                 ax.plot(hyades.x, hyades.output[i, :],
                         color=c, label=f'{hyades.time[i]:.2f} ns')
+                save_dictionary[f'{hyades.long_name} {hyades.time[i]:.2f} ns'] = hyades.output[i, :]
             if show_layers:  # Add material names and interfaces
                 ax = add_layers(hyades, ax)
             # Format axis labels for its respective variable
@@ -279,6 +369,13 @@ def lineout(filename, var, times, show_layers: bool = True):
             ax.legend(fontsize='x-small', loc='lower right')
         fig.suptitle(f'Lineouts of {hyades.run_name}')
         ax_arr[-1].set_xlabel('Lagrangian Position (µm)')  # Add x label to the bottom axis
+        out_filename = f'{hyades.run_name}_{"_".join(var)}.csv'
+
+    fig.canvas.manager.toolmanager.add_tool('Save Data', SaveTools,
+                                            data_dictionary=save_dictionary,
+                                            header=comment,
+                                            filename=os.path.join('data', hyades.run_name, out_filename))
+    fig.canvas.manager.toolbar.add_tool('Save Data', 'foo')
 
     return fig, ax
 
@@ -341,15 +438,61 @@ def show_ambient_density(hyades, ax):
     return ax
 
 
-if __name__ == '__main__':
-    f = '../data/FeSi/s76624_sep23_A'
-    # fig, ax = lineout(f, ['Pres', 'U', 'Rho'], [0.25, 0.5, 0.75])
-    # fig, ax = lineout(f, ['Pres', 'Te'], [0.25, 0.5, 0.75])
-    # fig, ax = lineout(f, ['Pres'], [0.25, 0.5, 0.75])
+# def save_lines_to_csv(*args, ax=None):
+#     """Gets all the lines on an axis and writes their x, y data to a .csv file.
+#
+#     Note:
+#         Assumes all lines use the same x values as the first line.
+#
+#     Args:
+#         *args: Keyword to handle the 'event' input from the button
+#         ax (matplotlib axis, optional): axis containing the data to be saved
+#
+#     Returns:
+#
+#     """
+#     if not ax:
+#         fig = plt.gcf()
+#         ax = fig.get_axes()[0]
+#     if not ax.lines:
+#         raise ValueError('Could not find any lines on the axis')
+#
+#     x_data = ax.lines[0].get_xdata()
+#     x_label = ax.get_xlabel().replace('µ', 'u')  # Unicode text can't encode the micron symbol
+#     data_dictionary = {x_label: x_data}
+#     for line in ax.lines:
+#         if line.get_label().startswith('_line'):  # If default matplotlib label
+#             y_label = ax.get_ylabel()
+#         else:
+#             y_label = line.get_label()
+#         y_data = line.get_ydata()
+#         data_dictionary[y_label] = y_data
+#     df = pd.DataFrame(data_dictionary)
+#     # Format  the output filename so data does not write over each other
+#     base_name = ax.get_title()
+#     directory_contents = os.listdir('./data')
+#     if base_name+'.csv' in directory_contents:
+#         i = 2
+#         while f'{base_name}_{i}.csv' in directory_contents:
+#             i += 1
+#         base_name = f'{base_name}_{i}'
+#     # Write comments to the file
+#     header = f'Data created using pyhy/graphics/static_graphics.py on {datetime.date.today().strftime("%Y-%m-%d")}\n'
+#     header += ax.comment + '\n'
+#     with open(os.path.join('./data', base_name + '.csv'), 'w', newline='\n') as f:
+#         f.write(header)
+#         df.to_csv(f, index=False, float_format='%.4f')
+#     print('Saved ', os.path.join('.', 'data', base_name+'.csv'))
 
-    hyades = HyadesOutput(f, 'Pres')
-    print(hyades.moi, hyades.shock_moi)
-    fig, ax = xt_diagram(f, 'Pres')
+
+if __name__ == '__main__':
+    f = '../data/diamond_decay'
+
+    fig, ax = lineout(f, ['Pres'], [1, 2, 3])
+
+    # hyades = HyadesOutput(f, 'Pres')
+    # print(hyades.moi, hyades.shock_moi)
+    # fig, ax = xt_diagram(f, 'Pres')
     shock_debug_plot = False
     if shock_debug_plot:
         hyades = HyadesOutput(f, 'Pres')

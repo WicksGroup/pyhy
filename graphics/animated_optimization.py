@@ -67,7 +67,7 @@ def velocity_residual_animation(run_name, save_movie=False):
                                    frames=len(jd['iterations']), interval=30,
                                    repeat=False, blit=False)
     if save_movie:
-        print('Saving...')
+        print('Saving... (This m')
         Writer = animation.writers['ffmpeg']
         writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
         anim.save(f'../data/{run_name}/{run_name} optimization progress.mp4', dpi=200, writer=writer)
@@ -77,5 +77,5 @@ def velocity_residual_animation(run_name, save_movie=False):
 
 
 if __name__ == '__main__':
-    run_name = 's76624_F'
+    run_name = 's77731_211104'
     velocity_residual_animation(run_name, save_movie=True)
