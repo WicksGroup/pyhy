@@ -151,6 +151,7 @@ class HyadesOutput:
         elif 'Qradgr' == var:
             unit_conversion = 1  # 8.62e-11
         elif 'R' == var:
+            long_name = 'Eulerian Position'
             units = 'µm'
             unit_conversion = 1e4
         elif 'Rho' == var:
@@ -177,6 +178,20 @@ class HyadesOutput:
         output *= unit_conversion
 
         return x, time, output, long_name, units
+
+    def get_closest_time(self, requested_time):
+        """Get the closest time and its index output by Hyades
+
+        Args:
+            requested_time (float):
+
+        Returns:
+            closest_time (float), index of closest time (int)
+
+        """
+        index = np.argmin(abs(self.time - requested_time))
+        closest_time = self.time[index]
+        return closest_time, index
 
     @staticmethod
     def get_tv(filename):

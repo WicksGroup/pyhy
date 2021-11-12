@@ -86,14 +86,15 @@ class SaveTools(ToolBase):
             return os.path.join(directory, new_filename_with_extension)
 
 
-def xt_diagram(filename, var, show_layers: bool = True, show_shock_front: bool = False):
+def xt_diagram(filename, var, x_mode='Lagrangian', show_layers: bool = True, show_shock_front: bool = False):
     """Plot a colored XT diagram for a Hyades variable
 
     ToDo:
-        - add the SavePlot tool to the toolbar. I can use my excel writer!!!
+        - add the SavePlot tool to the toolbar. I can use my excel writer!
     Args:
         filename (string): Name of the .cdf
         var (string): Abbreviated name of variable of interest - one of Pres, Rho, U, Te, Ti, Tr, R
+        x_mode (string):
         show_layers (bool, optional): Toggle to show layer interfaces and names
         show_shock_front (bool, optional): Toggle to show the position of the shock front
 
@@ -104,16 +105,31 @@ def xt_diagram(filename, var, show_layers: bool = True, show_shock_front: bool =
 
     fig, ax = plt.subplots()
 
-    if var == 'U':
-        pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, vmin=0, cmap='viridis')
-    else:
+    if x_mode.lower() == 'eulerian':
+        eulerian = HyadesOutput(filename, 'R')
+        x_label = 'Eulerian Position (µm)'
+        if len(hyades.x) == eulerian.output.shape[1]:  # hyades.output uses mesh coordinates
+            eulerian_mesh_coordinates = eulerian.output
+            pcm = ax.pcolormesh(eulerian_mesh_coordinates, hyades.time, hyades.output, cmap='viridis')
+        elif len(hyades.x) == eulerian.output.shape[1] - 1:  # hyades.output uses Zone coordinates
+            eulerian_zone_coordinates = (eulerian.output[:, :-1] + eulerian.output[:, 1:]) / 2
+            pcm = ax.pcolormesh(eulerian_zone_coordinates, hyades.time, hyades.output, cmap='viridis')
+        else:
+            raise ValueError(f'Unrecognized dimension of {filename} {var} output: {hyades.output.shape}')
+    elif x_mode.lower() == 'lagrangian':
+        x_label = 'Lagrangian Position (µm)'
         pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
+    else:
+        raise ValueError(f'Unrecognized x_mode: {x_mode}. Options are Lagrangian or Eulerian')
+    # During laser ablation the early material is ejected to the left at high speed making the scale whack
+    # if var == 'U':
+    #     pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, vmin=0, cmap='viridis')
+    # else:
+    #     pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
 
     fig.colorbar(pcm, label=f"{hyades.long_name} ({hyades.units})")
-
     ax.set_title(f'{hyades.run_name} XT Diagram')
-    ax.set(xlabel='Lagrangian Position (µm)', ylabel='Time (ns)',
-           xlim=(hyades.x.min(), hyades.x.max()))
+    ax.set(xlabel=x_label, ylabel='Time (ns)')
 
     if hyades.xray_probe:
         ax.hlines(hyades.xray_probe, hyades.x.min() - 0.5, hyades.x.max() + 0.5,
@@ -383,10 +399,13 @@ def lineout(filename, var, times, show_layers: bool = True):
 def add_layers(hyades, ax, color='black'):
     """Add the layer names and interfaces to an axis
 
+    Todo:
+        - can I make this work for eulerian coordinates???
+
     Args:
         hyades (HyadesOutput): Used for the layer information
         ax (matplotlib axis): axis to add the layers to
-        color (string, optional): Color used for text and lines. Try to pick one constrasting your plot
+        color (string, optional): Color used for text and lines. Try to pick one contrasting your plot
     """
     y_min = ax.get_ylim()[0]
     y_max = ax.get_ylim()[1]
@@ -438,57 +457,14 @@ def show_ambient_density(hyades, ax):
     return ax
 
 
-# def save_lines_to_csv(*args, ax=None):
-#     """Gets all the lines on an axis and writes their x, y data to a .csv file.
-#
-#     Note:
-#         Assumes all lines use the same x values as the first line.
-#
-#     Args:
-#         *args: Keyword to handle the 'event' input from the button
-#         ax (matplotlib axis, optional): axis containing the data to be saved
-#
-#     Returns:
-#
-#     """
-#     if not ax:
-#         fig = plt.gcf()
-#         ax = fig.get_axes()[0]
-#     if not ax.lines:
-#         raise ValueError('Could not find any lines on the axis')
-#
-#     x_data = ax.lines[0].get_xdata()
-#     x_label = ax.get_xlabel().replace('µ', 'u')  # Unicode text can't encode the micron symbol
-#     data_dictionary = {x_label: x_data}
-#     for line in ax.lines:
-#         if line.get_label().startswith('_line'):  # If default matplotlib label
-#             y_label = ax.get_ylabel()
-#         else:
-#             y_label = line.get_label()
-#         y_data = line.get_ydata()
-#         data_dictionary[y_label] = y_data
-#     df = pd.DataFrame(data_dictionary)
-#     # Format  the output filename so data does not write over each other
-#     base_name = ax.get_title()
-#     directory_contents = os.listdir('./data')
-#     if base_name+'.csv' in directory_contents:
-#         i = 2
-#         while f'{base_name}_{i}.csv' in directory_contents:
-#             i += 1
-#         base_name = f'{base_name}_{i}'
-#     # Write comments to the file
-#     header = f'Data created using pyhy/graphics/static_graphics.py on {datetime.date.today().strftime("%Y-%m-%d")}\n'
-#     header += ax.comment + '\n'
-#     with open(os.path.join('./data', base_name + '.csv'), 'w', newline='\n') as f:
-#         f.write(header)
-#         df.to_csv(f, index=False, float_format='%.4f')
-#     print('Saved ', os.path.join('.', 'data', base_name+'.csv'))
-
-
 if __name__ == '__main__':
     f = '../data/diamond_decay'
 
-    fig, ax = lineout(f, ['Pres'], [1, 2, 3])
+    # fig, ax = lineout(f, ['R'], [1, 2, 3, 4, 5, 6])
+    fig, ax = xt_diagram(f, 'Pres')
+    fig, ax = xt_diagram(f, 'Pres', x_mode='Eulerian')
+    plt.show()
+
 
     # hyades = HyadesOutput(f, 'Pres')
     # print(hyades.moi, hyades.shock_moi)
