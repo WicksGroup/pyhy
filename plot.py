@@ -7,17 +7,17 @@ Examples:
     If you already ran a Hyades simulation named `diamond_decay`, the following would generate XT Diagrams for 
     the Pressure, Density, and Particle Velocity, each in their own pop up window::
 
-    $ python plot_hyades.py diamond_decay -XT Pres Rho U
+    $ python plot.py diamond_decay -XT Pres Rho U
     
     To save graphics without displaying them, combine the `--save` and `--quiet` commands. The following would
     plot the target design and save the figure without displaying it::
 
-    $ python plot_hyades.py diamond_decay -target -sq
+    $ python plot.py diamond_decay -target -sq
 
     The following line plots the pressure over the whole sample at
     the times in the data closet to 1, 2, 3, 5, and 9 nanoseconds::
 
-    $ python plot_hyades.py diamond_decay -lo Pres 1 2 3 5 9
+    $ python plot.py diamond_decay -lo Pres 1 2 3 5 9
 
 """
 import os
@@ -49,16 +49,16 @@ Examples:
     If you already ran a simulation named 'diamond_decay' then the
     following line would create XT Diagrams for Pressure, Density,
     and Particle Velocity, each in their own pop up window:
-        $ python plot_hyades.py diamond_decay -XT Pres Rho U
+        $ python plot.py diamond_decay -XT Pres Rho U
     
     To save graphics without displaying them, combine the `--save`
     and `--quiet` commands. The following would create a figure of
     the target design and save the figure without displaying it:
-        $ python plot_hyades.py diamond_decay -target -sq
+        $ python plot.py diamond_decay -target -sq
     
     The following line plots the pressure over the whole sample at
     the times in the data closet to 1, 2, 3, 5, and 9 nanoseconds:
-        $ python plot_hyades.py diamond_decay -lo Pres 1 2 3 5 9
+        $ python plot.py diamond_decay -lo Pres 1 2 3 5 9
 '''
 epilog = '''
                       ___      _  _      
@@ -69,7 +69,7 @@ epilog = '''
                Developed by the Wicks Lab at JHU
 '''
 
-parser = argparse.ArgumentParser(prog='plot_hyades.py',
+parser = argparse.ArgumentParser(prog='plot.py',
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description=description,
                                  epilog=epilog
@@ -87,6 +87,8 @@ parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'Cu
                     help='Toggle to plot the Shock Velocity.'
                          ' Must select how to index the Particle Velocity.'
                          '\nMultiple selections are allowed and will be plotted on a single figure')
+parser.add_argument('-c', '--coordinate', choices=('e', 'eulerian', 'l', 'lagrangian'),
+                    help='Coordinate system to use on the x-axis of XT Diagrams and Lineouts. (Default: Lagrangian)')
 parser.add_argument('--title', type=str, nargs='+',
                     help='Sets a custom title on *all* figures. Recommended use when only one plot is specified.')
 parser.add_argument('-s', '--save', action='store_true',
@@ -101,14 +103,17 @@ args = parser.parse_args()
 abs_path = './data/' + os.path.splitext(args.filename)[0]
 base_out_filename = os.path.join('./data/', os.path.splitext(args.filename)[0], os.path.splitext(args.filename)[0])
 
+coordinate_system = args.coordinate or 'Lagrangian'
+
+
 if args.XT:
     '''XT Diagrams require a variable of interest. Multiple variables are plotted on separate figures.
     Example:
-        $ python plot_hyades.py file_name -XT Pres U
+        $ python plot.py file_name -XT Pres U
         Would create one XT Diagram for the Pressure and one for the Particle Velocity, each in their own figure.
     '''
     for var in args.XT:
-        fig, ax = static_graphics.xt_diagram(abs_path, var)
+        fig, ax = static_graphics.xt_diagram(abs_path, var, coordinate_system=coordinate_system)
         if args.title:
             ax.set_title(' '.join(args.title))
         if args.save:
@@ -120,7 +125,7 @@ if args.lineout:
     Lineouts require a list of variables and a list of times to plot the data at.
     Multiple variables create axis stacked on top of each other, sharing the x-axis on a single figure.
     Example:
-        $ python plot_hyades.py file_name --lineout Pres Rho 1 2 3 4 10
+        $ python plot.py file_name --lineout Pres Rho 1 2 3 4 10
         Would plot Pressure and Density lineouts of the data from file_name at times 1, 2, 3, 4, and 10 nanoseconds.
     '''
     variables = []
@@ -135,7 +140,7 @@ if args.lineout:
                                'Options for variable are {Pres, Rho, U, Te, Ti, Tr}'
                 raise ValueError(error_string)
             variables.append(v)
-    fig, ax = static_graphics.lineout(abs_path, variables, times)
+    fig, ax = static_graphics.lineout(abs_path, variables, times, coordinate_system=coordinate_system)
     if args.title:
         ax.set_title(' '.join(args.title))
     if args.save:

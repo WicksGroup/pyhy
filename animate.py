@@ -25,13 +25,13 @@ Using --save requires ffmpeg. Currently, there is no alternative.
 Examples:
     If you already ran the simulation diamond_decay, the following
     line would animate the distribution of pressures in the sample
-        $ python animated_hyades.py diamond_decay -l Pres
+        $ python animate.py diamond_decay -l Pres
     
     The following line would make an Eulerian space animation, and
     color the animation using the Particle Velocity at each point.
     The extensions --save and --quiet are combined into -sq so the
     graphics would be saved and would not be displayed.
-        $ python animated_hyades.py diamond_decay -e U -sq
+        $ python animate.py diamond_decay -e U -sq
 '''
 epilog = '''
                       ___      _  _      
@@ -42,7 +42,7 @@ epilog = '''
                Developed by the Wicks Lab at JHU
 '''
 
-parser = argparse.ArgumentParser(prog='animate_hyades.py',
+parser = argparse.ArgumentParser(prog='animate.py',
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description=description,
                                  epilog=epilog

@@ -51,15 +51,18 @@ class HyadesOutput:
         self.filename = filename
         if os.path.isdir(filename):
             self.dir_name = filename
+        elif os.path.isdir(os.path.join('.', 'data', filename)):
+            self.dir_name = os.path.join('.', 'data', filename)
         else:
             self.dir_name = os.path.dirname(filename)
+
         self.run_name = os.path.splitext(os.path.basename(filename))[0]
         self.var = var
 
         # Get variable information from cdf
         if self.run_name + '.cdf' in os.listdir(self.dir_name):
             cdf_name = os.path.join(self.dir_name, self.run_name+'.cdf')
-            x, time, output, long_name, units = self.get_var_from_cdf(cdf_name, self.var)
+            x, time, output, long_name, units, data_dimensions = self.get_var_from_cdf(cdf_name, self.var)
         else:
             raise Exception(f"Could not find {self.run_name+'.cdf'} in {self.dir_name}")
         self.x = x
@@ -67,6 +70,7 @@ class HyadesOutput:
         self.output = output
         self.long_name = long_name
         self.units = units
+        self.data_dimensions = data_dimensions
 
         # Get layer information from .inf
         if self.run_name + '.inf' in os.listdir(self.dir_name):
@@ -102,9 +106,9 @@ class HyadesOutput:
         cdf = netcdf.netcdf_file(filename, 'r')
 
         time = cdf.variables['DumpTimes'].data.copy() * 1e9  # convert seconds to nanoseconds
-        x = cdf.variables['R'].data[0, :].copy() * 1e4  # x is the mesh coordinates at time zero, convert cm to um
+        x = cdf.variables['R'].data.copy() * 1e4  # x is the mesh coordinates, convert cm to um
         output = cdf.variables[var].data.copy()  # output may be a 1D, 2D, or 3D array depending on the variable
-
+        data_dimensions = cdf.variables[var].dimensions
         # if var == 'Pres':
         #     sd1 = cdf.variables['Sd1'].data.copy()
         #     output = output - sd1
@@ -112,7 +116,7 @@ class HyadesOutput:
         if cdf.variables[var].dimensions[1] == 'NumMeshs':
             pass
         elif cdf.variables[var].dimensions[1] == 'NumZones':
-            x = (x[1:] + x[:-1]) / 2
+            x = (x[:, 1:] + x[:, :-1]) / 2
         else:
             raise Exception(f'Unexpected size of {var!r} data array: {cdf.variables[var].dimensions}')
 
@@ -177,7 +181,7 @@ class HyadesOutput:
 
         output *= unit_conversion
 
-        return x, time, output, long_name, units
+        return x, time, output, long_name, units, data_dimensions
 
     def get_closest_time(self, requested_time):
         """Get the closest time and its index output by Hyades

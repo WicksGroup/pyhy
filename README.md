@@ -1,8 +1,12 @@
 # PyHy
 Python for Hyades - PyHy  
 This repository is a Python wrapper for the Hyades hydrocode.
-It contains tools to help with creating input files, running the simulation,
+The primary goal of this repository is lower the barrier to entry of the Hyades hydrocode by 
+automating the tedious parts of the most common uses including creating input files, running the simulation,
 organizing the outputs, visualizing the inputs and outputs, and fitting Hyades velocities to experimental measurements.
+  
+Some aspects of Hyades were deliberately left out, and the user does not have control over every aspect of the inputs and outputs.
+This repository is supposed to make the basics very easy, not to completely replace the Hyades command line interface.
 
 This repository should work on all operating systems, but was tested on a MacOS installation of Hyades.
 This repository assumes the user has familiarity with Hyades simulations and basic terminal usage.
@@ -11,19 +15,6 @@ Little to no Python knowledge is required.
 First Published: Month , Year  
 Last Updated: Month, Year
 
----
-
-# Goals
-The primary goal of this repository is lower the barrier to entry of the Hyades hydrocode by 
-automating the tedious parts of the most common uses.
-Some aspects of Hyades were deliberately left out, and the user does not have control over every aspect of the inputs and outputs.
-This repository is supposed to make the basics very easy, not to completely replace the Hyades command line interface.
-
-### Building off these tools
-If you wish to use this repository to build your own graphics or customize Hyades inputs, all of the scripts are written
-as callable classes and functions that you can use in your own Python scripts. `pyhy/tools/hyades_reader.py` is used to 
-handle all the data output from Hyades, and `pyhy/graphics/static_graphics.py` provides many examples of how the 
-`HyadesOutput` class can be used to plot the data in many different ways.
 ___
 # GUIs for:
 
@@ -62,20 +53,20 @@ and neatly format the output for all .inf files in `pyhy/data/inf`.
 See `python run_hyades.py --help` for more details and examples.
 
 ### Plotting Hyades
-`plot_hyades.py` is a command line interface to plot common types of Hyades graphics.
+`plot.py` is a command line interface to plot common types of Hyades graphics.
 It can create many different static graphics, such as XT Diagrams, diagrams of the target design, 
 and/or a plot of the shock velocity.
 Please note the shock velocity function is only designed for shock simulations 
 and may not yield useful results for ramp compression.
-See `python plot_hyades.py --help` for more details and examples.
+See `python plt.py --help` for more details and examples.
 
 ### Animating Hyades
-`animate_hyades.py` is a command line interface to make simple animations of Hyades runs.
+`animate.py` is a command line interface to make simple animations of Hyades runs.
 It can create animations of the Eulerian position of a sample during a simulation, distributions of a variable over time,
-or show the lineout of any variable over time. See `python animate_hyades.py --help` for more details and examples.
+or show the lineout of any variable over time. See `python animate.py --help` for more details and examples.
 
 ### Optimizing Hyades
-`optimize_hyades.py` is a command line script to fit a Hyades simulated velocity to a VISAR measured velocity.
+`optimize.py` is a command line script to fit a Hyades simulated velocity to a VISAR measured velocity.
 To run the optimizer, three things must be set up before hand. This repository includes an example to run an optimization
 for the experimental data `pyhy/data/experimental/FeSi_s77742.xlsx`. 
 This experimental data is from [Crystal structure and equation of state of Fe-Si alloys 
@@ -92,11 +83,18 @@ See `pyhy/data/experimental/FeSi_s77742.xlsx` for formatting.
 3. `pyhy/data/FeSi_s77742/FeSi_s77742.cfg` a short text file with parameters for the optimization. 
 **The filename format `FeSi_s77742.cfg` must be used.** See `pyhy/optimizer/example.cfg` for formatting and further details.
 
-Once these three things are set up, the optimization can be run with `python optimize_hyades.py FeSi_s77742 --run`.
+Once these three things are set up, the optimization can be run with `python optimize.py FeSi_s77742 --run`.
 The iteration number, residual, and pressure drive will be printed in the terminal.
 The optimization can be stopped at any time by pressing `control + C` or `control + Z`.
 Once completed, the optimization output can be plotted and compared to experiment.
-See `python optimize_hyades.py --help` for more details.
+See `python optimize.py --help` for more details.
+
+---
+### Building off these tools
+If you wish to use this repository to build your own graphics or customize Hyades inputs, all of the scripts are written
+as callable classes and functions that you can use in your own Python scripts. `pyhy/tools/hyades_reader.py` is used to 
+handle all the data output from Hyades, and `pyhy/graphics/static_graphics.py` provides many examples of how the 
+`HyadesOutput` class can be used to plot the data in many different ways.
 
 ```
                       ___      _  _      

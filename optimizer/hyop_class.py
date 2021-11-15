@@ -273,7 +273,7 @@ class HyadesOptimizer:
         Note:
             To speed up optimization routines that use numerical derivatives, this function will raise the exception
             ResolutionError if both the number of points on the pressure drive is small and the residual is small.
-            The thrown ResolutionError is caught by optimize_hyades.py and used to restart the optimization routine
+            The thrown ResolutionError is caught by optimize.py and used to restart the optimization routine
             with a higher resolution on the pressure drive. The conditions for the size of the resolution drive and
             residual can be adjusted, but throwing a first error at resolution < 50 and number of pressure points <= 10,
             then a second ResolutionError at resolution < 20 and number of pressure points <= 20 has qualitatively

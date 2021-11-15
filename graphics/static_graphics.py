@@ -1,7 +1,5 @@
 """Useful plots of Hyades inputs and outputs
 
-Todo:
-    - add option to plot in eulerian coordinates
 """
 import sys
 sys.path.append('../')
@@ -16,6 +14,24 @@ import numpy as np
 import pandas as pd
 from scipy.io import netcdf
 from tools.hyades_reader import ShockVelocity, HyadesOutput
+from tools.excel_writer import write_excel
+
+
+class SaveXTTool(ToolBase):
+    """Matplotlib tool to save the XT Diagram on screen to an excel file"""
+    default_keymap = 'd'
+    description = 'Save data to an excel file'
+
+    def __init__(self, *args, hyades_filename, out_filename, variables, coordinate_system, **kwargs):
+        self.hyades_filename = hyades_filename
+        self.out_filename = out_filename
+        self.variables = variables
+        self.coordinate_system = coordinate_system
+        super().__init__(*args, **kwargs)
+
+    def trigger(self, *args, **kwargs):
+        """Function called when the button is clicked"""
+        write_excel(self.hyades_filename, self.out_filename, self.variables, coordinate_system=self.coordinate_system)
 
 
 class SaveTools(ToolBase):
@@ -86,64 +102,57 @@ class SaveTools(ToolBase):
             return os.path.join(directory, new_filename_with_extension)
 
 
-def xt_diagram(filename, var, x_mode='Lagrangian', show_layers: bool = True, show_shock_front: bool = False):
+def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool = True, show_shock_front: bool = False):
     """Plot a colored XT diagram for a Hyades variable
 
-    ToDo:
-        - add the SavePlot tool to the toolbar. I can use my excel writer!
     Args:
         filename (string): Name of the .cdf
         var (string): Abbreviated name of variable of interest - one of Pres, Rho, U, Te, Ti, Tr, R
-        x_mode (string):
+        coordinate_system (string):
         show_layers (bool, optional): Toggle to show layer interfaces and names
         show_shock_front (bool, optional): Toggle to show the position of the shock front
 
     Returns:
         fig (matplotlib figure), ax (matplotlib axis)
     """
+    coordinate_system = coordinate_system.lower()
+    if not (coordinate_system == 'lagrangian' or coordinate_system == 'eulerian'):
+        raise ValueError(f'Unrecognized coordinate system: {coordinate_system!r}. Options are Lagrangian or Eulerian')
     hyades = HyadesOutput(filename, var)
 
     fig, ax = plt.subplots()
 
-    if x_mode.lower() == 'eulerian':
-        eulerian = HyadesOutput(filename, 'R')
-        x_label = 'Eulerian Position (µm)'
-        if len(hyades.x) == eulerian.output.shape[1]:  # hyades.output uses mesh coordinates
-            eulerian_mesh_coordinates = eulerian.output
-            pcm = ax.pcolormesh(eulerian_mesh_coordinates, hyades.time, hyades.output, cmap='viridis')
-        elif len(hyades.x) == eulerian.output.shape[1] - 1:  # hyades.output uses Zone coordinates
-            eulerian_zone_coordinates = (eulerian.output[:, :-1] + eulerian.output[:, 1:]) / 2
-            pcm = ax.pcolormesh(eulerian_zone_coordinates, hyades.time, hyades.output, cmap='viridis')
-        else:
-            raise ValueError(f'Unrecognized dimension of {filename} {var} output: {hyades.output.shape}')
-    elif x_mode.lower() == 'lagrangian':
-        x_label = 'Lagrangian Position (µm)'
-        pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
+    if coordinate_system == 'lagrangian':
+        pcm = ax.pcolormesh(hyades.x[0, :], hyades.time, hyades.output, cmap='viridis')
+        ax.set_xlim(hyades.x[0, :].min(), hyades.x[0, :].max())
+        x_label = 'Lagrangian Position (um)'
     else:
-        raise ValueError(f'Unrecognized x_mode: {x_mode}. Options are Lagrangian or Eulerian')
+        pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
+        ax.set_facecolor('tab:gray')
+        ax.set_xlim(hyades.x.min(), hyades.x.max())
+        x_label = 'Eulerian Position (um)'
     # During laser ablation the early material is ejected to the left at high speed making the scale whack
     # if var == 'U':
     #     pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, vmin=0, cmap='viridis')
     # else:
     #     pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
-
     fig.colorbar(pcm, label=f"{hyades.long_name} ({hyades.units})")
     ax.set_title(f'{hyades.run_name} XT Diagram')
     ax.set(xlabel=x_label, ylabel='Time (ns)')
 
     if hyades.xray_probe:
-        ax.hlines(hyades.xray_probe, hyades.x.min() - 0.5, hyades.x.max() + 0.5,
+        ax.hlines(hyades.xray_probe, ax.get_xlim()[0], ax.get_xlim()[1],
                   color='white', linestyles='dotted', lw=1)
-        txt_x = (hyades.x.max() - hyades.x.min()) * 0.98
+        txt_x = ax.get_xlim()[1] * 0.98
         txt_y = hyades.xray_probe[0] + (hyades.xray_probe[1] - hyades.xray_probe[0]) * 0.1
         ax.text(txt_x, txt_y, 'X-Ray Probe',
                 color='white', ha='right')
 
     if show_layers:
-        ax = add_layers(hyades, ax, color='white')
+        ax = add_layers(hyades, ax, coordinate_system=coordinate_system, color='white')
 
     if show_shock_front:
-        shock = ShockVelocity(filename, 'left')
+        shock = ShockVelocity(filename, 'Cubic')
         x_shock = hyades.x[shock.shock_index]
         y_shock = hyades.time[10:]
         ax.plot(x_shock, y_shock,
@@ -151,6 +160,7 @@ def xt_diagram(filename, var, x_mode='Lagrangian', show_layers: bool = True, sho
                 linestyle='dotted', lw=2)
 
     def format_coord(x, y):
+        """Function to format the data displayed when your mouse hovers over the graph"""
         xarr = hyades.x
         yarr = hyades.time
         if ((x > xarr.min()) & (x <= xarr.max()) &
@@ -162,7 +172,17 @@ def xt_diagram(filename, var, x_mode='Lagrangian', show_layers: bool = True, sho
         else:
             return f'x={x:1.2f}, y={y:1.2f}'
     ax.format_coord = format_coord
-
+    out_filename = os.path.join('.', 'data', hyades.run_name, f'{hyades.run_name} {var}')
+    if coordinate_system == 'eulerian':
+        save_variables = ('R', var)
+    else:
+        save_variables = (var,)
+    fig.canvas.manager.toolmanager.add_tool('Save Data', SaveXTTool,
+                                            hyades_filename=hyades.filename,
+                                            out_filename=out_filename + '.xlsx',
+                                            variables=save_variables,
+                                            coordinate_system=coordinate_system)
+    fig.canvas.manager.toolbar.add_tool('Save Data', 'foo')
     return fig, ax
 
 
@@ -322,11 +342,43 @@ def plot_shock_velocity(filename, mode):
     return fig, ax
 
 
-def lineout(filename, var, times, show_layers: bool = True):
+def debug_shock_velocity(filename, mode='Cubic'):
+    """Plot the index and window used in the shock velocity calculations.
+
+    This plot is not useful for interpreting Hyades simulations. It is a visual aid for debugging Shock Front
+    calculations done by the tools.hyades_reader.ShockVelocity
+
+    Args:
+        filename (string): Name of the Hyades Run
+        mode (string, optional): indexing mode for Shock Velocity calculations
+
+    Returns:
+        fig (matplotlib figure), ax (matplotlib axis)
+
+    """
+    hyades = HyadesOutput(filename, 'Pres')
+    shock = ShockVelocity(filename, mode)
+    print(shock.time.shape, shock.Us.shape)
+    fig, ax = xt_diagram(filename, 'Pres')
+    x0 = hyades.x[shock.window_start]
+    y0 = shock.time
+    x1 = hyades.x[shock.window_stop]
+    y1 = shock.time
+    ax.plot(x0, y0,
+            color='white', ls='dotted', lw=2, label='Shock Window')
+    ax.plot(x1, y1,
+            color='white', ls='dotted', lw=2)
+    ax.plot(hyades.x[shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
+    ax.legend()
+
+    return fig, ax
+
+
+def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: bool = True):
     """Plot the variable of interest at multiple times.
 
     Note:
-        Hyades uses oddly sized time steps, so your time may not be in the data.
+        Hyades uses oddly sized time steps, so your requested time may not be in the data.
         This script plots the times closest to the input ones.
         The correct time is the one in the legend *not* the one you input.
 
@@ -334,31 +386,75 @@ def lineout(filename, var, times, show_layers: bool = True):
         filename (string): Name of the .cdf
         var (list): Abbreviated name of variable of interest - any of Pres, Rho, U, Te, Ti, Tr
         times (list): Floats of times to be plotted
+        coordinate_system (string, optional): Coordinate system to be used on the x-axis. Eulerian or Lagrangian..
         show_layers (bool, optional): Toggle to show the layer interfaces and names.
 
     Returns:
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
+    coordinate_system = coordinate_system.lower()
+    if not (coordinate_system == 'lagrangian' or coordinate_system == 'eulerian'):
+        raise ValueError(f'Unrecognized coordinate system: {coordinate_system!r}. Options are Lagrangian or Eulerian')
     save_dictionary = {}
+
     colors = matplotlib.cm.copper(np.linspace(0, 1, num=len(times)))
     if len(var) == 1:  # One variable plots on a single axis
         var = var[0]
         hyades = HyadesOutput(filename, var)
-        save_dictionary['Lagrangian Position (um)'] = hyades.x
+        if coordinate_system == 'lagrangian':
+            save_dictionary['Lagrangian Position (um)'] = hyades.x
         fig, ax = plt.subplots()
         for t, c in zip(times, colors):  # Plot a line for each time
-            i = np.argmin(abs(hyades.time - t))
-            ax.plot(hyades.x, hyades.output[i, :],
-                    color=c, label=f'{hyades.time[i]:.2f} ns')
-            save_dictionary[f'{hyades.time[i]:.2f} ns'] = hyades.output[i, :]
-        if show_layers:  # Add material names and interfaces
-            ax = add_layers(hyades, ax)
+            closest_time, index = hyades.get_closest_time(t)
+            label = f'{closest_time:.2f} ns'
+            if coordinate_system == 'lagrangian':  # Lagrangian Position on x-axis
+                ax.plot(hyades.x[0, :], hyades.output[index, :],
+                        color=c, label=label)
+                x_label = 'Lagrangian Position (um)'
+                save_dictionary[label] = hyades.output[index, :]  # Save the y-data
+            else:  # Eulerian Position on x-axis
+                ax.plot(hyades.x[index, :], hyades.output[index, :],
+                        color=c, label=label)
+                x_label = 'Eulerian Position (um)'
+                save_dictionary['Eulerian Position (um) '+label] = hyades.x[index, :]
+                save_dictionary[label] = hyades.output[index, :]
+
+        if show_layers:
+            if coordinate_system == 'lagrangian':  # Add material names and interfaces for lagrangian lineouts
+                ax = add_layers(hyades, ax, coordinate_system='lagrangian')
+            # Nov 15, 2021 - Attempt to add layer interface labels to lineouts in Eulerian Coordinates
+            # They are messy and unclear and I don't plan on including them in the final Release
+            # else:
+            #     for t in times:
+            #         closest_time, time_index = hyades.get_closest_time(t)
+            #         for material in hyades.layers:
+            #             right_boundary_index = hyades.layers[material]['Mesh Stop'] - 1  # Account for Python 0-index
+            #             if hyades.data_dimensions[1] == 'NumZones':  # Account for mesh to zone conversion
+            #                 right_boundary_index -= 1
+            #             layer_boundary = hyades.x[time_index, right_boundary_index]
+            #             if layer_boundary < hyades.x[time_index, :].max():
+            #                 boundary_marker_x = (hyades.x[time_index, right_boundary_index],
+            #                                      hyades.x[time_index, right_boundary_index])
+            #                 marker_height = (hyades.output.max() - hyades.output.min()) * 0.03
+            #                 boundary_marker_y = (hyades.output[time_index, right_boundary_index] - marker_height,
+            #                                      hyades.output[time_index, right_boundary_index] + marker_height)
+            #                 print(boundary_marker_x, boundary_marker_y)
+            #                 ax.plot(boundary_marker_x, boundary_marker_y, color='green')
+            #                 ax.text(hyades.x[time_index, right_boundary_index],
+            #                         hyades.output[time_index, right_boundary_index],
+            #                         hyades.layers[material]['Name'] + ' ',
+            #                         color='Green', ha='right')
+            #                 ax.text(hyades.x[time_index, right_boundary_index],
+            #                         hyades.output[time_index, right_boundary_index],
+            #                         ' LiF',
+            #                         color='Green', ha='left')
+
         if var == 'Rho':  # If plotting density, add horizontal lines for each layer ambient density
             ax = show_ambient_density(hyades, ax)
         # Format title, labels, axis, materials
         ax.set_title(f'{hyades.long_name} of {hyades.run_name}')
-        ax.set(xlabel='Lagrangian Position (µm)', ylabel=f'{hyades.long_name} ({hyades.units})')
+        ax.set(xlabel=x_label, ylabel=f'{hyades.long_name} ({hyades.units})')
         ax.grid(b=True, which='major', axis='both', lw=1)
         ax.grid(b=True, which='minor', axis='both', lw=0.5, alpha=0.5)
         ax.minorticks_on()
@@ -396,30 +492,51 @@ def lineout(filename, var, times, show_layers: bool = True):
     return fig, ax
 
 
-def add_layers(hyades, ax, color='black'):
+def add_layers(hyades, ax, coordinate_system='Lagrangian', color='black'):
     """Add the layer names and interfaces to an axis
-
-    Todo:
-        - can I make this work for eulerian coordinates???
-
     Args:
         hyades (HyadesOutput): Used for the layer information
         ax (matplotlib axis): axis to add the layers to
+        coordinate_system (string, optional): Eulerian or Lagrangian Coordinate system used for distances
         color (string, optional): Color used for text and lines. Try to pick one contrasting your plot
     """
+    coordinate_system = coordinate_system.lower()
+    if not (coordinate_system == 'lagrangian' or coordinate_system == 'eulerian'):
+        raise ValueError(f'Unrecognized coordinate system: {coordinate_system!r}. Options are Lagrangian or Eulerian')
     y_min = ax.get_ylim()[0]
     y_max = ax.get_ylim()[1]
-    for material in hyades.layers:
-        x_start = hyades.layers[material]['X Start']
-        x_stop = hyades.layers[material]['X Stop']
-        if x_stop < hyades.x.max():
-            ax.vlines(x_stop, y_min, y_max,
-                      color=color, linestyles='solid', lw=1, alpha=0.7)
-        text_x = x_start + ((x_stop - x_start) / 2)
-        text_y = y_max * 0.8
-        label = hyades.layers[material]['Name']
-        ax.text(text_x, text_y, label,
-                color=color, ha='center')
+    if coordinate_system == 'lagrangian':
+        x_min, x_max = ax.get_xlim()[0], ax.get_xlim()[1]
+        lagrangian_positions = hyades.x[0, :]
+        for material in hyades.layers:
+            x_start = hyades.layers[material]['X Start']
+            x_stop = hyades.layers[material]['X Stop']
+            if x_stop < lagrangian_positions.max():
+                ax.vlines(x_stop, y_min, y_max,
+                          color=color, linestyles='solid', lw=1, alpha=0.7)
+            text_x = x_start + ((x_stop - x_start) / 2)
+            text_y = y_min + ((y_max - y_min) * 0.8)
+            label = hyades.layers[material]['Name']
+            ax.text(text_x, text_y, label,
+                    color=color, ha='center')
+            ax.set_xlim(x_min, x_max)
+    else:  # Eulerian Coordinate system
+        for material in hyades.layers:
+            right_boundary_index = hyades.layers[material]['Mesh Stop'] - 1  # Account for Python 0-index
+            if hyades.data_dimensions[1] == 'NumZones':  # Account for Mesh to Zone conversion
+                right_boundary_index -= 1
+            eulerian_boundary = hyades.x[:, right_boundary_index]
+            if eulerian_boundary[0] < hyades.x[0, :].max():  # Ignores left-hand free surface
+                ax.plot(eulerian_boundary, hyades.time,
+                        color=color, linestyle='solid', lw=1, alpha=0.7)
+            x_stop = hyades.layers[material]['X Stop']
+            x_start = hyades.layers[material]['X Start']
+            text_x = x_start + ((x_stop - x_start) / 2)
+            text_y = y_min + ((y_max - y_min) * 0.05)
+            label = hyades.layers[material]['Name']
+            ax.text(text_x, text_y, label,
+                    color=color, ha='center')
+
     ax.set_ylim(y_min, y_max)
 
     return ax
@@ -458,32 +575,9 @@ def show_ambient_density(hyades, ax):
 
 
 if __name__ == '__main__':
-    f = '../data/diamond_decay'
+    f = '../data/CLiF_shock'
 
     # fig, ax = lineout(f, ['R'], [1, 2, 3, 4, 5, 6])
-    fig, ax = xt_diagram(f, 'Pres')
-    fig, ax = xt_diagram(f, 'Pres', x_mode='Eulerian')
-    plt.show()
-
-
-    # hyades = HyadesOutput(f, 'Pres')
-    # print(hyades.moi, hyades.shock_moi)
     # fig, ax = xt_diagram(f, 'Pres')
-    shock_debug_plot = False
-    if shock_debug_plot:
-        hyades = HyadesOutput(f, 'Pres')
-        shock = ShockVelocity(f, 'Cubic')
-        print(shock.time.shape, shock.Us.shape)
-        fig, ax = xt_diagram(f, 'Pres')
-        x0 = hyades.x[shock.window_start]
-        y0 = shock.time
-        x1 = hyades.x[shock.window_stop]
-        y1 = shock.time
-        ax.plot(x0, y0,
-                color='white', ls='dotted', lw=2, label='Shock Window')
-        ax.plot(x1, y1,
-                color='white', ls='dotted', lw=2)
-        ax.plot(hyades.x[shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
-        ax.legend()
-
-    plt.show()
+    # fig, ax = xt_diagram(f, 'Pres', x_mode='Eulerian')
+    # plt.show()

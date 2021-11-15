@@ -139,15 +139,15 @@ Hyades .inf template, optimization config, and experimental data.
 
 Examples:
     Start an optimization with
-        $ python optimize_hyades.py filename --start
+        $ python optimize.py filename --start
     The iteration number, residual, and pressure drive are displayed.
     Press Control + Z or Control + C to stop the optimizer at any time.
     
     To plot the best velocity and pressure distribution of a completed optimization
-        $ python optimize_hyades.py filename --best --histogram
+        $ python optimize.py filename --best --histogram
     
     To restart an optimization you must specify the number of pressure points.
-        $ python optimize_hyades.py filename --restart 32
+        $ python optimize.py filename --restart 32
     Takes the best pressure drive from filename_optimization.json and interpolates
     32 points onto it, then restarts the optimization from the interpolated pressure.
     The restarted optimization appends data to the previously created .json file.
@@ -160,7 +160,7 @@ epilog = '''
                           |__/      |__/ 
                Developed by the Wicks Lab at JHU
 '''
-parser = argparse.ArgumentParser(prog='optimize_hyades.py',
+parser = argparse.ArgumentParser(prog='optimize.py',
                                  description=description,
                                  epilog=epilog,
                                  formatter_class=argparse.RawDescriptionHelpFormatter
