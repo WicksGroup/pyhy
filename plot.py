@@ -57,8 +57,8 @@ Examples:
         $ python plot.py diamond_decay -target -sq
     
     The following line plots the pressure over the whole sample at
-    the times in the data closet to 1, 2, 3, 5, and 9 nanoseconds:
-        $ python plot.py diamond_decay -lo Pres 1 2 3 5 9
+    the times in the data closest to 1, 2, 3, 5 and 9 nanoseconds:
+        $ python plot.py diamond_decay -l Pres 1 2 3 5 9
 '''
 epilog = '''
                       ___      _  _      
@@ -88,7 +88,8 @@ parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'Cu
                          ' Must select how to index the Particle Velocity.'
                          '\nMultiple selections are allowed and will be plotted on a single figure')
 parser.add_argument('-c', '--coordinate', choices=('e', 'eulerian', 'l', 'lagrangian'),
-                    help='Coordinate system to use on the x-axis of XT Diagrams and Lineouts. (Default: Lagrangian)')
+                    help='Coordinate system to use on the x-axis of XT Diagrams and Lineouts. (Default: Lagrangian)'
+                         'Only applies to lineouts and XT digrams.')
 parser.add_argument('--title', type=str, nargs='+',
                     help='Sets a custom title on *all* figures. Recommended use when only one plot is specified.')
 parser.add_argument('-s', '--save', action='store_true',
@@ -103,8 +104,12 @@ args = parser.parse_args()
 abs_path = './data/' + os.path.splitext(args.filename)[0]
 base_out_filename = os.path.join('./data/', os.path.splitext(args.filename)[0], os.path.splitext(args.filename)[0])
 
-coordinate_system = args.coordinate or 'Lagrangian'
 
+coordinate_system = args.coordinate or 'Lagrangian'
+if coordinate_system == 'e':
+    coordinate_system = 'Eulerian'
+elif coordinate_system == 'l':
+    coordinate_system = 'Lagrangian'
 
 if args.XT:
     '''XT Diagrams require a variable of interest. Multiple variables are plotted on separate figures.

@@ -156,7 +156,7 @@ class App:
             if self.x_mode.get() == 'Distance':
                 maximum = len(self.hyades.time)
             else:
-                maximum = len(self.hyades.x)
+                maximum = len(self. hyades.x[0, :])
             while (0 <= index) and (index < maximum - 1):
                 index += anim.direction
                 yield index
@@ -195,7 +195,7 @@ class App:
         if self.x_mode.get() == 'Distance':
             frame_num = len(self.hyades.time)
         else:
-            frame_num = len(self.hyades.x)
+            frame_num = len(self. hyades.x[0, :])
         anim = animation.FuncAnimation(self.fig, self.animate,
                                        frames=frame_num,
                                        interval=10, blit=False, repeat=False)
@@ -259,7 +259,7 @@ class App:
         if self.x_mode.get() == 'Distance':
             suffix = f'{self.hyades.time[self.ix_scale.get()]:.1f}ns'
         else:
-            suffix = f'{self.hyades.x[self.ix_scale.get()]:.1f}um'
+            suffix = f'{self. hyades.x[0, self.ix_scale.get()]:.1f}um'
 
         if selection == 'Shock Velocity':
             basename = f'{os.path.basename(self.filename)}_{var}'
@@ -282,7 +282,7 @@ class App:
             index = f'{self.hyades.time[self.ix_scale.get()]:.1f}ns'
         else:
             x_title = 'Time (ns)'
-            index = f'{self.hyades.x[self.ix_scale.get()]:.1f}um'
+            index = f'{self.hyades.x[0, self.ix_scale.get()]:.1f}um'
         var = self.var.get()
         if var == 'Pressure':
             y_title = 'Pressure (GPa)'
@@ -362,8 +362,8 @@ class App:
         self.ix_scale.set(0)
         ix = self.ix_scale.get()
         if self.x_mode.get() == 'Distance':
-            self.line.set_data(self.hyades.x, self.hyades.output[ix, :])
-            self.ax.set(xlim=(0, self.hyades.x.max()),
+            self.line.set_data(self.hyades.x[0, :], self.hyades.output[ix, :])
+            self.ax.set(xlim=(0, self.hyades.x[0, :].max()),
                         xlabel='Lagrangian Distance (um)')
 
             self.txt._text = f'{self.hyades.time[ix]} ns'
@@ -379,10 +379,10 @@ class App:
             self.ax.set(xlim=(0, self.hyades.time.max()),
                         xlabel='Time (ns)')
 
-            self.txt._text = f'{self.hyades.x[ix]} um'
+            self.txt._text = f'{self.hyades.x[0, ix]} um'
             self.txt._x = self.ax.get_xlim()[1] * 0.95
 
-            self.ix_scale.configure(to=len(self.hyades.x) - 1)
+            self.ix_scale.configure(to=len(self.hyades.x[0, :]) - 1)
             for L, T in zip(self.label_lines, self.label_text):
                 L.set_visible(False)
                 T.set_visible(False)
@@ -447,10 +447,10 @@ class App:
             self.ix_scale.config(state="normal")
             # create hyades and update the line
             self.hyades = HyadesOutput(self.filename, var)
-            self.line, = self.ax.plot(self.hyades.x, self.hyades.output[0, :], color=color)  # create a new line
+            self.line, = self.ax.plot(self.hyades.x[0, :], self.hyades.output[0, :], color=color)  # create a new line
             ix = self.ix.get()
             if self.x_mode.get() == 'Time':
-                if ix > len(self.hyades.x) - 1:
+                if ix > len(self.hyades.x[0, :]) - 1:
                     self.ix.set(0)
                 print(self.hyades.time.shape, self.hyades.output[:, self.ix.get()].shape)
                 self.line.set_data(self.hyades.time, self.hyades.output[:, self.ix.get()])
@@ -460,8 +460,8 @@ class App:
             elif self.x_mode.get() == 'Distance':
                 if ix > len(self.hyades.time) - 1:
                     self.ix.set(0)
-                self.line.set_data(self.hyades.x, self.hyades.output[self.ix.get(), :])
-                x_min, x_max = self.hyades.x.min(), self.hyades.x.max()
+                self.line.set_data(self.hyades.x[0, :], self.hyades.output[self.ix.get(), :])
+                x_min, x_max = self.hyades.x[0,:].min(), self.hyades.x[0, :].max()
                 xlabel = 'Lagrangian Distance (um)'
             # format the plot
             y_max = self.hyades.output[11:, :].max() * 1.05
@@ -504,7 +504,7 @@ class App:
         else:
             ix = self.ix.get()
             if self.x_mode.get() == 'Time':
-                self.txt._text = f'{self.hyades.x[ix]:.1f} um'
+                self.txt._text = f'{self.hyades.x[0, ix]:.1f} um'
                 self.line.set_data(self.hyades.time, self.hyades.output[:, ix])
                 for mat in self.hyades.layers:
                     self.hyades.layers[mat]['Mesh Start']
@@ -515,7 +515,7 @@ class App:
                         break
             elif self.x_mode.get() == 'Distance':
                 self.txt._text = f'{self.hyades.time[ix]:.1f} ns'
-                self.line.set_data(self.hyades.x, self.hyades.output[ix, :])
+                self.line.set_data(self.hyades.x[0, :], self.hyades.output[ix, :])
         self.canvas.draw()
 
 

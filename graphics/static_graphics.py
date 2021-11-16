@@ -4,9 +4,11 @@
 import sys
 sys.path.append('../')
 import os
+import warnings
 import matplotlib
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
+warnings.simplefilter("ignore")
 plt.rcParams['toolbar'] = 'toolmanager'
 from matplotlib.backend_tools import ToolBase
 import datetime
@@ -158,20 +160,29 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool 
         ax.plot(x_shock, y_shock,
                 label='Shock Front', color='white',
                 linestyle='dotted', lw=2)
+    # Shows the current data point when your mouse hovers over a point
 
     def format_coord(x, y):
         """Function to format the data displayed when your mouse hovers over the graph"""
-        xarr = hyades.x
-        yarr = hyades.time
-        if ((x > xarr.min()) & (x <= xarr.max()) &
-                (y > yarr.min()) & (y <= yarr.max())):
-            col = np.searchsorted(xarr, x) - 1
-            row = np.searchsorted(yarr, y) - 1
-            z = hyades.output[row, col]
-            return f'Position {x:1.2f} µm, Time {y:1.2f} ns, z={z:1.2f}'
+        nonlocal hyades
+        nonlocal coordinate_system
+        y_array = hyades.time
+        if coordinate_system == 'lagrangian':
+            if ((x > hyades.x[0, :].min()) & (x <= hyades.x[0, :].max()) &
+                    (y > y_array.min()) & (y <= y_array.max())):
+                return f'Position {x:1.2f} µm, Time {y:1.2f} ns'
+            else:
+                return f'x={x:1.2f}, y={y:1.2f}'
         else:
-            return f'x={x:1.2f}, y={y:1.2f}'
+            closest_time, row = hyades.get_closest_time(y)
+            if ((hyades.x[row, :].min() < x) and (x < hyades.x[row, :].max()) &
+                    (y_array.min() < y) and (y < y_array.max())):
+                return f'Position {x:1.2f} µm, Time {y:1.2f} ns'
+            else:
+                return f'Cursor out of sample x={x:1.2f}, y={y:1.2f}'
     ax.format_coord = format_coord
+
+    # Add Save Data button to the figure toolbar
     out_filename = os.path.join('.', 'data', hyades.run_name, f'{hyades.run_name} {var}')
     if coordinate_system == 'eulerian':
         save_variables = ('R', var)
@@ -182,7 +193,8 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool 
                                             out_filename=out_filename + '.xlsx',
                                             variables=save_variables,
                                             coordinate_system=coordinate_system)
-    fig.canvas.manager.toolbar.add_tool('Save Data', 'foo')
+    fig.canvas.manager.toolbar.add_tool('Save Data', 'default')
+
     return fig, ax
 
 
@@ -377,6 +389,8 @@ def debug_shock_velocity(filename, mode='Cubic'):
 def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: bool = True):
     """Plot the variable of interest at multiple times.
 
+    Todo:
+        - Implement Eulerian coordinates when multiple variables are plotted
     Note:
         Hyades uses oddly sized time steps, so your requested time may not be in the data.
         This script plots the times closest to the input ones.
@@ -450,7 +464,7 @@ def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: b
             #                         ' LiF',
             #                         color='Green', ha='left')
 
-        if var == 'Rho':  # If plotting density, add horizontal lines for each layer ambient density
+        if var == 'Rho':  # Add horizontal lines for each layer ambient density
             ax = show_ambient_density(hyades, ax)
         # Format title, labels, axis, materials
         ax.set_title(f'{hyades.long_name} of {hyades.run_name}')
@@ -462,16 +476,16 @@ def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: b
         out_filename = f'{hyades.run_name} {var}.csv'
         comment = f'{hyades.long_name} of {hyades.run_name} at various times. ' \
                   f'Lagrangian Positions are in microns. {hyades.long_name} are in {hyades.units}'
-    else:  # Multiple variables plot on stacked axes
+    else:  # Multiple variables plot on stacked axes. Only available in Lagrangian Nov 16, 2021
         comment = 'Lagrangian Positions are in microns. '
         fig, ax_arr = plt.subplots(nrows=len(var), ncols=1, sharex=True)
         for v, ax in zip(var, ax_arr):  # Each variable gets its own axis
             hyades = HyadesOutput(filename, v)
-            save_dictionary[f'{hyades.long_name} Position (um)'] = hyades.x
+            save_dictionary[f'{hyades.long_name} Position (um)'] = hyades.x[0, :]
             comment += f'{hyades.long_name} are in {hyades.units}. '
             for t, c in zip(times, colors):  # Plot a line for each time
                 i = np.argmin(abs(hyades.time - t))
-                ax.plot(hyades.x, hyades.output[i, :],
+                ax.plot(hyades.x[0, :], hyades.output[i, :],
                         color=c, label=f'{hyades.time[i]:.2f} ns')
                 save_dictionary[f'{hyades.long_name} {hyades.time[i]:.2f} ns'] = hyades.output[i, :]
             if show_layers:  # Add material names and interfaces
@@ -561,7 +575,7 @@ def show_ambient_density(hyades, ax):
     show_label = True
     for layer_num in np.unique(region_numbers):
         mask, = np.where(region_numbers == layer_num)
-        layer_coordinates = hyades.x[mask]
+        layer_coordinates = hyades.x[0, mask]
         layer_ambient_density = hyades.output[0, mask]  # Density at time zero for a single layer
         if show_label:  # Cheap way to only label the Ambient Density line once
             ax.plot(layer_coordinates, layer_ambient_density,
@@ -576,7 +590,6 @@ def show_ambient_density(hyades, ax):
 
 if __name__ == '__main__':
     f = '../data/CLiF_shock'
-
     # fig, ax = lineout(f, ['R'], [1, 2, 3, 4, 5, 6])
     # fig, ax = xt_diagram(f, 'Pres')
     # fig, ax = xt_diagram(f, 'Pres', x_mode='Eulerian')
