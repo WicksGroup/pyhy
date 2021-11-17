@@ -340,6 +340,6 @@ class InputGUI:
 if __name__ == "__main__":
     root = Tk()
     style = ttk.Style(root)
-    style.theme_use('xpnative')  # xpnative, clam, winnative, vista
+    # style.theme_use('xpnative')  # xpnative, clam, winnative, vista
     GUI = InputGUI(root)
     root.mainloop()
