@@ -522,6 +522,6 @@ class App:
 if __name__ == '__main__':
     root = tkinter.Tk()
     style = ttk.Style(root)
-    style.theme_use('xpnative')  # xpnative, clam, winnative, vista
+    # style.theme_use('xpnative')  # xpnative, clam, winnative, vista
     app = App(root)
     root.mainloop()
