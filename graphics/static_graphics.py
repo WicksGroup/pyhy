@@ -188,12 +188,12 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool 
         save_variables = ('R', var)
     else:
         save_variables = (var,)
-    fig.canvas.manager.toolmanager.add_tool('Save Data', SaveXTTool,
-                                            hyades_filename=hyades.filename,
-                                            out_filename=out_filename + '.xlsx',
-                                            variables=save_variables,
-                                            coordinate_system=coordinate_system)
-    fig.canvas.manager.toolbar.add_tool('Save Data', 'default')
+    # fig.canvas.manager.toolmanager.add_tool('Save Data', SaveXTTool,
+    #                                         hyades_filename=hyades.filename,
+    #                                         out_filename=out_filename + '.xlsx',
+    #                                         variables=save_variables,
+    #                                         coordinate_system=coordinate_system)
+    # fig.canvas.manager.toolbar.add_tool('Save Data', 'default')
 
     return fig, ax
 
