@@ -401,9 +401,6 @@ class ShockVelocity:
         min_pressure = 10  # GPa
         window_size = 10  # check for a shock window_size zones before the leading edge
 
-        # pressure = np.zeros((max_index - min_index))
-        # density = np.zeros((max_index - min_index))
-        # particle_velocity = np.zeros((max_index - min_index))
         pressure = []
         density = []
         particle_velocity = []
@@ -419,7 +416,7 @@ class ShockVelocity:
             except ValueError:
                 print(f'Time: {t, hyades_pres.time[t]}, Max Pressure: {hyades_pres.output[t, :].max()}')
                 fig, ax = plt.subplots()
-                ax.plot(hyades_pres.x, hyades_pres.output[t, :])
+                ax.plot(hyades_pres.x[0, :], hyades_pres.output[t, :])
                 ax.set_title(f'Error Graph at {hyades_pres.time[t]:.2f} ns')
                 ax.set(xlabel='Lagrangian Distance (um)', ylabel='Pressure (GPA)')
                 plt.show()
@@ -451,10 +448,10 @@ class ShockVelocity:
             elif (mode.lower() == 'average') or (mode.lower() == 'avg'):
                 Up = (left + right) / 2
             elif mode.lower() == 'cubic':  # Interpolate Particle Velocity with Cubic Spline
-                x = hyades_Up.x
+                x = hyades_Up.x[t, :]
                 y = hyades_Up.output[t, :]
                 cubic_spline = CubicSpline(x, y)
-                zone_x = hyades_pres.x[shock_index]
+                zone_x = hyades_pres.x[t, shock_index]
                 Up = cubic_spline(zone_x)
             else:
                 raise ValueError(f'Shock Velocity Interpolation Mode {mode!r} not recognized. '
@@ -462,7 +459,7 @@ class ShockVelocity:
             # particle_velocity[j] = Up
             particle_velocity.append(Up)
 
-            if abs(len(hyades_pres.x) - window_stop) <= 2:  # If the shock index is too close to the free surface, stop
+            if abs(len(hyades_pres.x[0, :]) - window_stop) <= 2:  # If the shock index is too close to the free surface, stop
                 break
 
         shock_velocity = np.array(pressure) / (np.array(density) * np.array(particle_velocity))

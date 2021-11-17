@@ -83,7 +83,8 @@ parser.add_argument('-l', '--lineout', nargs='+',
                     help='Plot lineouts of a single variable of interest at multiple times')
 parser.add_argument('-t', '--target', action='store_true',
                     help='Toggle to plot the target design. Works best on targets with wide layers.')
-parser.add_argument('-k', '--shock', choices=['L', 'R', 'Avg', 'difference', 'Cubic', 'all'], nargs='+',
+parser.add_argument('-k', '--shock', nargs='*',
+                    choices=['L', 'R', 'Avg', 'difference', 'Cubic', 'all'],
                     help='Toggle to plot the Shock Velocity.'
                          ' Must select how to index the Particle Velocity.'
                          '\nMultiple selections are allowed and will be plotted on a single figure')
@@ -160,12 +161,15 @@ if args.target:
     if args.save:
         out_fname = f'{base_out_filename} Target Design.png'
         plt.savefig(out_fname, dpi=200)
-
-if args.shock:
-    '''Shock Velocity plots only use the required filename.'''
+if args.shock or (isinstance(args.shock, list) and len(args.shock) == 0):
+    if isinstance(args.shock, list) and len(args.shock) == 0:
+        interpolation_mode = 'Cubic'
+    else:
+        interpolation_mode = args.shock
+    '''Shock Velocity plots require the filename and an interpolation mode'''
     if len(args.shock) == 1:
         args.shock = args.shock[0]
-    fig, ax = static_graphics.plot_shock_velocity(abs_path, args.shock)
+    fig, ax = static_graphics.plot_shock_velocity(abs_path, interpolation_mode)
     if args.title:
         ax.set_title(' '.join(args.title))
     if args.save:
