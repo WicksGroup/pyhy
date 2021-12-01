@@ -5,15 +5,17 @@ The primary goal of this repository is lower the barrier to entry of the Hyades 
 automating the tedious parts of the most common uses including creating input files, running the simulation,
 organizing the outputs, visualizing the inputs and outputs, and fitting Hyades velocities to experimental measurements.
   
-Some aspects of Hyades were deliberately left out, and the user does not have control over every aspect of the inputs and outputs.
-This repository is supposed to make the basics very easy, not to completely replace the Hyades command line interface.
+Some aspects of Hyades were deliberately left out, and the user does not have control over every aspect of Hyades inputs and outputs.
+This repository is supposed to make the basics very easy, not completely replace the Hyades command line interface.
 
 This repository should work on all operating systems, but was tested on a MacOS installation of Hyades.
 This repository assumes the user has familiarity with Hyades simulations and basic terminal usage.
 Little to no Python knowledge is required.
 
-First Published: Month , Year  
-Last Updated: Month, Year
+Developed by Connor Krill (ckrill1@jh.edu) under the Wicks Lab at Johns Hopkins University.
+
+First Published: December 2021  
+Last Updated: December 2021
 
 ___
 # GUIs for:
@@ -58,7 +60,7 @@ It can create many different static graphics, such as XT Diagrams, diagrams of t
 and/or a plot of the shock velocity.
 Please note the shock velocity function is only designed for shock simulations 
 and may not yield useful results for ramp compression.
-See `python plt.py --help` for more details and examples.
+See `python plot.py --help` for more details and examples.
 
 ### Animating Hyades
 `animate.py` is a command line interface to make simple animations of Hyades runs.
@@ -66,6 +68,10 @@ It can create animations of the Eulerian position of a sample during a simulatio
 or show the lineout of any variable over time. See `python animate.py --help` for more details and examples.
 
 ### Optimizing Hyades
+
+**Note: As of Dec 1, 2021 the PyHy Optimizer is only intended to optimize Particle Velocities in ramp compression experiments.
+Options to optimize Shock Velocity in shock compression experiments will be added.**
+
 `optimize.py` is a command line script to fit a Hyades simulated velocity to a VISAR measured velocity.
 To run the optimizer, three things must be set up before hand. This repository includes an example to run an optimization
 for the experimental data `pyhy/data/experimental/FeSi_s77742.xlsx`. 
