@@ -2,22 +2,6 @@
 
 Notes:
     See --help for usage.
-    
-Examples:
-    If you already ran a Hyades simulation named `diamond_decay`, the following would generate XT Diagrams for 
-    the Pressure, Density, and Particle Velocity, each in their own pop up window::
-
-    $ python plot.py diamond_decay -XT Pres Rho U
-    
-    To save graphics without displaying them, combine the `--save` and `--quiet` commands. The following would
-    plot the target design and save the figure without displaying it::
-
-    $ python plot.py diamond_decay -target -sq
-
-    The following line plots the pressure over the whole sample at
-    the times in the data closet to 1, 2, 3, 5, and 9 nanoseconds::
-
-    $ python plot.py diamond_decay -lo Pres 1 2 3 5 9
 
 """
 import os
@@ -50,15 +34,17 @@ Examples:
     following line would create XT Diagrams for Pressure, Density,
     and Particle Velocity, each in their own pop up window:
         $ python plot.py diamond_decay -XT Pres Rho U
+        
+    The following line plots the pressure over the whole sample at
+    the times in the data closest to 1, 2, 3.4, 5 and 9 nanoseconds:
+        $ python plot.py diamond_decay -l Pres 1 2 3.4 5 9
     
     To save graphics without displaying them, combine the `--save`
     and `--quiet` commands. The following would create a figure of
     the target design and save the figure without displaying it:
-        $ python plot.py diamond_decay -target -sq
+        $ python plot.py diamond_decay --target -sq
     
-    The following line plots the pressure over the whole sample at
-    the times in the data closest to 1, 2, 3, 5 and 9 nanoseconds:
-        $ python plot.py diamond_decay -l Pres 1 2 3 5 9
+
 '''
 epilog = '''
                       ___      _  _      
@@ -76,21 +62,23 @@ parser = argparse.ArgumentParser(prog='plot.py',
                                  )
 
 parser.add_argument('filename', type=str,
-                    help='Name of the Hyades run to be plotted. Does not require file extension.')
-parser.add_argument('-XT', choices=['Pres', 'U', 'Rho', 'Te', 'Tr', 'Ti'], nargs='+',
-                    help='Plot each variable on an XT diagram')
+                    help='Name of the Hyades run to be plotted. Assumed to be in pyhy/data '
+                         'and does not require file extension.')
+parser.add_argument('-XT', choices=['Pres', 'U', 'Rho', 'Rho0', 'Te', 'Tr', 'Ti'], nargs='+',
+                    help='Plot each variable on an XT diagram.'
+                         '\nMultiple selections are allowed and will be plotted on their own figure.')
 parser.add_argument('-l', '--lineout', nargs='+',
-                    help='Plot lineouts of a single variable of interest at multiple times')
+                    help='Plot lineouts of a variable of interest at multiple times')
 parser.add_argument('-t', '--target', action='store_true',
                     help='Toggle to plot the target design. Works best on targets with wide layers.')
 parser.add_argument('-k', '--shock', nargs='*',
                     choices=['L', 'R', 'Avg', 'difference', 'Cubic', 'all'],
                     help='Toggle to plot the Shock Velocity.'
-                         ' Must select how to index the Particle Velocity.'
+                         ' Optionally select how to index Particle Velocity in Shock calculation (default: Cubic).'
                          '\nMultiple selections are allowed and will be plotted on a single figure')
 parser.add_argument('-c', '--coordinate', choices=('e', 'eulerian', 'l', 'lagrangian'),
                     help='Coordinate system to use on the x-axis of XT Diagrams and Lineouts. (Default: Lagrangian)'
-                         'Only applies to lineouts and XT digrams.')
+                         'Only applies to lineouts and XT diagrams.')
 parser.add_argument('--title', type=str, nargs='+',
                     help='Sets a custom title on *all* figures. Recommended use when only one plot is specified.')
 parser.add_argument('-s', '--save', action='store_true',
@@ -140,10 +128,10 @@ if args.lineout:
         if is_float(v):  # Times are floats
             times.append(float(v))
         else:  # Variables are string abbreviations of Hyades variables
-            if v not in ('Pres', 'Rho', 'U', 'Te', 'Ti', 'Tr'):
+            if v not in ('Pres', 'Rho', 'Rho0', 'U', 'Te', 'Ti', 'Tr'):
                 error_string = 'Variable of interest required for lineout plots.\n' \
                                'Example: --lineout Pres 1 2 3\n' \
-                               'Options for variable are {Pres, Rho, U, Te, Ti, Tr}'
+                               'Options for variable are {Pres, Rho, Rho0, U, Te, Ti, Tr}'
                 raise ValueError(error_string)
             variables.append(v)
     fig, ax = static_graphics.lineout(abs_path, variables, times, coordinate_system=coordinate_system)

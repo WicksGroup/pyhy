@@ -190,7 +190,7 @@ class HyadesOutput:
             requested_time (float):
 
         Returns:
-            closest_time (float), index of closest time (int)
+            closest_time (float), index_of_closest_time (int)
 
         """
         index = np.argmin(abs(self.time - requested_time))

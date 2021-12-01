@@ -9,9 +9,6 @@ plt.style.use('ggplot')
 def histogram_animation(inf_name, var):
     """Animate the distribution of a variable over time
 
-    Todo:
-        - update json references
-
     Note:
         Click the screen to pause/play the animation
 
@@ -31,10 +28,10 @@ def histogram_animation(inf_name, var):
     counts, bins, bars = ax.hist(hyades.output[0, :], bins=my_bins)
     ax.set_title('s77742 Pressure Histogram')
     axin1 = ax.inset_axes([0.7, 0.65, 0.25, 0.25], zorder=5)
-    line, = axin1.plot(hyades.x, hyades.output[0, :])
+    axin1.plot(hyades.x[0, :], hyades.output[0, :])
     x_text = hyades.output.min() + ((hyades.output.max() - hyades.output.min()) * 0.05)
     y_text = max(counts) * 0.9
-    txt = ax.text(x_text, y_text, f'Time {hyades.time[0]:.2f} ns')
+    ax.text(x_text, y_text, f'Time {hyades.time[0]:.2f} ns')
 
     def onclick(event):
         nonlocal anim_running
@@ -59,7 +56,7 @@ def histogram_animation(inf_name, var):
 
         ax.text(x_text, ax.get_ylim()[1] * 0.9, f'Time {hyades.time[i]:.2f} ns', fontsize='large')
         ax_in = ax.inset_axes([0.7, 0.65, 0.25, 0.25])
-        ax_in.plot(hyades.x, hyades.output[i, :])
+        ax_in.plot(hyades.x[0, :], hyades.output[i, :])
         ax_in.set_title(f'{hyades.long_name} at {hyades.time[i]:.2f} ns', fontsize='small')
         ax_in.set_xlabel('Position (µm)', fontsize='small')
         ax_in.set_ylabel('Pressure (GPa)', fontsize='small')

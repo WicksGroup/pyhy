@@ -1,5 +1,9 @@
 """Useful plots of Hyades inputs and outputs
 
+Todo:
+    - add histogram
+    - add rho / rho0 compressive factor as a plotting option
+
 """
 import sys
 sys.path.append('../')
@@ -104,12 +108,12 @@ class SaveTools(ToolBase):
             return os.path.join(directory, new_filename_with_extension)
 
 
-def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool = True, show_shock_front: bool = False):
+def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers=True, show_shock_front=False):
     """Plot a colored XT diagram for a Hyades variable
 
     Args:
         filename (string): Name of the .cdf
-        var (string): Abbreviated name of variable of interest - one of Pres, Rho, U, Te, Ti, Tr, R
+        var (string): Abbreviated name of variable of interest - one of Pres, Rho, Rho0, U, Te, Ti, Tr, R
         coordinate_system (string):
         show_layers (bool, optional): Toggle to show layer interfaces and names
         show_shock_front (bool, optional): Toggle to show the position of the shock front
@@ -120,16 +124,31 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool 
     coordinate_system = coordinate_system.lower()
     if not (coordinate_system == 'lagrangian' or coordinate_system == 'eulerian'):
         raise ValueError(f'Unrecognized coordinate system: {coordinate_system!r}. Options are Lagrangian or Eulerian')
-    hyades = HyadesOutput(filename, var)
+    if var == 'Rho0':
+        hyades = HyadesOutput(filename, 'Rho')
+    else:
+        hyades = HyadesOutput(filename, var)
 
     fig, ax = plt.subplots()
 
     if coordinate_system == 'lagrangian':
-        pcm = ax.pcolormesh(hyades.x[0, :], hyades.time, hyades.output, cmap='viridis')
+        if var == 'Rho0':
+            z = hyades.output / hyades.output[0, :]
+            colorbar_label = r'Compressive Factor $\rho / \rho_0$'
+        else:
+            z = hyades.output
+            colorbar_label = f"{hyades.long_name} ({hyades.units})"
+        pcm = ax.pcolormesh(hyades.x[0, :], hyades.time, z, cmap='viridis')
         ax.set_xlim(hyades.x[0, :].min(), hyades.x[0, :].max())
         x_label = 'Lagrangian Position (um)'
     else:
-        pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
+        if var == 'Rho0':
+            z = hyades.output / hyades.output[0, :]
+            colorbar_label = r'Compressive Factor $\rho / \rho_0$'
+        else:
+            z = hyades.output
+            colorbar_label = f"{hyades.long_name} ({hyades.units})"
+        pcm = ax.pcolormesh(hyades.x, hyades.time, z, cmap='viridis')
         ax.set_facecolor('tab:gray')
         ax.set_xlim(hyades.x.min(), hyades.x.max())
         x_label = 'Eulerian Position (um)'
@@ -138,7 +157,7 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool 
     #     pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, vmin=0, cmap='viridis')
     # else:
     #     pcm = ax.pcolormesh(hyades.x, hyades.time, hyades.output, cmap='viridis')
-    fig.colorbar(pcm, label=f"{hyades.long_name} ({hyades.units})")
+    fig.colorbar(pcm, label=colorbar_label)
     ax.set_title(f'{hyades.run_name} XT Diagram')
     ax.set(xlabel=x_label, ylabel='Time (ns)')
 
@@ -194,7 +213,7 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers: bool 
     #                                         variables=save_variables,
     #                                         coordinate_system=coordinate_system)
     # fig.canvas.manager.toolbar.add_tool('Save Data', 'default')
-
+    # plt.rc('text', usetex=True)
     return fig, ax
 
 
@@ -372,15 +391,15 @@ def debug_shock_velocity(filename, mode='Cubic'):
     shock = ShockVelocity(filename, mode)
     print(shock.time.shape, shock.Us.shape)
     fig, ax = xt_diagram(filename, 'Pres')
-    x0 = hyades.x[shock.window_start]
+    x0 = hyades.x[0, shock.window_start]
     y0 = shock.time
-    x1 = hyades.x[shock.window_stop]
+    x1 = hyades.x[0, shock.window_stop]
     y1 = shock.time
     ax.plot(x0, y0,
             color='white', ls='dotted', lw=2, label='Shock Window')
     ax.plot(x1, y1,
             color='white', ls='dotted', lw=2)
-    ax.plot(hyades.x[shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
+    ax.plot(hyades.x[0, shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
     ax.legend()
 
     return fig, ax

@@ -12,6 +12,7 @@ def velocity_residual_animation(run_name, save_movie=False):
 
     Args:
         run_name:
+        save_movie (bool, optional):
 
     Returns:
 

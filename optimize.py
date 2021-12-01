@@ -2,7 +2,7 @@
 
 Todo:
     - Implement shock velocity
-    - Does the start function need to clear any hyades data after the best one?
+    - Does the restart function need to clear any hyades data after the best one?
 """
 import sys
 sys.path.append('../')

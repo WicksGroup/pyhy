@@ -56,6 +56,9 @@ parser.add_argument('-g', '--histogram',
                     help='Animate the distribution of a variable over time.')
 parser.add_argument('-l', '--lineout',
                     help='Animate a lineout of a variable over time.')
+parser.add_argument('-c', '--coordinate', choices=('e', 'eulerian', 'l', 'lagrangian'),
+                    help='Coordinate system to use on the x-axis of XT Diagrams and Lineouts. (Default: Lagrangian)'
+                         '\nOnly applies to --lineout.')
 
 parser.add_argument('-s', '--save', nargs='?', const=12,
                     help='* Requires ffmpeg installed * '
@@ -70,6 +73,11 @@ args = parser.parse_args()
 
 abs_path = os.path.join('./data/', os.path.splitext(args.filename)[0])
 base_save_filename = os.path.join('./data', os.path.splitext(args.filename)[0], os.path.splitext(args.filename)[0])
+coordinate_system = args.coordinate or 'Lagrangian'
+if coordinate_system == 'e':
+    coordinate_system = 'Eulerian'
+elif coordinate_system == 'l':
+    coordinate_system = 'Lagrangian'
 
 if args.eulerian:
     animation = eulerian_animation(abs_path, args.eulerian)
@@ -88,7 +96,7 @@ if args.histogram:
         print('Saved.')
 
 if args.lineout:
-    animation = lineout_animation(abs_path, args.lineout)
+    animation = lineout_animation(abs_path, args.lineout, coordinate_system=coordinate_system)
     if args.save:
         save_filename = f'{base_save_filename} {args.lineout} lineout.mp4'
         print(f'Saving {save_filename}...')
