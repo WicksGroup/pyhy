@@ -129,7 +129,11 @@ class HyadesOutput:
         Most conversions taken from https://en.wikipedia.org/wiki/Centimetre%E2%80%93gram%E2%80%93second_system_of_units
         unit_conversions that are commented out have not been confirmed
         '''
-        if 'Akappa' == var:
+        if 'Acc' == var:
+            long_name = 'Mesh Acceleration'
+            units = 'km/s^2'
+            unit_conversion = 1e-5
+        elif 'Akappa' == var:
             unit_conversion = 1  # 0.1
         elif 'Conde' == var:
             unit_conversion = 1  # 8.62e-13

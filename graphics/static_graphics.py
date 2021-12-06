@@ -113,7 +113,7 @@ def xt_diagram(filename, var, coordinate_system='Lagrangian', show_layers=True, 
 
     Args:
         filename (string): Name of the .cdf
-        var (string): Abbreviated name of variable of interest - one of Pres, Rho, Rho0, U, Te, Ti, Tr, R
+        var (string): Abbreviated name of variable of interest - one of Pres, Rho, Rho0, U, Te, Ti, Tr, R, Acc
         coordinate_system (string):
         show_layers (bool, optional): Toggle to show layer interfaces and names
         show_shock_front (bool, optional): Toggle to show the position of the shock front

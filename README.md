@@ -1,5 +1,4 @@
-# PyHy
-Python for Hyades - PyHy  
+# Python for Hyades - PyHy 
 This repository is a Python wrapper for the Hyades hydrocode.
 The primary goal of this repository is lower the barrier to entry of the Hyades hydrocode by 
 automating the tedious parts of the most common uses including creating input files, running the simulation,
@@ -8,14 +7,22 @@ organizing the outputs, visualizing the inputs and outputs, and fitting Hyades v
 Some aspects of Hyades were deliberately left out, and the user does not have control over every aspect of Hyades inputs and outputs.
 This repository is supposed to make the basics very easy, not completely replace the Hyades command line interface.
 
-This repository should work on all operating systems, but was tested on a MacOS installation of Hyades.
 This repository assumes the user has familiarity with Hyades simulations and basic terminal usage.
 Little to no Python knowledge is required.
 
-Developed by Connor Krill (ckrill1@jh.edu) under the Wicks Lab at Johns Hopkins University.
-
+Developed by Connor Krill et al. under the Wicks Lab at Johns Hopkins University.  
 First Published: December 2021  
 Last Updated: December 2021
+
+___
+# Requirements & Set Up
+This repository was written on Python version 3.7.6 and requires Python 3. It uses several additional Python packages,
+all of which are listed under `pyhy/requriements.txt`.
+To install all packages at once, navigate to the PyHy repository in terminal and use the command 
+`pip install - r requirements.txt`. This will attempt to install compatible versions of all required packages if they are not 
+already present on your machine.
+
+This repository should work on all operating systems and was tested on a MacOS installation of Hyades.
 
 ___
 # GUIs for:
