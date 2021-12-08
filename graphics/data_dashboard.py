@@ -314,14 +314,14 @@ def update_surface(children):
                             font=dict( size=16 ), #,family='Courier New, monospace', color='#7f7f7f')
                             autosize=True, height=800,
                             scene={"xaxis": {'title': "Nanoseconds"},
-                                   "yaxis": {"title": "Lagranian Distance"},
+                                   "yaxis": {"title": "Lagrangian Distance"},
                                    "zaxis": {"title": label},
                                    'aspectratio': dict(x=1, y=1, z=0.7),
                                    'aspectmode': "manual",
                                    },
                             template="plotly_white",
                             xaxis={'title': 'Nanoseconds'},
-                            yaxis={'title': 'Lagranian Distance'},
+                            yaxis={'title': 'Lagrangian Distance'},
                             updatemenus=layer_buttons + style_buttons,
                             
                   )
@@ -333,25 +333,26 @@ def update_surface(children):
               Output('heatmap-plot', 'figure'),
               [Input('intermediate-value', 'children')])
 def update_heatmap(children):
-    '''Function to update the 3D heatmap plot of the variable history
-        Includes buttons to change to heat map and simple controls for the colormap'''
+    """Function to update the 3D heatmap plot of the variable history.
+    Includes buttons to change to heat map and simple controls for the colormap
+    """
     if children is None:
         return {
-        'data': [go.Heatmap(x=[1,2,3], y=[4,5,6], z=[[0,0,0,],[0,1,0],[0,0,0]],
-                            )
-                 ],
-                 'layout': go.Layout(title=f'Children is None Error',
-                                     autosize=True, height=800,
-                                     scene={"xaxis": {'title': ""},
-                                     "yaxis": {"title": ""},
-                                     },
-                                     template="plotly_white",
-                                     xaxis={'title': '',},
-                                     yaxis={'title': ''},
-#                                     title_font=dict(size=18),
-#                                     tickfont  =dict(size=18)
-                                     )
-    }
+                'data': [go.Heatmap(x=[1, 2, 3], y=[4, 5, 6], z=[[0, 0, 0, ], [0, 1, 0], [0, 0, 0]],
+                                    )
+                         ],
+                         'layout': go.Layout(title=f'Children is None Error',
+                                             autosize=True, height=800,
+                                             scene={"xaxis": {'title': ""},
+                                                    "yaxis": {"title": ""},
+                                                    },
+                                             template="plotly_white",
+                                             xaxis={'title': ''},
+                                             yaxis={'title': ''},
+                                             # title_font=dict(size=18),
+                                             # tickfont=dict(size=18)
+                                             )
+                }
 
     # load the intermediate variables into useful numpy arrays
     data = json.loads(children)
@@ -420,23 +421,23 @@ def update_heatmap(children):
                                            xanchor="left",
                                            y=1.08,
                                            yanchor="top",
-                                           font={'size':12}
+                                           font={'size': 12}
                                            ),
                       ]
     return {
-        'data': traces,
+            'data': traces,
             'layout': go.Layout(title=f'{data["filename"]} {label} Profile',
-                                font=dict( size=24 ),
+                                font=dict(size=24),
                                 autosize=True, height=800,
                                 scene={"xaxis": {'title': "Nanoseconds"},
-                                       "yaxis": {"title": "Lagranian Distance"},
-                                },
+                                       "yaxis": {"title": "Lagrangian Distance"},
+                                      },
                                 template="plotly_white",
-                                xaxis={'title': 'Nanoseconds',},# 'title_font':{'size':24}, 'tickfont':{'size':24}},
-                                yaxis={'title': 'Lagranian Distance',},# 'title_font':{'size':24}, 'tickfont':{'size':24}},
+                                xaxis={'title': 'Nanoseconds'},  # 'title_font':{'size':24}, 'tickfont':{'size':24}},
+                                yaxis={'title': 'Lagrangian Distance'},  # 'title_font':{'size':24}, 'tickfont':{'size':24}},
                                 updatemenus=layer_buttons + style_buttons
                                 )
-    }
+            }
 ######################################################
 
 file  = 'DatasaurusDozen.csv'
@@ -516,7 +517,7 @@ def update_lineout(selected_time, children):
         'layout': go.Layout(
             title=f'{data["filename"]} {label} Profile',
             font=dict( size=18 ),
-            xaxis={'title': 'Lagranian Distance',},# 'title_font':{'size':24}, 'tickfont':{'size':16} },
+            xaxis={'title': 'Lagrangian Distance',},# 'title_font':{'size':24}, 'tickfont':{'size':16} },
             yaxis={'title': f'{label} {units}',},#   'title_font':{'size':24}, 'tickfont':{'size':16}, 'range':(0, output.max())},
             margin={'l': 200, 'b': 40, 't': 75, 'r': 200},
             hovermode='closest',

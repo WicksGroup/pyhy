@@ -17,7 +17,7 @@ Last Updated: December 2021
 ___
 # Requirements & Set Up
 This repository was written on Python version 3.7.6 and requires Python 3. It uses several additional Python packages,
-all of which are listed under `pyhy/requriements.txt`.
+all of which are listed under `pyhy/requirements.txt`.
 To install all packages at once, navigate to the PyHy repository in terminal and use the command 
 `pip install - r requirements.txt`. This will attempt to install compatible versions of all required packages if they are not 
 already present on your machine.
