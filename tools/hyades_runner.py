@@ -1,131 +1,133 @@
-'''
-Connor Krill August 6, 2019
-Functions to run hyades. Intended for use with the inf_GUI.
-'''
-
+"""Functions to run Hyades, convert the .otf to .cdf, and organize the output files into folders."""
 import os
-import shutil
 import time
+import shutil
 import logging
-from excel_writer import writeExcel
-import traceback
+import subprocess
 
-def batchRunHyades(inf_path, final_destination, copy_data_to_excel, debug=1):
-    '''Use the runHyades and runHyadesPostProcess functions to simulate all .inf in a given folder.'''
-    inf_path = os.path.abspath(inf_path)
-    final_destination = os.path.abspath(final_destination)#.replace(' ','\ ')
-    
-    variables = ('Pres', 'Rho', 'Te', 'Tr', 'Ti', 'U', 'sd1')
-    # setup a logging file
-    filename   = 'hyades.log'
-    log_format = '%(asctime)s %(levelname)s:%(message)s'
-    datefmt    = '%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(filename=filename, 
-                        format=log_format, datefmt=datefmt, level=logging.DEBUG)
-    error_str = f'{filename} not in current directory, {os.getcwd()}'
-    assert filename in os.listdir(os.getcwd()), error_str
+from tools.excel_writer import write_excel
 
-    inf_files = sorted([os.path.splitext(f)[0] for f in os.listdir(inf_path)
-                       if (f.endswith('.inf')) and ('setup' not in f)])
 
-    if inf_files:
-        if debug > 0:
-            print(f'Found {len(inf_files)} .inf files: {", ".join(inf_files)} \n')
+def run_hyades(inf_name, quiet=False):
+    """Runs a single Hyades simulation.
+
+    Args:
+        inf_name (string): Name of the .inf
+        quiet (bool, optional): Toggle to save the terminal output to a text file instead of printing on screen.
+                                This text file is automatically deleted.
+
+    Returns:
+        log_string (string): Status and details of Hyades simulation
+
+    """
+    if quiet:
+        txt_file = os.path.splitext(inf_name)[0] + '_hyades_terminal.txt'
+        command = f'hyades {inf_name} > {txt_file}'
     else:
-        raise Exception(f'Found no .inf files in {inf_path!r}')
-    for run_name in inf_files:
-        # changed a current directory to an abs path, i think this will fix it
-        # creates a new folder named "run_name"
-        try:
-            t2complete = runHyades(inf_path, run_name,
-                                   final_destination, debug=debug)
-        except Exception:
-            errorfile = f"{os.path.join(final_destination, run_name, run_name)}_ErrorLog.txt"
-            with open(errorfile, "w") as log:
-                traceback.print_exc(file=log)
-                print(f"ERROR IN {run_name} - recording error in {errorfile} and skipping this .inf")
-                continue
-        logging.info(f'Complete HYADES run for {run_name} in {round(t2complete,1)} seconds')
-        runHyadesPostProcess(os.path.join( os.path.abspath(final_destination), run_name, run_name),
-                             variables, debug=debug) # post processing on all variables
-        logging.info(f'Completed post processing for {run_name} variables: {", ".join(variables)}')
+        command = f'hyades {inf_name}'
 
-        if copy_data_to_excel:
-            writeExcel(os.path.join(final_destination, run_name, run_name),
-                       os.path.join(final_destination, run_name, run_name), variables)
-        
+    t0 = time.time()
+    os.system(command)
+    t1 = time.time()
 
-        # move the folder and post processing to final_destination
-#        if (final_destination != './') and (final_destination != os.getcwd()):
-#            shutil.move(os.path.join(inf_path, run_name), final_destination)
-#        print("FINISHED THE RUN AND POST LOOP FOR", run_name)
-        if debug > 0:
-            print()
-    if debug > 0:
-        print('Finished')
+    if quiet:
+        if os.path.exists(txt_file):  # Delete the terminal output if it exists
+            os.remove(txt_file)
+
+    file_extensions = ('.otf', '.ppf', '.tmf')
+    run_name = os.path.basename(os.path.splitext(inf_name)[0])
+    found_all = all([run_name + ext in os.listdir(os.path.dirname(inf_name))
+                     for ext in file_extensions])
+    if found_all:
+        log_string = f'Completed Hyades simulation of {os.path.basename(inf_name)} in {t1 - t0:.2f} seconds.'
+    else:
+        log_string = f'Failed to run Hyades simulation of {os.path.basename(inf_name)}.'
+
+    return log_string
 
 
+def otf2cdf(otf_name, quiet=False):
+    """Runs the PPF2NCDF command to convert Hyades output (.otf) to a netcdf (.cdf) file
 
-def runHyades(path, run_name, final_destination, debug=0):
-    ''' Run hyades for a given run name
-        Create a new directory and move all files into it.'''
-#    os.chdir(path)
-    assert f'{run_name}.inf' in os.listdir(path), f'Did not find {run_name}.inf in {path!r}'
-    
-    try:
-        t0 = time.time()
-        command = f'hyades -c {os.path.join(path, run_name)}'
-        if debug==2:
-            print(os.getcwd())
-            print(os.listdir())
-        if debug==1 or debug==2:
-            print(f'Started {command!r}')
-        os.system(command)
-        t1 = time.time()
-        t2complete = t1 - t0
-        if debug==1 or debug==2:
-            print(f'Completed {command!r} in {str(int(t2complete))} seconds')
-    except:
-        raise Exception(f'Error occured running {command!r}')
-    
-    # create a directory for this run
-    if not os.path.isdir(os.path.join(final_destination, run_name)):
-        os.mkdir(os.path.join(final_destination, run_name))
-        if debug==2:
-            print(f'Createdy a directory named: {run_name}')
-        
-    # Get the names of all files to move
-    files_to_move = [f for f in os.listdir(path) if (f.startswith(run_name)) and (not os.path.isdir(os.path.join(path, f))) ]
+    Args:
+        otf_name (string): Name of the .otf (should match name of .inf)
+        quiet (bool, optional): Toggle to save the terminal output to a text file instead of printing on screen
 
-    try: # move the files
-        for file in files_to_move:
-            shutil.move(os.path.join(path, file), os.path.join(final_destination, run_name, file))
-        if debug==2:
-            print(f'Moved {str(len(files_to_move))} files to {run_name}')
-    except:
-        raise Exception(f'Error occured moving {file}')
+    Returns:
+        log_string (string): status of the PPF2NCDF command
 
-    assert len(files_to_move)==4, f'Expected to find 4 files to move (.inf, .otf, .ppf, .tmf) - instead found {files_to_move}'
+    """
+    if quiet:
+        txt_file = os.path.splitext(otf_name)[0] + '_PPF2NCDF_terminal.txt'
+        command = f'PPF2NCDF {os.path.splitext(otf_name)[0]} > {txt_file}'
+    else:
+        command = f'PPF2NCDF {os.path.splitext(otf_name)[0]}'
+    os.system(command)
 
-    return t2complete
+    if quiet:
+        if os.path.exists(txt_file):  # Delete the terminal output if it exists
+            os.remove(txt_file)
 
-    
-def runHyadesPostProcess(run_name, variables, debug=0):
-    '''Run HyadesPostProcess for a list of variables'''
-    for var in variables:
-        command = f'HyadesPostProcess {run_name} {var}'
-        os.system(command)
-        if debug==2:
-            print(f'Completed {command!r}')
-            matching = [f for f in os.listdir() if f.startswith(run_name) and f.endswith(f'{var}.dat')]
-            assert matching, f'Error: did not process {var}'
-    if debug==1 or debug==2:    
-        print(f'Completed HyadesPostProcess for {variables}')
-        
-        
-        
-if __name__=='__main__':
-    inf_path = '../data/inf'
-    final_destination = '../data/'
-    copy_data_to_excel = True
-    batchRunHyades(inf_path, final_destination, copy_data_to_excel)
+    run_name = os.path.basename(os.path.splitext(otf_name)[0])
+    found = run_name + '.cdf' in os.listdir(os.path.dirname(otf_name))
+    if found:
+        log_string = 'Completed PPF2NCDF.'
+    else:
+        log_string = 'Failed PPF2NCDF.'
+
+    return log_string
+
+
+def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
+    """Runs Hyades simulations of many .inf files and packages each output into its own folder.
+
+    Args:
+        inf_dir (string): Name of the directory containing .inf files
+        out_dir (string): Destination directory where all the data will end up
+        excel_variables (list, optional): List of abbreviated variable names to copy to excel file
+        quiet (bool, optional): Toggle to hide the terminal output during simulation
+
+    Returns:
+        None
+
+    """
+    inf_files = sorted([f for f in os.listdir(inf_dir) if f.endswith('.inf')])
+    if len(inf_files) == 0:  # if there are no inf files in the inf_directory
+        raise ValueError(f'Did not find any .inf files in {inf_dir}')
+
+    if inf_dir.startswith('./'):  # Hyades doe not work with ./ prepended on directories
+        inf_dir = inf_dir[2:]
+
+    # Set up a logging file
+    filename = 'hyades.log'
+    log_format = '%(asctime)s %(levelname)s:%(message)s'
+    date_format = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(filename=filename, format=log_format, datefmt=date_format, level=logging.DEBUG)
+
+    for inf in inf_files:
+        # print(f'Starting Hyades {inf}')
+        abs_path = os.path.join(inf_dir, inf)
+        # Run Hyades
+        log_note = run_hyades(abs_path, quiet=quiet)
+        # Run PPF2NCDF to create .cdf file and add note to log
+        log_note += ' ' + otf2cdf(abs_path, quiet=quiet)
+
+        # Optionally convert .cdf as a human-readable excel file
+        if excel_variables:
+            excel_filename = os.path.join(os.path.splitext(abs_path)[0])
+            write_excel(abs_path, excel_filename, excel_variables)
+            log_note += f' Saved {", ".join(excel_variables)} to excel file.'
+        logging.info(log_note)
+
+        # Create new directory in out_dir
+        basename = os.path.splitext(inf)[0]
+        new_dir = os.path.join(out_dir, basename)
+        os.mkdir(new_dir)
+        # Move all files with the same name as the .inf to the new directory
+        for f in os.listdir(inf_dir):
+            if os.path.splitext(f)[0] == basename:
+                source = os.path.join(inf_dir, f)
+                destination = os.path.join(new_dir, f)
+                shutil.move(source, destination)
+
+    return None

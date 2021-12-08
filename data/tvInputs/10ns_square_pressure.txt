@@ -1,6 +1,6 @@
-S26622 ramp pressure drive
+10 ns Square pressure drive
 time (ns), Pressure (Gpa)
 0.0, 0.0
-0.1, 40
-10.0, 40
+0.1, 500
+10.0, 500
 10.1, 0.0
