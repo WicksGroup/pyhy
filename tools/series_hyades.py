@@ -1,7 +1,5 @@
 """A script to run benchmark Hyades times against parallel runs
 
-Todo:
-    - confirm this works at all. I think my inf files are broken, check B
 """
 import os
 import time
@@ -9,18 +7,26 @@ import time
 
 def run_hyades(inf):
     """A simple function to run Hyades in series for several inf files"""
-    command = f'hyades {inf} nano '
-    print('Starting', command)
+    command = f'hyades {inf}'
+    with open('series_log.txt', 'a') as f:
+        f.write(f'Starting {command}\n')
     start = time.time()
     os.system(command)
     stop = time.time()
-    print(f'Finished {command} in {stop - start:.4f} seconds')
+    with open('series_log.txt', 'a') as f:
+        f.write(f'Finished {command} in {stop - start:.4f} seconds\n')
 
 
 if __name__ == '__main__':
-    inf_files = sorted([f for f in os.listdir('./') if f.endswith('.inf')])
+    path = '../data/inf'
+    inf_files = sorted([f for f in os.listdir(path) if f.endswith('.inf')])
+    with open('series_log.txt', 'w') as f:
+        f.write(f'Logging for series_hyades.py\n')
+        f.write(f'Running {len(inf_files)} Hyades simulations in series.\n')
+        f.write(f'inf files are: {", ".join(inf_files)}\n')
     start_time = time.time()
     for inf in inf_files:
-        run_hyades(inf)
+        run_hyades(os.path.join(path, inf))
     end_time = time.time()
-    print(f'Entire script took {end_time - start_time:.4f} seconds.')
+    with open('series_log.txt', 'a') as f:
+        f.write(f'Entire script took {end_time - start_time:.4f} seconds.')
