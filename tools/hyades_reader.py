@@ -57,7 +57,7 @@ class HyadesOutput:
             self.dir_name = os.path.dirname(filename)
 
         self.run_name = os.path.splitext(os.path.basename(filename))[0]
-        self.var = var
+        self.var = var.capitalize()
 
         # Get variable information from cdf
         if self.run_name + '.cdf' in os.listdir(self.dir_name):
@@ -104,11 +104,11 @@ class HyadesOutput:
 
         """
         cdf = netcdf.netcdf_file(filename, 'r')
-
         time = cdf.variables['DumpTimes'].data.copy() * 1e9  # convert seconds to nanoseconds
         x = cdf.variables['R'].data.copy() * 1e4  # x is the mesh coordinates, convert cm to um
         output = cdf.variables[var].data.copy()  # output may be a 1D, 2D, or 3D array depending on the variable
         data_dimensions = cdf.variables[var].dimensions
+        # FIXME: what does sd1 do with the pressure calculations. Ray thinks it needs to be subtracted
         # if var == 'Pres':
         #     sd1 = cdf.variables['Sd1'].data.copy()
         #     output = output - sd1
@@ -160,6 +160,10 @@ class HyadesOutput:
             unit_conversion = 1  # 8.62e-11
         elif 'R' == var:
             long_name = 'Eulerian Position'
+            units = 'µm'
+            unit_conversion = 1e4
+        elif 'RCM' == var:
+            long_name = 'Eulerian Zone Position'
             units = 'µm'
             unit_conversion = 1e4
         elif 'Rho' == var:

@@ -95,7 +95,7 @@ class HyadesOptimizer:
         """Take apart the single vector from the optimizer into the component parts
 
         Note:
-            If we ever optimize more than one variable at a time this will be useful.
+            Currently, this doesn't do much. If we ever optimize more than one variable at a time this will be useful.
         """
         self.pres = var_vec
 

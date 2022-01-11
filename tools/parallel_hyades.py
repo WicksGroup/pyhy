@@ -1,5 +1,7 @@
 """An attempt to run Hyades simulations in parallel. Does **not** neatly format the output like hyades_runner.py
 
+TODO:
+    - Remove terminal displays from the hyades commands
 """
 import multiprocessing
 import os

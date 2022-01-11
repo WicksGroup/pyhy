@@ -3,6 +3,7 @@
 Todo:
     - Implement shock velocity
     - Does the restart function need to clear any hyades data after the best one?
+    - Can I make a branch with my own jacobian function?
 """
 import sys
 sys.path.append('../')
