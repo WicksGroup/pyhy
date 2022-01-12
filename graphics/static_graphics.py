@@ -2,8 +2,6 @@
 
 Todo:
     - add histogram
-    - add rho / rho0 compressive factor as a plotting option
-
 """
 import sys
 sys.path.append('../')
@@ -245,8 +243,8 @@ def visualize_target(filename):
         ax.add_patch(matplotlib.patches.Rectangle((x, y), width, height,
                                                   facecolor=c,
                                                   edgecolor=None))
-    upper_x = hyades.x.max() * 1.05
-    lower_x = hyades.x.max() * -0.05
+    upper_x = hyades.x[0, :].max() * 1.05
+    lower_x = hyades.x[0, :].max() * -0.05
     ax.set(xlabel='Lagrangian Position (µm)', xlim=(lower_x, upper_x), ylim=(-0.3, 1.3))
     ax.set_title(f'Target Visualization of {hyades.run_name}')
     plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
@@ -284,15 +282,9 @@ def eulerian_position(filename):
         i = np.argmin(abs(hyades.time - t))
         mesh_coordinates = hyades.output[i, :]
         zone_coordinates = (mesh_coordinates[1:] + mesh_coordinates[:-1]) / 2
-        # print('Time: ', t, 'Hyades min/max: ', hyades.output.min(), hyades.output.max())
-        # print('Time: ', t, 'Mesh min/max: ', mesh_coordinates.min(), mesh_coordinates.max())
-        # print('Time: ', t, 'Zone min/max: ', zone_coordinates.min(), zone_coordinates.max())
         for layer_num in np.unique(region_numbers):
-            # print(t, layer_num)
             mask, = np.where(region_numbers == layer_num)
-            # print(mask)
             layer_zone_coordinates = zone_coordinates[mask]
-            # print(layer_zone_coordinates)
             y = [hyades.time[i] for j in range(len(layer_zone_coordinates))]
             ax.plot(layer_zone_coordinates, y, marker='o', color=colors[layer_num-1], markersize=1)
 

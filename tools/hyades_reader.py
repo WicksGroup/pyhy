@@ -110,7 +110,7 @@ class HyadesOutput:
         data_dimensions = cdf.variables[var].dimensions
         # FIXME: what does sd1 do with the pressure calculations. Ray thinks it needs to be subtracted
         # if var == 'Pres':
-        #     sd1 = cdf.variables['Sd1'].data.copy()
+        #     sd1 = cdf.variables['Sd1'].data.copy() * 1e-10
         #     output = output - sd1
 
         if cdf.variables[var].dimensions[1] == 'NumMeshs':

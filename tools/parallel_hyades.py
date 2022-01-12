@@ -9,7 +9,7 @@ import time
 
 
 def run_hyades(inf):
-    """A simple function to run Hyades in series for several inf files"""
+    """A simple function to run Hyades in parallel for several inf files"""
     command = f'hyades {inf}'
     with open('parallel_log.txt', 'a') as f:
         f.write(f'Starting {command}\n')
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     inf_files = sorted([f for f in os.listdir(path) if f.endswith('.inf')])
     with open('parallel_log.txt', 'w') as f:
         f.write(f'Logging for parallel_log.py\n')
-        f.write(f'Running {len(inf_files)} Hyades simulations in series.\n')
+        f.write(f'Running {len(inf_files)} Hyades simulations in parallel.\n')
         f.write(f'inf files are: {", ".join(inf_files)}\n')
     num_processes = len(inf_files)
     start_time = time.time()
@@ -36,5 +36,3 @@ if __name__ == '__main__':
     end_time = time.time()
     with open('parallel_log.txt', 'a') as f:
         f.write(f'Entire script took {end_time - start_time:.4f} seconds.')
-
-
