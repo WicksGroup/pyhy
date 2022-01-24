@@ -298,7 +298,7 @@ def eulerian_position(filename):
     return fig, ax
 
 
-def plot_shock_velocity(filename, mode):
+def plot_shock_velocity(filename, mode, color=None):
     """Plot the Shock Velocity.
 
     Note:
@@ -307,6 +307,7 @@ def plot_shock_velocity(filename, mode):
     Args:
         filename (string): Name of the .cdf
         mode (string): Type of indexing to use on particle velocity - one of Left, Right, All, Difference, or a list
+        color:
 
     Returns:
         fig (matplotlib figure), ax (matplotlib axis)
@@ -347,7 +348,10 @@ def plot_shock_velocity(filename, mode):
     else:
         shock = ShockVelocity(filename, mode=mode)
         fig, ax = plt.subplots()
-        ax.plot(shock.time, shock.Us)
+        if color:
+            ax.plot(shock.time, shock.Us, color=color)
+        else:
+            ax.plot(shock.time, shock.Us)
         save_dictionary['Time (ns)'] = shock.time
         save_dictionary[f'{mode} Us (km/s)'] = shock.Us
         ax.set_title(f'Shock Velocity ({mode}) of {shock.run_name}')

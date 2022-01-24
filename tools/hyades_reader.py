@@ -183,9 +183,15 @@ class HyadesOutput:
             long_name = 'Particle Velocity'
             units = 'km/s'
             unit_conversion = 1e-5
+        elif 'Ucm' == var:
+            long_name = 'Zone Particle Velocity'
+            units = 'km/s'
+            unit_conversion = 1e-5
         elif 'Ubin' == var:
             units = 'Joules/(K * m^3)'
             unit_conversion = 8.62e-9
+        else:
+            raise Exception(f'HyadesOutput does not recognize variable: {var}')
 
         output *= unit_conversion
 

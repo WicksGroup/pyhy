@@ -95,7 +95,7 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
     if len(inf_files) == 0:  # if there are no inf files in the inf_directory
         raise ValueError(f'Did not find any .inf files in {inf_dir}')
 
-    if inf_dir.startswith('./'):  # Hyades doe not work with ./ prepended on directories
+    if inf_dir.startswith('./'):  # Hyades does not work with ./ prepended on directories
         inf_dir = inf_dir[2:]
 
     # Set up a logging file
