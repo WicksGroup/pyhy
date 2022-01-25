@@ -147,7 +147,7 @@ class HyadesOptimizer:
 
     def calculate_residual(self):
         """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment
-        # FIXME: Implement residual for shock velocity. Known to be broken as oc t Oct 13, 2021
+        # FIXME: Implement residual for shock velocity. Known to be broken as Oct 13, 2021
         """
         hyades_file = f'{self.run_name}_{str(self.iter_count).zfill(3)}'
         hyades_path = os.path.join(self.path, hyades_file, hyades_file)
@@ -159,7 +159,6 @@ class HyadesOptimizer:
             self.shock_moi = hyades_U.shock_moi
 
         if self.use_shock_velocity:
-
             # adjust the shock velocity timing so the shock MOI lines up with experimental data
             # calculate residual on the overlap between the adjusted time and experimental data
             # ie calculate from (beginning of experimental time) to (end of exp_time or shock leaves shock MOI)
