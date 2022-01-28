@@ -159,22 +159,41 @@ class HyadesOptimizer:
             self.shock_moi = hyades_U.shock_moi
 
         if self.use_shock_velocity:
-            # adjust the shock velocity timing so the shock MOI lines up with experimental data
-            # calculate residual on the overlap between the adjusted time and experimental data
-            # ie calculate from (beginning of experimental time) to (end of exp_time or shock leaves shock MOI)
-            shock = ShockVelocity(hyades_path, 'Shock velocity')
-            time_start = shock.material_properties[hyades_U.shock_MOI]['timeIn']
-            time_stop = shock.material_properties[hyades_U.shock_MOI]['timeOut']
-            delay = self.exp_time.min() - time_start
-            self.delay = delay
-            adjusted_shock_time = shock.time + delay
-            # interpolate from the beginning of exp_time
-            # to the end of exp_time or the shock leaves the sample, whichever comes first
-            f_Us = interpolate.interp1d(adjusted_shock_time, shock.Us)
-            max_interp_time = min(self.exp_time.max(), time_stop)
-            interp_time = np.linspace(self.exp_time.min(), max_interp_time, num=50)
-            interp_hyades = f_Us(interp_time)
-            self.residual = sum(np.square(self.exp_data - interp_hyades))
+            '''All the old code that was written for an outdated version of HyadesOutput'''
+            # # adjust the shock velocity timing so the shock MOI lines up with experimental data
+            # # calculate residual on the overlap between the adjusted time and experimental data
+            # # ie calculate from (beginning of experimental time) to (end of exp_time or shock leaves shock MOI)
+            # shock = ShockVelocity(hyades_path, 'Shock velocity')
+            # time_start = shock.material_properties[hyades_U.shock_MOI]['timeIn']
+            # time_stop = shock.material_properties[hyades_U.shock_MOI]['timeOut']
+            # delay = self.exp_time.min() - time_start
+            # self.delay = delay
+            # adjusted_shock_time = shock.time + delay
+            # # interpolate from the beginning of exp_time
+            # # to the end of exp_time or the shock leaves the sample, whichever comes first
+            # f_Us = interpolate.interp1d(adjusted_shock_time, shock.Us)
+            # max_interp_time = min(self.exp_time.max(), time_stop)
+            # interp_time = np.linspace(self.exp_time.min(), max_interp_time, num=50)
+            # interp_hyades = f_Us(interp_time)
+            # self.residual = sum(np.square(self.exp_data - interp_hyades))
+
+            shock = ShockVelocity(hyades_path)
+
+            '''
+            Calculate the residual between the Hyades Shock Velocity and the Experimental Velocity 
+            from when the shock enters the material of interest till it leaves the material of interest, 
+            or the experimental data ends, whichever comes first
+            '''
+            residual_time_start = shock.time_into_moi
+            residual_time_stop = min(shock.time_out_of_moi, self.exp_time.max())
+            residual_time = np.linspace(residual_time_start, residual_time_stop, num=50)
+
+            f_hyades = interpolate.interp1d(shock.time, shock.Us)
+            f_experiment = interpolate.interp1d(self.exp_time, self.exp_data)
+
+            difference = f_experiment(residual_time_stop) - f_hyades(residual_time)
+            self.residual = sum(np.square(difference))
+
         else:
             if self.material_of_interest is None:
                 self.material_of_interest = hyades_U.moi

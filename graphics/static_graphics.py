@@ -385,7 +385,6 @@ def debug_shock_velocity(filename, mode='Cubic'):
     """
     hyades = HyadesOutput(filename, 'Pres')
     shock = ShockVelocity(filename, mode)
-    print(shock.time.shape, shock.Us.shape)
     fig, ax = xt_diagram(filename, 'Pres')
     x0 = hyades.x[0, shock.window_start]
     y0 = shock.time
@@ -395,7 +394,8 @@ def debug_shock_velocity(filename, mode='Cubic'):
             color='white', ls='dotted', lw=2, label='Shock Window')
     ax.plot(x1, y1,
             color='white', ls='dotted', lw=2)
-    ax.plot(hyades.x[0, shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
+    ax.scatter(hyades.x[0, shock.shock_index], shock.time,
+               color='red', marker='x', label='Shock Front')
     ax.legend()
 
     return fig, ax

@@ -492,13 +492,17 @@ class ShockVelocity:
             '''Attempting to find the time the shock enters and exits the shock material of interest.'''
             if self.shock_moi:  # Only True if inf has a shock material of interest specified
                 if self.time_into_moi is None:  # only consider reassigning time_into_moi if it is None
-                    if shock_index == hyades_Up.layers[hyades_Up.shock_moi]['Mesh Start']:
+                    if shock_index >= hyades_Up.layers[hyades_Up.shock_moi]['Mesh Start']:
                         self.time_into_moi = hyades_Up.time[t]
-                if self.time_out_of_moi is None:  # only consider reassigning time_out_of_moi if it is None
-                    if shock_index == hyades_Up.layers[hyades_Up.shock_moi]['Mesh Stop']:
+                if (self.time_into_moi is not None) and (self.time_out_of_moi is None):
+                    # only True if the shock has entered the shock moi and has not exited
+                    if shock_index >= hyades_Up.layers[hyades_Up.shock_moi]['Mesh Stop']:
                         self.time_out_of_moi = hyades_Up.time[t]
 
-            if abs(len(hyades_pres.x[0, :]) - window_stop) <= 2:  # If the shock index is too close to the free surface, stop
+            if (len(hyades_pres.x[0, :]) - window_stop) <= 2:  # If shock index is too close to the free surface, stop
+                if (self.time_into_moi is not None) and (self.time_out_of_moi is None):
+                    # If we haven't assigned a time_out_of_moi, assign it now
+                    self.time_out_of_moi = hyades_Up.time[t]
                 break
 
         shock_velocity = np.array(pressure) / (np.array(density) * np.array(particle_velocity))
