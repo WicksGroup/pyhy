@@ -170,11 +170,11 @@ parser = argparse.ArgumentParser(prog='optimize.py',
 parser.add_argument('filename', type=str,
                     help='Name of the Hyades run to be optimized.')
 command_group = parser.add_mutually_exclusive_group()
-command_group.add_argument('-s', '--start', action='store_true',
+command_group.add_argument('-s', '-start', action='store_true',
                            help='Start the optimization from the parameters in the .cfg file.')
-command_group.add_argument('-r', '--restart', type=int,
+command_group.add_argument('-r', '-restart', type=int,
                            help='Continue a previous optimization with specified number of pressure points.')
-parser.add_argument('-d', '-debug', type=int, const=0,
+parser.add_argument('-d', '-debug', type=int, const=0, args='?',
                     help='Flag to print debug statements during optimization. ')
 
 parser.add_argument('-b', '-best', action='store_true',
