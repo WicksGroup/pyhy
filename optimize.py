@@ -19,7 +19,7 @@ from optimizer.hyop_functions import calculate_laser_pressure
 from graphics import optimizer_graphics
 
 
-def run_optimizer(run_name, restart=0):
+def run_optimizer(run_name, restart=0, debug=0):
     """Starts an optimization to fit Hyades simulated Velocity to experimental VISAR.
 
     This function is mostly formatting the variables specified in the .cfg to work with the Hyades Optimizer class.
@@ -33,7 +33,8 @@ def run_optimizer(run_name, restart=0):
 
     Args:
         run_name (string):
-        restart (int):
+        restart (int, optional):
+        debug (int, optional):
 
     Returns:
         sol (scipy.optimize.OptimizeResult): The solution to the optimization
@@ -60,7 +61,7 @@ def run_optimizer(run_name, restart=0):
     if len(time) == 3 and len(pressure) != 3:  # If time is in the format: start, stop, num
         time = [i for i in np.linspace(time[0], time[1], num=int(time[2]), endpoint=True)]
     hyop = HyadesOptimizer(run_name, time, pressure,
-                           delay=delay, use_shock_velocity=use_shock_velocity)
+                           delay=delay, use_shock_velocity=use_shock_velocity, debug=debug)
 
     laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
                                           fallback=0)
@@ -173,22 +174,24 @@ command_group.add_argument('-s', '--start', action='store_true',
                            help='Start the optimization from the parameters in the .cfg file.')
 command_group.add_argument('-r', '--restart', type=int,
                            help='Continue a previous optimization with specified number of pressure points.')
-parser.add_argument('-b', '--best', action='store_true',
+parser.add_argument('-d', '-debug', type=int, const=0,
+                    help='Flag to print debug statements during optimization. ')
+
+parser.add_argument('-b', '-best', action='store_true',
                     help='Plot the best velocity from a completed optimization, '
                          'experimental velocity, and pressure drive all on a single figure.')
-parser.add_argument('-g', '--histogram', action='store_true',
+parser.add_argument('-g', '-histogram', action='store_true',
                     help='Plot a pressure histogram of the best run from a completed optimization.')
-parser.add_argument('-v', '--velocity', action='store_true',
+parser.add_argument('-v', '-velocity', action='store_true',
                     help='Plot a comparison of the optimized and experimental velocities.')
 args = parser.parse_args()
 # End parser
 
-print(args.filename, 'START: ', args.start)
-print(args.filename, 'RESTART: ', args.restart)
+print(args.filename, 'DEBUG:', args.debug)
 if args.start:
-    sol = run_optimizer(args.filename)
+    sol = run_optimizer(args.filename, debug=args.debug)
 if args.restart:
-    sol = run_optimizer(args.filename, restart=args.restart)
+    sol = run_optimizer(args.filename, restart=args.restart, debug=args.debug)
 if args.best:
     fig, ax = optimizer_graphics.compare_velocities(args.filename)
 if args.histogram:

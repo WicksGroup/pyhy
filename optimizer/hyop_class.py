@@ -19,7 +19,7 @@ class HyadesOptimizer:
 
     """
     
-    def __init__(self, run_name, t0, x0, delay=0, use_shock_velocity=False):
+    def __init__(self, run_name, t0, x0, delay=0, use_shock_velocity=False, debug=0):
         """Constructor method to initialize Hyades parameters and simulation hyperparameters
 
         Args:
@@ -34,6 +34,7 @@ class HyadesOptimizer:
         self.pres = np.array(x0)
         self.delay = delay
         self.use_shock_velocity = use_shock_velocity
+        self.debug = debug
         
         self.exp_file = ''
         self.path = f'./data/{self.run_name}/'
@@ -93,6 +94,10 @@ class HyadesOptimizer:
 
         self.exp_time = np.linspace(time_of_interest[0], time_of_interest[1], num=50)
         self.exp_data = f_velocity(self.exp_time)
+        if self.debug >= 1:
+            print(f'DEBUG: Experimental Data\n'
+                  f'Experimental Time has {len(self.exp_time)} points from {self.exp_time.min()} to {self.exp_time.max()}\n'
+                  f'Experimental Velocity has {len(self.exp_data)} points from {self.exp_data.min()} to {self.exp_data.max()}')
 
     def update_variables(self, var_vec):
         """Take apart the single vector from the optimizer into the component parts
@@ -181,6 +186,11 @@ class HyadesOptimizer:
             # self.residual = sum(np.square(self.exp_data - interp_hyades))
 
             shock = ShockVelocity(hyades_path)
+            if self.debug >= 1:
+                print(f'DEBUG: Hyades Shock Velocity\n'
+                      f'Shock.time has {len(shock.time)} points from {shock.time.min()} to {shock.time.max()}\n'
+                      f'Shock.Us has {len(shock.Us)} points from {shock.Us.min()} to {shock.Us.max()}\n'
+                      f'shock_moi: {shock.shock_moi}, time_into_moi: {shock.time_into_moi}, time_out_of_moi: {shock.time_out_of_moi}')
             '''
             Calculate the residual between the Hyades Shock Velocity and the Experimental Velocity 
             from when the shock enters the material of interest till it leaves the material of interest, 
