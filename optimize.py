@@ -170,19 +170,19 @@ parser = argparse.ArgumentParser(prog='optimize.py',
 parser.add_argument('filename', type=str,
                     help='Name of the Hyades run to be optimized.')
 command_group = parser.add_mutually_exclusive_group()
-command_group.add_argument('-s', '-start', action='store_true',
+command_group.add_argument('-s', '--start', action='store_true',
                            help='Start the optimization from the parameters in the .cfg file.')
-command_group.add_argument('-r', '-restart', type=int,
+command_group.add_argument('-r', '--restart', type=int,
                            help='Continue a previous optimization with specified number of pressure points.')
-parser.add_argument('-d', '-debug', type=int, const=0, nargs='?',
+parser.add_argument('-d', '--debug', type=int, const=0, nargs='?',
                     help='Flag to print debug statements during optimization. ')
 
-parser.add_argument('-b', '-best', action='store_true',
+parser.add_argument('-b', '--best', action='store_true',
                     help='Plot the best velocity from a completed optimization, '
                          'experimental velocity, and pressure drive all on a single figure.')
-parser.add_argument('-g', '-histogram', action='store_true',
+parser.add_argument('-g', '--histogram', action='store_true',
                     help='Plot a pressure histogram of the best run from a completed optimization.')
-parser.add_argument('-v', '-velocity', action='store_true',
+parser.add_argument('-v', '--velocity', action='store_true',
                     help='Plot a comparison of the optimized and experimental velocities.')
 args = parser.parse_args()
 # End parser
