@@ -5,8 +5,6 @@ Todo:
     - Does the restart function need to clear any hyades data after the best one?
     - Can I make a branch with my own jacobian function?
 """
-import sys
-sys.path.append('../')
 import os
 import json
 import argparse
@@ -14,6 +12,8 @@ import configparser
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate, optimize
+import sys
+sys.path.append('../')
 from optimizer.hyop_class import HyadesOptimizer, ResolutionError
 from optimizer.hyop_functions import calculate_laser_pressure
 from graphics import optimizer_graphics

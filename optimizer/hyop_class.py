@@ -14,8 +14,6 @@ from tools import hyades_runner
 class HyadesOptimizer:
     """Class used to fit a Hyades simulated velocity to experimentally measured VISAR
 
-    Massive class that will be fed into the SciPy optimization function to fit hyades data to experiment.
-
     Note:
         See HyadesOptimizer.run(), the last function, for a summary of how this class works
 
@@ -28,6 +26,7 @@ class HyadesOptimizer:
             run_name (string): Name of the folder and setup file for the optimization
             t0 (list): timing of the initial pressure
             x0 (list): initial guess of the pressure drive
+            delay (float, optional):
             use_shock_velocity (bool, optional): Toggle to optimize shock velocity instead of particle velocity
         """
         self.run_name = run_name
@@ -76,10 +75,14 @@ class HyadesOptimizer:
         velocity = df[df.columns[1]]
         # Excel adds NaN rows to Velocity Time and Velocity if the other columns in the sheet are longer
         # This drops all rows from velocity and time if the first instance of NaN till the end of the file is NaN
-        index_of_first_nan = min(np.where(velocity.isna())[0])
-        if all(velocity_time[index_of_first_nan:].isna()):
-            velocity_time = velocity_time[:index_of_first_nan]
-            velocity = velocity[:index_of_first_nan]
+        if any(velocity.isna()):
+            index_of_first_nan = min(np.where(velocity.isna())[0])
+            if all(velocity_time[index_of_first_nan:].isna()):
+                velocity_time = velocity_time[:index_of_first_nan]
+                velocity = velocity[:index_of_first_nan]
+            else:
+                raise ValueError(f'Found NaN (Not-a-Number) in {self.exp_file} and could not easily remove them.\n'
+                                 f'This might be caused by blank rows or invalid numbers in {self.exp_file}')
 
         if any(velocity.isna()) or any(velocity_time.isna()):
             raise ValueError(f'Found NaN (Not-a-Number) in experimental velocity file {self.exp_file}')
@@ -159,7 +162,7 @@ class HyadesOptimizer:
             self.shock_moi = hyades_U.shock_moi
 
         if self.use_shock_velocity:
-            '''All the old code that was written for an outdated version of HyadesOutput'''
+            '''All the old code that was written for an outdated version of the HyadesOutput class'''
             # # adjust the shock velocity timing so the shock MOI lines up with experimental data
             # # calculate residual on the overlap between the adjusted time and experimental data
             # # ie calculate from (beginning of experimental time) to (end of exp_time or shock leaves shock MOI)
@@ -178,7 +181,6 @@ class HyadesOptimizer:
             # self.residual = sum(np.square(self.exp_data - interp_hyades))
 
             shock = ShockVelocity(hyades_path)
-
             '''
             Calculate the residual between the Hyades Shock Velocity and the Experimental Velocity 
             from when the shock enters the material of interest till it leaves the material of interest, 
@@ -310,7 +312,10 @@ class HyadesOptimizer:
         self.save_json()
 
         pretty_pressure = ', '.join([f'{p:.2f}' for p in self.pres])
-        print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f} Pressure: {pretty_pressure}')
+        print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}\n'
+              f'\tPressure: {pretty_pressure}')
+        if self.iter_count < 5:
+            print(f'Using Shock Velocity: {self.use_shock_velocity}')
 
         self.iter_count += 1
         if (self.residual < 50) and (len(self.pres_time) <= 10):
