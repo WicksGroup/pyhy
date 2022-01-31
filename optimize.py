@@ -174,7 +174,7 @@ command_group.add_argument('-s', '-start', action='store_true',
                            help='Start the optimization from the parameters in the .cfg file.')
 command_group.add_argument('-r', '-restart', type=int,
                            help='Continue a previous optimization with specified number of pressure points.')
-parser.add_argument('-d', '-debug', type=int, const=0, args='?',
+parser.add_argument('-d', '-debug', type=int, const=0, nargs='?',
                     help='Flag to print debug statements during optimization. ')
 
 parser.add_argument('-b', '-best', action='store_true',
