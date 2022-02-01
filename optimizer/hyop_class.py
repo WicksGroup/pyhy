@@ -196,14 +196,31 @@ class HyadesOptimizer:
             from when the shock enters the material of interest till it leaves the material of interest, 
             or the experimental data ends, whichever comes first
             '''
-            residual_time_start = shock.time_into_moi
-            residual_time_stop = min(shock.time_out_of_moi, self.exp_time.max())
-            residual_time = np.linspace(residual_time_start, residual_time_stop, num=50)
 
-            f_hyades = interpolate.interp1d(shock.time, shock.Us)
+            '''Previous attempt at shock velocity residual that failed'''
+            # residual_time_start = shock.time_into_moi
+            # residual_time_stop = min(shock.time_out_of_moi, self.exp_time.max())
+            # residual_time = np.linspace(residual_time_start, residual_time_stop, num=50)
+
+            # f_hyades = interpolate.interp1d(shock.time, shock.Us)
+            # f_experiment = interpolate.interp1d(self.exp_time, self.exp_data)
+            #
+            # difference = f_experiment(residual_time_stop) - f_hyades(residual_time)
+            # self.residual = sum(np.square(difference))
+            '''new attempt
+            In theory I think this should also be trying to minimize delay but lets see how it works
+            '''
+            delay = self.exp_time.min() - shock.time_into_moi
+
+            delayed_time = shock.time + delay
+            f_hyades = interpolate.interp1d(delayed_time, shock.Us)
             f_experiment = interpolate.interp1d(self.exp_time, self.exp_data)
 
-            difference = f_experiment(residual_time_stop) - f_hyades(residual_time)
+            residual_time_start = self.exp_time.min()
+            residual_time_stop = min(self.exp_time.max(), shock.time_out_of_moi + delay)
+            residual_time = np.linspace(residual_time_start, residual_time_stop, num=50)
+
+            difference = f_experiment(residual_time) - f_hyades(residual_time)
             self.residual = sum(np.square(difference))
 
         else:

@@ -490,6 +490,8 @@ class ShockVelocity:
             particle_velocity.append(Up)
 
             '''Attempting to find the time the shock enters and exits the shock material of interest.'''
+            # FIXME: There is a case when the time_out_of_moi is not assigned. This happens when the shock enters
+            #        the material of interest and the entire simulation ends before the shock leaves.
             if self.shock_moi:  # Only True if inf has a shock material of interest specified
                 if self.time_into_moi is None:  # only consider reassigning time_into_moi if it is None
                     if shock_index >= hyades_Up.layers[hyades_Up.shock_moi]['Mesh Start']:
