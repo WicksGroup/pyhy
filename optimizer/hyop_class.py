@@ -243,16 +243,22 @@ class HyadesOptimizer:
 
         hyades_file = f'{self.run_name}_{str(self.iter_count).zfill(3)}'
         hyades_path = os.path.join(self.path, hyades_file, hyades_file)
-        hyades = HyadesOutput(hyades_path, 'U')
-        i = hyades.layers[hyades.moi]['Mesh Stop'] - 1
 
         # Format the data from this iteration
         iteration_data = {'time pressure': list(self.pres_time),
                           'pressure': list(self.pres),
-                          'time velocity': list(hyades.time),
-                          'velocity': list(hyades.output[:, i]),
                           'residual': self.residual,
                           }
+        if self.use_shock_velocity:  # if using shock velocity, add shock velocity to iteration data
+            shock = ShockVelocity(hyades_path)
+            iteration_data['time velocity'] = list(shock.time)
+            iteration_data['velocity'] = list(shock.Us)
+        else:  # else, add particle velocity to iteration data
+            hyades = HyadesOutput(hyades_path, 'U')
+            i = hyades.layers[hyades.moi]['Mesh Stop'] - 1
+            iteration_data['time velocity'] = list(hyades.time)
+            iteration_data['velocity'] = list(hyades.output[:, i])
+
         # Initialize json file if it doesn't exist, else load in json file
         if not os.path.exists(json_name):
             parameters = {'delay': self.delay,
