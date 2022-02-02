@@ -1,9 +1,7 @@
 """The newest version of how to control the optimizer with a configuration file and configparser
 
 Todo:
-    - Implement shock velocity
     - Does the restart function need to clear any hyades data after the best one?
-    - Can I make a branch with my own jacobian function?
 """
 import os
 import json
@@ -63,12 +61,6 @@ def run_optimizer(run_name, restart=0, debug=0):
     hyop = HyadesOptimizer(run_name, time, pressure,
                            delay=delay, use_shock_velocity=use_shock_velocity, debug=debug)
 
-    laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
-                                          fallback=0)
-    if laser_spot_diameter != 0:  # Update initial pressure using laser ablation pressure
-        ablation_pressure, laser_log_message = calculate_laser_pressure(hyop, laser_spot_diameter)
-        hyop.pres = ablation_pressure
-
     if restart:  # Try to continue the optimization from a previous run
         previous_optimization_json = f'{run_name}_optimization.json'
         error_string = f'Tried to restart, but could not find {previous_optimization_json} in {run_path}' \
@@ -97,6 +89,13 @@ def run_optimizer(run_name, restart=0, debug=0):
     if time_of_interest:
         time_of_interest = [float(i) for i in time_of_interest.split(',')]
     hyop.read_experimental_data(experimental_filename, time_of_interest=time_of_interest)
+
+    # Update initial pressure guess if the spot size is not zero
+    laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
+                                          fallback=0)
+    if laser_spot_diameter > 0:
+        ablation_pressure, laser_log_message = calculate_laser_pressure(hyop, laser_spot_diameter)
+        hyop.pres = ablation_pressure
 
     # Run a loop over each of the resolutions
     for resolution in (len(hyop.pres), 2*len(hyop.pres), 4*len(hyop.pres)):
