@@ -1,6 +1,6 @@
 """Convert netcdf (.cdf) files to more friendly excel format
 
-Todo:
+FIXME:
     * Figure out why excel throws an error when I first try to open these notebooks
       error does not break the excel notebook, just throws a pop up that doesn't appear to change any data
 """
@@ -36,6 +36,8 @@ def format_for_excel(hyades, label, coordinate_system='Lagrangian'):
         top = hyades.x[0, :].reshape((1, len(hyades.x[0, :])))
     elif coordinate_system.lower() == 'eulerian':
         top = np.array([range(len(hyades.x[0, :]))])
+    else:
+        raise Exception(f'Unrecognized coordinate system {coordinate_system}. Options are Lagrangian or Eulerian.')
     right_matrix = np.concatenate((top, hyades.output), axis=0)
     time = np.insert(hyades.time, 0, np.NaN)
     time = time.reshape((len(time), 1))
@@ -64,25 +66,28 @@ def write_excel(cdf_path, excel_fname, variables, coordinate_system='Lagrangian'
     if not excel_fname.endswith('.xlsx'):
         excel_fname += '.xlsx'
 
-    writer = pd.ExcelWriter(excel_fname, mode='w')
+    # writer = pd.ExcelWriter(excel_fname, mode='w')
     for var in variables:
-        if var == 'R':
-            label, units = 'Eulerian Coordinates', '(um)'
-        elif var == 'Pres':
+        if var == 'Pres':
             label, units = 'Pressure', '(GPa)'
+        elif var == 'R':
+            label, units = 'Eulerian Coordinates', '(um)'
         elif var == 'Rho':
             label, units = 'Density', '(g/cc)'
-        elif var == 'U':
-            label, units = 'Particle Velocity', '(km/s)'
         elif var == 'Te':
             label, units = 'Electron Temperature', '(K)'
         elif var == 'Ti':
             label, units = 'Ion Temperature', '(K)'
         elif var == 'Tr':
             label, units = 'Radiation Temperature', '(K)'
+        elif var == 'U':
+            label, units = 'Particle Velocity', '(km/s)'
+        else:
+            raise Exception(f'Unrecognized variable {var}. Options are Pres, R, Rho, Te, Ti, Tr, U.')
         hyades = HyadesOutput(cdf_path, var)
         df = format_for_excel(hyades, f'{label} {units}', coordinate_system=coordinate_system)
-        df.to_excel(writer, sheet_name=label, header=False, index=False)
+        with pd.ExcelWriter(excel_fname, mode='w') as writer:
+            df.to_excel(writer, sheet_name=label, header=False, index=False)
 
     # Add a sheet to the excel file specifying the data format
     if coordinate_system == 'lagrangian':
@@ -93,15 +98,16 @@ def write_excel(cdf_path, excel_fname, variables, coordinate_system='Lagrangian'
                        'x M': ['Var (0, M)', 'Var (1, M)', '...', 'Var (N, M)']}
     elif coordinate_system == 'eulerian':
         format_dict = {'Variable Name (Units)': ['Time (ns) 0', 'Time 1', '...', 'Time N'],
-                       '0)': ['Var (0, 0)', 'Var (1, 0)', '...', 'Var (N, 0)'],
-                       '1': ['Var (0, 1)', 'Var (1, 1)', '...', 'Var (N, 1)'],
+                       'Eulerian Position 0 (um)': ['Var (0, 0)', 'Var (1, 0)', '...', 'Var (N, 0)'],
+                       'x 1': ['Var (0, 1)', 'Var (1, 1)', '...', 'Var (N, 1)'],
                        '...': ['...', '...', '...', '...'],
-                       'M': ['Var (0, M)', 'Var (1, M)', '...', 'Var (N, M)']}
+                       'x M': ['Var (0, M)', 'Var (1, M)', '...', 'Var (N, M)']}
     df_format = pd.DataFrame.from_dict(format_dict, dtype=str)
-    df_format.to_excel(writer, sheet_name='Data Format', header=True, index=False)
+    with pd.ExcelWriter(excel_fname, mode='w') as writer:
+        df_format.to_excel(writer, sheet_name='Data Format', header=True, index=False)
 
-    writer.save()
-    writer.close()
+    # writer.save()
+    # writer.close()
     print(f'Saved: {excel_fname}')
 
     return excel_fname

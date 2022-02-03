@@ -57,7 +57,7 @@ class HyadesOutput:
             self.dir_name = os.path.dirname(filename)
 
         self.run_name = os.path.splitext(os.path.basename(filename))[0]
-        self.var = var
+        self.var = var.capitalize()
 
         # Get variable information from cdf
         if self.run_name + '.cdf' in os.listdir(self.dir_name):
@@ -104,13 +104,13 @@ class HyadesOutput:
 
         """
         cdf = netcdf.netcdf_file(filename, 'r')
-
         time = cdf.variables['DumpTimes'].data.copy() * 1e9  # convert seconds to nanoseconds
         x = cdf.variables['R'].data.copy() * 1e4  # x is the mesh coordinates, convert cm to um
         output = cdf.variables[var].data.copy()  # output may be a 1D, 2D, or 3D array depending on the variable
         data_dimensions = cdf.variables[var].dimensions
+        # FIXME: what does sd1 do with the pressure calculations. Ray thinks it needs to be subtracted
         # if var == 'Pres':
-        #     sd1 = cdf.variables['Sd1'].data.copy()
+        #     sd1 = cdf.variables['Sd1'].data.copy() * 1e-10
         #     output = output - sd1
 
         if cdf.variables[var].dimensions[1] == 'NumMeshs':
@@ -162,6 +162,10 @@ class HyadesOutput:
             long_name = 'Eulerian Position'
             units = 'µm'
             unit_conversion = 1e4
+        elif 'RCM' == var:
+            long_name = 'Eulerian Zone Position'
+            units = 'µm'
+            unit_conversion = 1e4
         elif 'Rho' == var:
             long_name = 'Density'
             units = 'g/cc'
@@ -179,9 +183,15 @@ class HyadesOutput:
             long_name = 'Particle Velocity'
             units = 'km/s'
             unit_conversion = 1e-5
+        elif 'Ucm' == var:
+            long_name = 'Zone Particle Velocity'
+            units = 'km/s'
+            unit_conversion = 1e-5
         elif 'Ubin' == var:
             units = 'Joules/(K * m^3)'
             unit_conversion = 8.62e-9
+        else:
+            raise InvalidVariable(f'HyadesOutput does not recognize variable: {var}')
 
         output *= unit_conversion
 
@@ -357,6 +367,10 @@ class ShockVelocity:
 
         self.index_mode = mode
 
+        self.shock_moi = HyadesOutput(os.path.join(self.dir_name, self.run_name), 'U').shock_moi
+        self.time_into_moi = None
+        self.time_out_of_moi = None
+
         time, Us, window_start, window_stop, shock_index = self.calculate_shock_velocity(self.filename, self.index_mode)
         self.time = time
         self.Us = Us
@@ -364,8 +378,7 @@ class ShockVelocity:
         self.window_stop = window_stop
         self.shock_index = shock_index
 
-    @staticmethod
-    def calculate_shock_velocity(filename, mode):
+    def calculate_shock_velocity(self, filename, mode):
         """Compute the Shock Velocity of a simulation using Rankine–Hugoniot conditions.
 
         Find the shock velocity in a Hyades simulation using the Rankin-Hugoniot equation, Us = P / (Rho_0 * Up)
@@ -395,12 +408,17 @@ class ShockVelocity:
             WINDOW_STOP (list): Last index at time t where shock front was searched for
             SHOCK_INDEX (list): Index of shock front at time t
 
+        # FIXME:
+            - My attempt at finding the time in and time out of the shocked material is flawed.
+            The strict equality overlooks cases where the shock front jumps several zones and misses the boundary.
+            I need to enforce the shock front can only stay still or move to the right, and then use < and >
+
         """
         hyades_pres = HyadesOutput(filename, 'Pres')
         hyades_rho = HyadesOutput(filename, 'Rho')
         hyades_Up = HyadesOutput(filename, 'U')
 
-        min_index = 8  # only look for a shock after min_index time steps have occurred
+        min_index = 8  # only look for a shock front after min_index time steps have occurred
         max_index = len(hyades_pres.time)
         min_pressure = 10  # GPa
         window_size = 10  # check for a shock window_size zones before the leading edge
@@ -414,38 +432,47 @@ class ShockVelocity:
         SHOCK_INDEX = []
 
         for t in range(min_index, max_index):
-            # leading edge is the furthest-right zone index where the pressure is greater than min_pressure
             try:
+                # leading edge is the furthest-right zone index where the pressure is greater than min_pressure
                 leading_edge = max(np.where(hyades_pres.output[t, :] > min_pressure)[0])
             except ValueError:
                 print(f'Time: {t, hyades_pres.time[t]}, Max Pressure: {hyades_pres.output[t, :].max()}')
                 fig, ax = plt.subplots()
                 ax.plot(hyades_pres.x[0, :], hyades_pres.output[t, :])
                 ax.set_title(f'Error Graph at {hyades_pres.time[t]:.2f} ns')
-                ax.set(xlabel='Lagrangian Distance (um)', ylabel='Pressure (GPA)')
+                ax.set(xlabel='Lagrangian Distance (um)', ylabel='Pressure (GPa)')
                 plt.show()
-                raise Exception(f'At {hyades_pres.time[t]} could not find a pressure greater than {min_pressure} GPa,'
+                raise Exception(f'At {hyades_pres.time[t]} ns could not find a pressure greater than {min_pressure} GPa,'
                                 f'which caused the shock velocity calculation to crash.')
 
+            '''shock_index is where we consider the shock front to be. See function description for details.'''
             window_start = leading_edge - window_size
             if window_start < 0:
                 window_start = 0
             window_stop = leading_edge
             pressure_window = hyades_pres.output[t, window_start:window_stop]
-            shock_index = window_start + np.argmax(pressure_window)
+            shock_index = window_start + np.argmax(pressure_window)  # Shock index is the
 
             WINDOW_START.append(window_start)
             WINDOW_STOP.append(window_stop)
             SHOCK_INDEX.append(shock_index)
 
-            # pressure[j] = hyades_pres.output[t, shock_index]
-            # density[j] = hyades_rho.output[0, shock_index]
             pressure.append(hyades_pres.output[t, shock_index])
             density.append(hyades_rho.output[0, shock_index])
 
             left = hyades_Up.output[t, shock_index]
             right = hyades_Up.output[t, shock_index + 1]
-            if (mode.lower() == 'left') or (mode == 'L'):
+            if mode.lower() == 'ucm':
+                '''Attempt to load UCM, which is the Zone-indexed particle velocity output by Hyades'''
+                try:
+                    ucm = HyadesOutput(filename, 'UCM')
+                    Up = ucm.output[t, shock_index]
+                except KeyError as e:
+                    run_name = os.path.splitext(os.path.basename(filename))[0]
+                    print(f'UCM was specified, but was not found in {run_name}.cdf\n'
+                          f'Check if ucm is in pparray line in {run_name}.inf')
+                    raise e
+            elif (mode.lower() == 'left') or (mode == 'L'):
                 Up = left
             elif (mode.lower() == 'right') or (mode == 'R'):
                 Up = right
@@ -459,11 +486,25 @@ class ShockVelocity:
                 Up = cubic_spline(zone_x)
             else:
                 raise ValueError(f'Shock Velocity Interpolation Mode {mode!r} not recognized. '
-                                 f'Use one of Left, Right, Average, Cubic')
-            # particle_velocity[j] = Up
+                                 f'Use one of Left, Right, Average, Cubic, Ucm')
             particle_velocity.append(Up)
 
-            if abs(len(hyades_pres.x[0, :]) - window_stop) <= 2:  # If the shock index is too close to the free surface, stop
+            '''Attempting to find the time the shock enters and exits the shock material of interest.'''
+            # FIXME: There is a case when the time_out_of_moi is not assigned. This happens when the shock enters
+            #        the material of interest and the entire simulation ends before the shock leaves.
+            if self.shock_moi:  # Only True if inf has a shock material of interest specified
+                if self.time_into_moi is None:  # only consider reassigning time_into_moi if it is None
+                    if shock_index >= hyades_Up.layers[hyades_Up.shock_moi]['Mesh Start']:
+                        self.time_into_moi = hyades_Up.time[t]
+                if (self.time_into_moi is not None) and (self.time_out_of_moi is None):
+                    # only True if the shock has entered the shock moi and has not exited
+                    if shock_index >= hyades_Up.layers[hyades_Up.shock_moi]['Mesh Stop']:
+                        self.time_out_of_moi = hyades_Up.time[t]
+
+            if (len(hyades_pres.x[0, :]) - window_stop) <= 2:  # If shock index is too close to the free surface, stop
+                if (self.time_into_moi is not None) and (self.time_out_of_moi is None):
+                    # If we haven't assigned a time_out_of_moi, assign it now
+                    self.time_out_of_moi = hyades_Up.time[t]
                 break
 
         shock_velocity = np.array(pressure) / (np.array(density) * np.array(particle_velocity))

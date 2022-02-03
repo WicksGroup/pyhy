@@ -30,7 +30,7 @@ def eulerian_animation(inf_name, color_var):
     x_min = hyades.x.min() - ((hyades.x.max() - hyades.x.min()) * 0.05)
     if x_min < 0:
         x_min = -10
-    x_max = hyades.x.max() * 1.25
+    x_max = min(hyades.x[0, :].max() * 4, hyades.x.max() * 1.25)  # accounts for runs where material moves very far
     ax.set(xlim=(x_min, x_max), ylim=(-0.2, 1.2))
 
     # Add the lines for free surface initial positions

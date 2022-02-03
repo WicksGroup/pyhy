@@ -64,7 +64,7 @@ parser = argparse.ArgumentParser(prog='plot.py',
 parser.add_argument('filename', type=str,
                     help='Name of the Hyades run to be plotted. Assumed to be in pyhy/data '
                          'and does not require file extension.')
-parser.add_argument('-XT', choices=['Pres', 'U', 'Rho', 'Rho0', 'Te', 'Tr', 'Ti', 'Acc'], nargs='+',
+parser.add_argument('-XT', choices=['Acc', 'Pres', 'Rho', 'Rho0', 'Sd1', 'Te',  'Ti', 'Tr', 'U'], nargs='+',
                     help='Plot each variable on an XT diagram.'
                          '\nMultiple selections are allowed and will be plotted on their own figure.')
 parser.add_argument('-l', '--lineout', nargs='+',

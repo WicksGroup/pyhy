@@ -1,37 +1,38 @@
-"""An attempt to run Hyades simulations in parallel. Does **not** neatly format the output like hyades_runner.py"""
+"""An attempt to run Hyades simulations in parallel. Does **not** neatly format the output like hyades_runner.py
+
+TODO:
+    - Remove terminal displays from the hyades commands
+"""
 import multiprocessing
 import os
+import time
 
 
-def run_parallel_hyades(inf_files):
-    """Runs hyades simulations in parallel.
-
-    Todo:
-        * Test this on the lab iMac to explore effects of parallel simulations
-
-    Note:
-        THIS SCRIPT HAS NOT BEEN THOROUGHLY TESTED. UNSURE OF EFFECTS OF PARALLEL SIMULATIONS.
-        We are not sure this script actually saves any time. Further testing is needed.
-    """
-
-    assert(len(inf_files)) < 5, 'Due to a lack of testing, the number of parallel simulations is limited to 4 or fewer.'
-
-    def execute(file):
-        """Function to run Hyades for the parallel command"""
-        os.system(f'hyades {file}')
-
-    print(f'There are {len(inf_files)} inf files: {", ".join(inf_files)}.')
-    answer = input(f'Attempt to run all {len(inf_files)} in parallel? [y/n]')
-    if answer == 'y':
-        parallel_runs = tuple([os.path.join(inf_dir, f) for f in inf_files])
-        num_processes = len(parallel_runs)
-        process_pool = multiprocessing.Pool(processes=num_processes)
-        process_pool.map(execute, parallel_runs)
-    else:
-        print('Not running any Hyades simulations.')
+def run_hyades(inf):
+    """A simple function to run Hyades in parallel for several inf files"""
+    command = f'hyades {inf}'
+    with open('parallel_log.txt', 'a') as f:
+        f.write(f'Starting {command}\n')
+    start = time.time()
+    os.system(command)
+    stop = time.time()
+    with open('parallel_log.txt', 'a') as f:
+        f.write(f'Finished {command} in {stop - start:.4f} seconds\n')
 
 
 if __name__ == '__main__':
-    inf_dir = '../data/inf'
-    inf_files = [os.path.join(inf_dir, f) for f in os.listdir(inf_dir) if f.endswith('.inf')]
-    run_parallel_hyades(inf_files)
+    path = '../data/inf'
+    inf_files = sorted([f for f in os.listdir(path) if f.endswith('.inf')])
+    with open('parallel_log.txt', 'w') as f:
+        f.write(f'Logging for parallel_log.py\n')
+        f.write(f'Running {len(inf_files)} Hyades simulations in parallel.\n')
+        f.write(f'inf files are: {", ".join(inf_files)}\n')
+    num_processes = len(inf_files)
+    start_time = time.time()
+    process_pool = multiprocessing.Pool(processes=num_processes)
+    inf_files = [os.path.join(path, inf) for inf in inf_files]
+    process_pool.map(run_hyades, inf_files)
+    process_pool.close()
+    end_time = time.time()
+    with open('parallel_log.txt', 'a') as f:
+        f.write(f'Entire script took {end_time - start_time:.4f} seconds.')

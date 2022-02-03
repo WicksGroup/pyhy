@@ -2,8 +2,6 @@
 
 Todo:
     - add histogram
-    - add rho / rho0 compressive factor as a plotting option
-
 """
 import sys
 sys.path.append('../')
@@ -245,8 +243,8 @@ def visualize_target(filename):
         ax.add_patch(matplotlib.patches.Rectangle((x, y), width, height,
                                                   facecolor=c,
                                                   edgecolor=None))
-    upper_x = hyades.x.max() * 1.05
-    lower_x = hyades.x.max() * -0.05
+    upper_x = hyades.x[0, :].max() * 1.05
+    lower_x = hyades.x[0, :].max() * -0.05
     ax.set(xlabel='Lagrangian Position (µm)', xlim=(lower_x, upper_x), ylim=(-0.3, 1.3))
     ax.set_title(f'Target Visualization of {hyades.run_name}')
     plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
@@ -284,15 +282,9 @@ def eulerian_position(filename):
         i = np.argmin(abs(hyades.time - t))
         mesh_coordinates = hyades.output[i, :]
         zone_coordinates = (mesh_coordinates[1:] + mesh_coordinates[:-1]) / 2
-        # print('Time: ', t, 'Hyades min/max: ', hyades.output.min(), hyades.output.max())
-        # print('Time: ', t, 'Mesh min/max: ', mesh_coordinates.min(), mesh_coordinates.max())
-        # print('Time: ', t, 'Zone min/max: ', zone_coordinates.min(), zone_coordinates.max())
         for layer_num in np.unique(region_numbers):
-            # print(t, layer_num)
             mask, = np.where(region_numbers == layer_num)
-            # print(mask)
             layer_zone_coordinates = zone_coordinates[mask]
-            # print(layer_zone_coordinates)
             y = [hyades.time[i] for j in range(len(layer_zone_coordinates))]
             ax.plot(layer_zone_coordinates, y, marker='o', color=colors[layer_num-1], markersize=1)
 
@@ -306,7 +298,7 @@ def eulerian_position(filename):
     return fig, ax
 
 
-def plot_shock_velocity(filename, mode):
+def plot_shock_velocity(filename, mode, color=None):
     """Plot the Shock Velocity.
 
     Note:
@@ -315,6 +307,7 @@ def plot_shock_velocity(filename, mode):
     Args:
         filename (string): Name of the .cdf
         mode (string): Type of indexing to use on particle velocity - one of Left, Right, All, Difference, or a list
+        color:
 
     Returns:
         fig (matplotlib figure), ax (matplotlib axis)
@@ -355,7 +348,10 @@ def plot_shock_velocity(filename, mode):
     else:
         shock = ShockVelocity(filename, mode=mode)
         fig, ax = plt.subplots()
-        ax.plot(shock.time, shock.Us)
+        if color:
+            ax.plot(shock.time, shock.Us, color=color)
+        else:
+            ax.plot(shock.time, shock.Us)
         save_dictionary['Time (ns)'] = shock.time
         save_dictionary[f'{mode} Us (km/s)'] = shock.Us
         ax.set_title(f'Shock Velocity ({mode}) of {shock.run_name}')
@@ -389,7 +385,6 @@ def debug_shock_velocity(filename, mode='Cubic'):
     """
     hyades = HyadesOutput(filename, 'Pres')
     shock = ShockVelocity(filename, mode)
-    print(shock.time.shape, shock.Us.shape)
     fig, ax = xt_diagram(filename, 'Pres')
     x0 = hyades.x[0, shock.window_start]
     y0 = shock.time
@@ -399,7 +394,8 @@ def debug_shock_velocity(filename, mode='Cubic'):
             color='white', ls='dotted', lw=2, label='Shock Window')
     ax.plot(x1, y1,
             color='white', ls='dotted', lw=2)
-    ax.plot(hyades.x[0, shock.shock_index], shock.time, 'red', label='Shock Front', lw=1)
+    ax.scatter(hyades.x[0, shock.shock_index], shock.time,
+               color='red', marker='x', label='Shock Front')
     ax.legend()
 
     return fig, ax

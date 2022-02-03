@@ -1,6 +1,7 @@
 """Useful graphics to view a completed optimization"""
 import os
 import json
+import configparser
 import numpy as np
 import matplotlib.pyplot as plt
 from tools.hyades_reader import HyadesOutput
@@ -22,6 +23,12 @@ def compare_velocities(run_name, show_drive=True):
     json_name = f'./data/{run_name}/{run_name}_optimization.json'
     with open(json_name) as f:
         jd = json.load(f)
+    # Load if using shock velocity from config file
+    config = configparser.ConfigParser()
+    config_filename = os.path.join('.', 'data', run_name, f'{run_name}.cfg')
+    config.read(config_filename)
+    use_shock_velocity = config.getboolean('Setup', 'use_shock_velocity',
+                                           fallback=False)
 
     fig, ax = plt.subplots()
     # Plot experimental data
@@ -46,7 +53,11 @@ def compare_velocities(run_name, show_drive=True):
 
     # Figure formatting
     ax.set_title('Result of optimization ' + run_name)
-    ax.set(xlabel='Time (ns)', ylabel='Particle Velocity (km/s)')
+    if use_shock_velocity:
+        y_label = 'Shock Velocity (km/s)'
+    else:
+        y_label = 'Particle Velocity (km/s)'
+    ax.set(xlabel='Time (ns)', ylabel=y_label)
     ax.legend()
 
     if show_drive:  # Optionally plot the pressure drive on the same figure
@@ -69,15 +80,22 @@ def iteration_velocities(run_name):
         Use the arrow keys to move through the iterations in the optimizer. b jumps straight to the best optimization.
 
     Args:
-        run_name: Name of the optimization run to be plotted. Does not require path
+        run_name (string): Name of the optimization run to be plotted. Does not require path
 
     Returns:
         fig (matplotlib figure), ax (matplotlib axis)
 
     """
+
+    # Load json data from optimization
     json_name = f'./data/{run_name}/{run_name}_optimization.json'
     with open(json_name) as f:
         jd = json.load(f)  # load json data from optimization
+    # Load if using shock velocity from config file
+    config = configparser.ConfigParser()
+    config.read(os.path.join('.', 'data', 'run_name', f'{run_name}.cfg'))
+    use_shock_velocity = config.get('Setup', 'use_shock_velocity',
+                                    fallback=False)
 
     fig, ax = plt.subplots()
     # Plot experimental velocity
@@ -104,7 +122,11 @@ def iteration_velocities(run_name):
     # Formatting
     iteration = 0
     ax.set_title(f'Optimization Progress of {run_name}: {iteration} / {max([int(i) for i in jd["iterations"].keys()])}')
-    ax.set(xlabel='Time (ns)', ylabel='Velocity (km/s)')
+    if use_shock_velocity:
+        y_label = 'Shock Velocity (km/s)'
+    else:
+        y_label = 'Particle Velocity (km/s)'
+    ax.set(xlabel='Time (ns)', ylabel=y_label)
     ax.legend(loc='upper left')
     # Display instructions on screen
     instruction_txt = ax.text(ax.get_xlim()[0] + 0.5, ax.get_ylim()[1] * 0.5,
