@@ -318,9 +318,9 @@ class InfWriter:
             self.inf['DESCRIPTION'].append(line)
         
         if 'tvPres' in sim_props:
-            self.inf['PRES'] = ['source pres 1 10', f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvPres']
+            self.inf['PRES'] = ['source pres 1 1', f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvPres']
         if 'tvTemp' in sim_props:
-            self.inf['TEMP'] = ['source te 1 10',   f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvTemp']
+            self.inf['TEMP'] = ['source te 1 1',   f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvTemp']
         if 'tvLaser' in sim_props:
             wavelength = sim_props['laserWavelength'] / 1000  # convert nm to microns for Hyades
             self.inf['LASER'] = [f'source laser {wavelength} 1',
