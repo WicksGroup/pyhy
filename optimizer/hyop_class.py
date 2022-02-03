@@ -35,6 +35,8 @@ class HyadesOptimizer:
         self.delay = delay
         self.use_shock_velocity = use_shock_velocity
         self.debug = debug
+        if self.use_shock_velocity:
+            print('Optimization initialized using Shock Velocity.')
         
         self.exp_file = ''
         self.path = f'./data/{self.run_name}/'
@@ -347,8 +349,6 @@ class HyadesOptimizer:
         pretty_pressure = ', '.join([f'{p:.2f}' for p in self.pres])
         print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}\n'
               f'\tPressure: {pretty_pressure}')
-        if self.iter_count < 5:
-            print(f'Using Shock Velocity: {self.use_shock_velocity}')
 
         self.iter_count += 1
         if (self.residual < 50) and (len(self.pres_time) <= 10):
