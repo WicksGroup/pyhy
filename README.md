@@ -12,7 +12,7 @@ Little to no Python knowledge is required.
 
 Developed by Connor Krill et al. under the Wicks Lab at Johns Hopkins University.  
 First Published: December 2021  
-Last Updated: December 2021
+Last Updated: February 2022
 
 ___
 # Requirements & Set Up
