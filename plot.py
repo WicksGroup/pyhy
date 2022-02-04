@@ -111,7 +111,7 @@ if args.XT:
         if args.title:
             ax.set_title(' '.join(args.title))
         if args.save:
-            out_fname = f'{base_out_filename} {var} XT.png'
+            out_fname = f'{base_out_filename} {var} {coordinate_system} XT.png'
             plt.savefig(out_fname, dpi=200)
 
 if args.lineout:
