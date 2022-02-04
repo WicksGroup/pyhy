@@ -93,7 +93,6 @@ args = parser.parse_args()
 abs_path = './data/' + os.path.splitext(args.filename)[0]
 base_out_filename = os.path.join('./data/', os.path.splitext(args.filename)[0], os.path.splitext(args.filename)[0])
 
-
 coordinate_system = args.coordinate or 'Lagrangian'
 if coordinate_system == 'e':
     coordinate_system = 'Eulerian'
