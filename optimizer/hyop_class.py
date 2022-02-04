@@ -229,7 +229,24 @@ class HyadesOptimizer:
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
             if any(np.isnan(y)):
-                raise ValueError(f'Found NaN in HyadesOuput {hyades_path}')
+                raise ValueError(f'Found NaN in HyadesOuput from: {hyades_path}')
+
+            '''
+            During testing, myself and several users got an error when the experimental time is longer than
+            hyades simulation time, which causes the interpolation function to crash. The if statements below
+            check if the Hyades simulation covers all experimental time, and informs the user of any errors.
+            '''
+            if self.exp_time.max() > hyades_U.time.max():
+                raise ValueError(f'Experimental time is longer than Hyades time.\n'
+                                 f'Hyades ends at {hyades_U.time.max()} ns, while Experimental time goes until '
+                                 f'{self.exp_time.max()} ns.\n'
+                                 f'To fix, try extending Hyades simulation time past the end of experimental time.')
+            if self.exp_time.min() < hyades_U.time.min():
+                raise ValueError(f'Experimental time begins before Hyades time.\n'
+                                 f'Hyades begins at {hyades_U.time.min()} ns, while Experimental time begins at '
+                                 f'{self.exp_time.min()} ns.\n'
+                                 f'To fix, try shifting all experimental times so they start at zero.')
+
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             if any(np.isnan(interp_hyades)):
