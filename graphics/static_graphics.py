@@ -404,8 +404,6 @@ def debug_shock_velocity(filename, mode='Cubic'):
 def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: bool = True):
     """Plot the variable of interest at multiple times.
 
-    Todo:
-        - Implement Eulerian coordinates when multiple variables are plotted
     Note:
         Hyades uses oddly sized time steps, so your requested time may not be in the data.
         This script plots the times closest to the input ones.
@@ -432,7 +430,7 @@ def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: b
         var = var[0]
         hyades = HyadesOutput(filename, var)
         if coordinate_system == 'lagrangian':
-            save_dictionary['Lagrangian Position (um)'] = hyades.x
+            save_dictionary['Lagrangian Position (um)'] = hyades.x[0, :]
         fig, ax = plt.subplots()
         for t, c in zip(times, colors):  # Plot a line for each time
             closest_time, index = hyades.get_closest_time(t)
@@ -441,7 +439,7 @@ def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: b
                 ax.plot(hyades.x[0, :], hyades.output[index, :],
                         color=c, label=label)
                 x_label = 'Lagrangian Position (um)'
-                save_dictionary[label] = hyades.output[index, :]  # Save the y-data
+                save_dictionary[f'{hyades.long_name} ({hyades.units}) at {label}'] = hyades.output[index, :]  # Save the y-data
             else:  # Eulerian Position on x-axis
                 ax.plot(hyades.x[index, :], hyades.output[index, :],
                         color=c, label=label)
@@ -452,8 +450,8 @@ def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: b
         if show_layers:
             if coordinate_system == 'lagrangian':  # Add material names and interfaces for lagrangian lineouts
                 ax = add_layers(hyades, ax, coordinate_system='lagrangian')
-            # Nov 15, 2021 - Attempt to add layer interface labels to lineouts in Eulerian Coordinates
-            # They are messy and unclear and I don't plan on including them in the final Release
+            '''Nov 15, 2021 - Attempt to add layer interface labels to lineouts in Eulerian Coordinates
+               They are messy and unclear and I don't plan on including them in the final Release'''
             # else:
             #     for t in times:
             #         closest_time, time_index = hyades.get_closest_time(t)
@@ -488,35 +486,54 @@ def lineout(filename, var, times, coordinate_system='Lagrangian', show_layers: b
         ax.grid(b=True, which='minor', axis='both', lw=0.5, alpha=0.5)
         ax.minorticks_on()
         ax.legend()
-        out_filename = f'{hyades.run_name} {var}.csv'
+        out_filename = f'{hyades.run_name}_{var}.csv'
         comment = f'{hyades.long_name} of {hyades.run_name} at various times. ' \
-                  f'Lagrangian Positions are in microns. {hyades.long_name} are in {hyades.units}'
-    else:  # Multiple variables plot on stacked axes. Only available in Lagrangian Nov 16, 2021
-        comment = 'Lagrangian Positions are in microns. '
+                  f'Lagrangian Positions are in microns. {hyades.long_name} are in {hyades.units}.'
+    else:  # Multiple variables plot on stacked axes. Only available in Lagrangian as of Nov 16, 2021
+        if coordinate_system == 'lagrangian':
+            comment = 'Lagrangian Positions are in microns. '
+        else:
+            comment = 'Eulerian Positions are in microns. '
+
         fig, ax_arr = plt.subplots(nrows=len(var), ncols=1, sharex=True)
         for v, ax in zip(var, ax_arr):  # Each variable gets its own axis
             hyades = HyadesOutput(filename, v)
-            save_dictionary[f'{hyades.long_name} Position (um)'] = hyades.x[0, :]
+            if coordinate_system == 'lagrangian':
+                save_dictionary[f'{hyades.long_name} Position (um)'] = hyades.x[0, :]
+                # if eulerian coordinate system then the position needs to be saved at each time
             comment += f'{hyades.long_name} are in {hyades.units}. '
+
             for t, c in zip(times, colors):  # Plot a line for each time
                 i = np.argmin(abs(hyades.time - t))
-                ax.plot(hyades.x[0, :], hyades.output[i, :],
+                if coordinate_system == 'eulerian':
+                    save_dictionary[f'{hyades.long_name} Position (um) {hyades.time[i]:.2f} ns'] = hyades.x[i, :]
+                    x = hyades.x[i, :]
+                else:
+                    x = hyades.x[0, :]
+                ax.plot(x, hyades.output[i, :],
                         color=c, label=f'{hyades.time[i]:.2f} ns')
-                save_dictionary[f'{hyades.long_name} {hyades.time[i]:.2f} ns'] = hyades.output[i, :]
+
+                save_dictionary[f'{hyades.long_name} {hyades.units} at {hyades.time[i]:.2f} ns'] = hyades.output[i, :]
+
             if show_layers:  # Add material names and interfaces
                 ax = add_layers(hyades, ax)
             # Format axis labels for its respective variable
             ax.set_ylabel(f'{hyades.long_name} ({hyades.units})', fontsize='small')
             ax.legend(fontsize='x-small', loc='lower right')
+
         fig.suptitle(f'Lineouts of {hyades.run_name}')
-        ax_arr[-1].set_xlabel('Lagrangian Position (µm)')  # Add x label to the bottom axis
+        if coordinate_system == 'lagrangian':
+            ax_arr[-1].set_xlabel('Lagrangian Position (µm)')  # Add x label to the bottom axis
+        else:
+            ax_arr[-1].set_xlabel('Eulerian Position (µm)')
         out_filename = f'{hyades.run_name}_{"_".join(var)}.csv'
 
-    fig.canvas.manager.toolmanager.add_tool('Save Data', SaveTools,
-                                            data_dictionary=save_dictionary,
-                                            header=comment,
-                                            filename=os.path.join('data', hyades.run_name, out_filename))
-    fig.canvas.manager.toolbar.add_tool('Save Data', 'foo')
+    if SaveTools:  # Weak attempt to fix bug where SaveTools is NoneType on some users matplotlib installation
+        fig.canvas.manager.toolmanager.add_tool('Save Data', SaveTools,
+                                                data_dictionary=save_dictionary,
+                                                header=comment,
+                                                filename=os.path.join('data', hyades.run_name, out_filename))
+        fig.canvas.manager.toolbar.add_tool('Save Data', 'foo')
 
     return fig, ax
 
