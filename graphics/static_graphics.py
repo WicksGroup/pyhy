@@ -1,24 +1,20 @@
-"""Useful plots of Hyades inputs and outputs
-
-Todo:
-    - add histogram
-"""
-import sys
-sys.path.append('../')
+"""Useful plots of Hyades inputs and outputs"""
 import os
 import warnings
 import matplotlib
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-warnings.simplefilter("ignore")
-plt.rcParams['toolbar'] = 'toolmanager'
 from matplotlib.backend_tools import ToolBase
 import datetime
 import numpy as np
 import pandas as pd
 from scipy.io import netcdf
+import sys
+sys.path.append('../')
 from tools.hyades_reader import ShockVelocity, HyadesOutput
 from tools.excel_writer import write_excel
+plt.style.use('ggplot')
+warnings.simplefilter("ignore")
+plt.rcParams['toolbar'] = 'toolmanager'
 
 
 class SaveXTTool(ToolBase):
@@ -618,11 +614,3 @@ def show_ambient_density(hyades, ax):
         show_label = False
 
     return ax
-
-
-if __name__ == '__main__':
-    f = '../data/CLiF_shock'
-    # fig, ax = lineout(f, ['R'], [1, 2, 3, 4, 5, 6])
-    # fig, ax = xt_diagram(f, 'Pres')
-    # fig, ax = xt_diagram(f, 'Pres', x_mode='Eulerian')
-    # plt.show()
