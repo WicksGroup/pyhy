@@ -94,6 +94,7 @@ def run_optimizer(run_name, restart=0, debug=0):
     laser_spot_diameter = config.getfloat('Experimental', 'laser_spot_diameter',
                                           fallback=0)
     if laser_spot_diameter > 0:
+        print('First pressure guess calculated with laser ablation formula. ')
         ablation_pressure, laser_log_message = calculate_laser_pressure(hyop, laser_spot_diameter)
         hyop.pres = ablation_pressure
 
@@ -185,7 +186,6 @@ parser.add_argument('-v', '--velocity', action='store_true',
 args = parser.parse_args()
 # End parser
 
-print(args.filename, 'DEBUG:', args.debug)
 if args.start:
     sol = run_optimizer(args.filename, debug=args.debug)
 if args.restart:

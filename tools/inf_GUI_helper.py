@@ -318,16 +318,16 @@ class InfWriter:
             self.inf['DESCRIPTION'].append(line)
         
         if 'tvPres' in sim_props:
-            self.inf['PRES'] = ['source pres 1 10', f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvPres']
+            self.inf['PRES'] = ['source pres 1 1', f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvPres']
         if 'tvTemp' in sim_props:
-            self.inf['TEMP'] = ['source te 1 10',   f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvTemp']
+            self.inf['TEMP'] = ['source te 1 1',   f'sourcem {sim_props["sourceMultiplier"]}'] + sim_props['tvTemp']
         if 'tvLaser' in sim_props:
             wavelength = sim_props['laserWavelength'] / 1000  # convert nm to microns for Hyades
             self.inf['LASER'] = [f'source laser {wavelength} 1',
                                  f'sourcem {sim_props["sourceMultiplier"]}']
             self.inf['LASER'] += sim_props['tvLaser']  # extends the list, not a numerical addition
 
-        self.inf['PARM'] = ['pparray r u acc rho te ti tr pres zbar sd1 eelc eion',
+        self.inf['PARM'] = ['pparray r pres u rho te ti tr sd1',
                             'parm nstop 5000000',
                             'parm IRDTRN 0',
                             f'parm tstop {sim_props["time_max"] * 1e-9:.2e}',

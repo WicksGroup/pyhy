@@ -35,6 +35,8 @@ class HyadesOptimizer:
         self.delay = delay
         self.use_shock_velocity = use_shock_velocity
         self.debug = debug
+        if self.use_shock_velocity:
+            print('Optimization initialized using Shock Velocity.')
         
         self.exp_file = ''
         self.path = f'./data/{self.run_name}/'
@@ -154,9 +156,7 @@ class HyadesOptimizer:
         logging.info(log)
 
     def calculate_residual(self):
-        """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment
-        # FIXME: Implement residual for shock velocity. Known to be broken as Oct 13, 2021
-        """
+        """Calculates the sum of least squares residual between the most recent Hyades simulation and experiment"""
         hyades_file = f'{self.run_name}_{str(self.iter_count).zfill(3)}'
         hyades_path = os.path.join(self.path, hyades_file, hyades_file)
         hyades_U = HyadesOutput(hyades_path, 'U')
@@ -210,14 +210,13 @@ class HyadesOptimizer:
             '''new attempt
             In theory I think this should also be trying to minimize delay but lets see how it works
             '''
-            delay = self.exp_time.min() - shock.time_into_moi
-
-            delayed_time = shock.time + delay
+            self.delay = self.exp_time.min() - shock.time_into_moi
+            delayed_time = shock.time + self.delay
             f_hyades = interpolate.interp1d(delayed_time, shock.Us)
             f_experiment = interpolate.interp1d(self.exp_time, self.exp_data)
 
             residual_time_start = self.exp_time.min()
-            residual_time_stop = min(self.exp_time.max(), shock.time_out_of_moi + delay)
+            residual_time_stop = min(self.exp_time.max(), shock.time_out_of_moi + self.delay)
             residual_time = np.linspace(residual_time_start, residual_time_stop, num=50)
 
             difference = f_experiment(residual_time) - f_hyades(residual_time)
@@ -230,7 +229,24 @@ class HyadesOptimizer:
             x = hyades_U.time - self.delay
             y = hyades_U.output[:, idx]
             if any(np.isnan(y)):
-                raise ValueError(f'Found NaN in HyadesOuput {hyades_path}')
+                raise ValueError(f'Found NaN in HyadesOuput from: {hyades_path}')
+
+            '''
+            During testing, myself and several users got an error when the experimental time is longer than
+            hyades simulation time, which causes the interpolation function to crash. The if statements below
+            check if the Hyades simulation covers all experimental time, and informs the user of any errors.
+            '''
+            if self.exp_time.max() > hyades_U.time.max():
+                raise ValueError(f'Experimental time is longer than Hyades time.\n'
+                                 f'Hyades ends at {hyades_U.time.max()} ns, while Experimental time goes until '
+                                 f'{self.exp_time.max()} ns.\n'
+                                 f'To fix, try extending Hyades simulation time past the end of experimental time.')
+            if self.exp_time.min() < hyades_U.time.min():
+                raise ValueError(f'Experimental time begins before Hyades time.\n'
+                                 f'Hyades begins at {hyades_U.time.min()} ns, while Experimental time begins at '
+                                 f'{self.exp_time.min()} ns.\n'
+                                 f'To fix, try shifting all experimental times so they start at zero.')
+
             f_hyades_U = scipy.interpolate.interp1d(x, y)  # Interpolate Hyades data onto experimental time
             interp_hyades = f_hyades_U(self.exp_time)
             if any(np.isnan(interp_hyades)):
@@ -248,6 +264,7 @@ class HyadesOptimizer:
         iteration_data = {'time pressure': list(self.pres_time),
                           'pressure': list(self.pres),
                           'residual': self.residual,
+                          'delay': self.delay
                           }
         if self.use_shock_velocity:  # if using shock velocity, add shock velocity to iteration data
             shock = ShockVelocity(hyades_path)
@@ -261,8 +278,7 @@ class HyadesOptimizer:
 
         # Initialize json file if it doesn't exist, else load in json file
         if not os.path.exists(json_name):
-            parameters = {'delay': self.delay,
-                          'time of interest': [self.exp_time.min(), self.exp_time.max()],
+            parameters = {'time of interest': [self.exp_time.min(), self.exp_time.max()],
                           'moi': self.material_of_interest,
                           'shock moi': self.shock_moi,
                           'path': self.path
@@ -347,8 +363,6 @@ class HyadesOptimizer:
         pretty_pressure = ', '.join([f'{p:.2f}' for p in self.pres])
         print(f'Iteration: {str(self.iter_count).zfill(3)} Residual: {self.residual:.4f}\n'
               f'\tPressure: {pretty_pressure}')
-        if self.iter_count < 5:
-            print(f'Using Shock Velocity: {self.use_shock_velocity}')
 
         self.iter_count += 1
         if (self.residual < 50) and (len(self.pres_time) <= 10):
