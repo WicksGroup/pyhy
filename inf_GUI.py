@@ -5,7 +5,6 @@ The `Run Hyades` button **does** require a local installation of Hyades to work.
 
 Example:
     Start the GUI with the following line::
-
         $ python inf_GUI.py
 """
 import os
@@ -25,7 +24,7 @@ matplotlib.use("TkAgg")
 class InputGUI:
     """Create a GUI to format Hyades .inf files.
 
-    Takes in many different parameters, including simulation variables, Pressure / Temperature / Laser drives, and
+    Takes in many parameters, including simulation variables, Pressure / Temperature / Laser drives, and
     material properties then formats it all into a .inf for Hyades. Also has options to run Hyades and the optimizer.
 
     Note:
@@ -83,8 +82,8 @@ class InputGUI:
 
         def simulate():
             """Function to run all .inf files in a directory for Run Hyades button"""
-            inf_path = './data/inf/'
-            final_destination = './data/'
+            inf_path = os.path.join('.', 'data', 'inf')  # './data/inf/'
+            final_destination = os.path.join('.', 'data')  # './data/'
             if self.save_excel.get() == 1:
                 excel_variables = ['Pres', 'U', 'Rho', 'Te']
             else:
@@ -99,23 +98,25 @@ class InputGUI:
             elif messagebox.askyesno(title, message):
                 hyades_runner.batch_run_hyades(inf_path, final_destination, excel_variables=excel_variables)
 
+        initial_dir = os.path.join('..', 'data')
+
         def select_pres_file():
-            pres_filename = filedialog.askopenfilename(initialdir='../data', title='Select Pressure Profile')
+            pres_filename = filedialog.askopenfilename(initialdir=initial_dir, title='Select Pressure Profile')
             self.pres_fname.set(pres_filename)
             self.pres_label_variable.set(os.path.basename(pres_filename))
 
         def select_temp_file():
-            temp_filename = filedialog.askopenfilename(initialdir='../data', title='Select Temperature Profile')
+            temp_filename = filedialog.askopenfilename(initialdir=initial_dir, title='Select Temperature Profile')
             self.temp_fname.set(temp_filename)
             self.temp_label_variable.set(os.path.basename(temp_filename))
 
         def select_laser_file():
-            laser_filename = filedialog.askopenfilename(initialdir='../data', title='Select Laser Profile')
+            laser_filename = filedialog.askopenfilename(initialdir=initial_dir, title='Select Laser Profile')
             self.laser_fname.set(laser_filename)
             self.laser_label_variable.set(os.path.basename(laser_filename))
 
         def select_dir():
-            out_dir = filedialog.askdirectory(initialdir='../data/inf', title='Select .inf destination')
+            out_dir = filedialog.askdirectory(initialdir=initial_dir, title='Select .inf destination')
             self.out_dir.set(out_dir)
 
         # out_fname entry
@@ -127,7 +128,7 @@ class InputGUI:
         row += 1
         # Optionally select directory for inf
         pad_y = (0, 0)
-        self.out_dir.set('./data/inf')
+        self.out_dir.set(os.path.join('.', 'data', 'inf'))
         ttk.Button(root, text='Select .inf destination', command=select_dir).grid(row=row, column=2,
                                                                                   sticky='NWE', pady=pad_y)
         Label(root, textvariable=self.out_dir).grid(row=row, column=3, sticky='NW', pady=pad_y)
@@ -320,26 +321,25 @@ class InputGUI:
         writer = InfWriter()
         writer.add_layers(layers, sim_props)  # put layers & simulation properties in the InfWriter
         # writer.display()  # displays a formatted inf file
-
+        inf_dir = os.path.join('.', 'data', 'inf')
+        print('INF_GUI inf_dir from os.path.join:', inf_dir)
         if self.out_dir.get() == 'Select Directory':
-            if os.path.isdir('./data/inf'):
-                out_dir = './data/inf'
-            elif os.path.isdir('./data/inf'):
-                out_dir = './data/inf'
+            if os.path.isdir(inf_dir):
+                out_dir = inf_dir  # './data/inf'
             else:
-                out_dir = './'
+                out_dir = '.' + os.path.sep
         else:
             out_dir = self.out_dir.get()
         # If there isn't a directory for pyhy/data/inf, then make one
-        if (out_dir == './data/inf') and (not os.path.exists(out_dir)):
+        if (out_dir == inf_dir) and (not os.path.exists(out_dir)):
             os.mkdir(out_dir)
-
-        writer.write_out(os.path.join(out_dir, self.out_fname.get()))
+        out_filename = os.path.join(out_dir, self.out_fname.get())
+        print('INF_GUI out_filename', out_filename)
+        writer.write_out(out_filename)
 
 
 if __name__ == "__main__":
     root = Tk()
     style = ttk.Style(root)
-    # style.theme_use('xpnative')  # xpnative, clam, winnative, vista
     GUI = InputGUI(root)
     root.mainloop()
