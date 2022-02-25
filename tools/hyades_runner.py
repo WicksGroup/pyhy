@@ -118,8 +118,9 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
             os.chdir(old_directory)  # Change back to the original directory
         # Optionally convert .cdf as a human-readable Excel file
         if excel_variables:
-            excel_filename = os.path.join(os.path.splitext(abs_path)[0])
-            write_excel(abs_path, excel_filename, excel_variables)
+            absolute_path = os.path.join(inf_dir, inf)
+            excel_filename = os.path.join(os.path.splitext(absolute_path)[0])
+            write_excel(absolute_path, excel_filename, excel_variables)
             log_note += f' Saved {", ".join(excel_variables)} to excel file.'
         logging.info(log_note)
 
