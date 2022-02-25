@@ -279,7 +279,53 @@ class InputGUI:
         return tv_lines
 
     def write_out_props(self):
-        """Convert the GUI properties to a Layer object then pass all the Layers to the InfWriter"""
+        """Convert the GUI properties to a Layer object then pass all the Layers to the InfWriter
+        ToDo:
+            notify the user if the name of their new inf is already being used in the pyhy/data folder
+        """
+
+        '''The user may enter invalid options. These if statements check for invalid options and notify the user'''
+        messagebox_title = 'Hyades Input File GUI'
+        if not self.out_fname.get():  # Notify user if they did not enter a filename for the inf
+            messagebox.showerror(messagebox_title,
+                                 'Enter a unique filename for the inf.'
+                                 '\nInf will not be written.')
+            return
+        if self.time_max.get() <= 0:  # notify user for invalid simulation time
+            messagebox.showerror(messagebox_title,
+                                 'Simulation Time (ns) must be greater than zero.'
+                                 '\nInf will not be written.')
+            return
+        if self.time_step.get() <= 0:  # Notify user for invalid time step
+            messagebox.showerror(messagebox_title,
+                                 'Time Step (ns) must be greater than zero. 0.1 ns is standard.'
+                                 '\nInf will not be written.')
+            return
+        if self.n_layers.get() <= 0:  # notify user if they did not enter number of layers
+            messagebox.showerror(messagebox_title,
+                                 'Enter the number of layers then click Generate Layers.'
+                                 '\nInf will not be written')
+            return
+        if any([len(tab.material.get()) == 0 for tab in self.tabs]):  # notify user if they didn't select a material
+            invalid_layers = [f'Layer {i+1}' for i, tab in enumerate(self.tabs) if len(tab.material.get()) == 0]
+            messagebox.showerror(messagebox_title,
+                                 f'Select a material for {", ".join(invalid_layers)}.'
+                                 f'\nInf will not be written.')
+            return
+        if any([tab.thickness.get() <= 0 for tab in self.tabs]):  # Notify user for invalid thickness
+            invalid_materials = [tab.material.get() for tab in self.tabs if tab.thickness.get() <= 0]
+            messagebox.showerror('Hyades Input File GUI',
+                                 f'Enter a thickness greater than 0 for {", ".join(invalid_materials)}'
+                                 f'\nInf will not be written.')
+            return
+        if any([tab.n_mesh.get() <= 0 for tab in self.tabs]):  # Notify user for invalid mesh count
+            invalid_materials = [tab.material.get() for tab in self.tabs if tab.n_mesh.get() <= 0]
+            messagebox.showerror('Hyades Input File GUI',
+                                 f'Enter a Num Mesh Points greater than 0 for {", ".join(invalid_materials)}'
+                                 f'\nInf will not be written.')
+            return
+
+
         layers = []
         for i, T in enumerate(self.tabs):
             prop_dict = {}  # scraps all the properties out of GUI
