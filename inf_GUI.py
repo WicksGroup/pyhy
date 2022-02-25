@@ -322,7 +322,6 @@ class InputGUI:
         writer.add_layers(layers, sim_props)  # put layers & simulation properties in the InfWriter
         # writer.display()  # displays a formatted inf file
         inf_dir = os.path.join('.', 'data', 'inf')
-        print('INF_GUI inf_dir from os.path.join:', inf_dir)
         if self.out_dir.get() == 'Select Directory':
             if os.path.isdir(inf_dir):
                 out_dir = inf_dir  # './data/inf'
@@ -334,7 +333,6 @@ class InputGUI:
         if (out_dir == inf_dir) and (not os.path.exists(out_dir)):
             os.mkdir(out_dir)
         out_filename = os.path.join(out_dir, self.out_fname.get())
-        print('INF_GUI out_filename', out_filename)
         writer.write_out(out_filename)
 
 
