@@ -37,7 +37,9 @@ def compare_velocities(run_name, show_drive=True):
     experimental_label = os.path.basename(jd['experimental']['file'])
     ax.plot(experimental_x, experimental_y, label=experimental_label, color='tab:orange')
     # Plot best iteration from optimized data
-    simulated_x = np.array(jd['best']['time velocity']) - jd['parameters']['delay']
+    best_iteration = jd['best']['number']
+    delay = jd['iterations'][best_iteration]['delay']
+    simulated_x = np.array(jd['best']['time velocity']) - delay  # jd['parameters']['delay']
     simulated_y = jd['best']['velocity']
     ax.plot(simulated_x, simulated_y, label=f'{run_name}_{jd["best"]["number"]}', color='tab:blue')
 
@@ -61,7 +63,7 @@ def compare_velocities(run_name, show_drive=True):
     ax.legend()
 
     if show_drive:  # Optionally plot the pressure drive on the same figure
-        x = np.array(jd['best']['time pressure']) - jd['parameters']['delay']
+        x = np.array(jd['best']['time pressure']) - delay  # jd['parameters']['delay']
         y = jd['best']['pressure']
         ax2 = ax.twinx()
         ax2.plot(x, y, linestyle='--', label='Pressure Drive', color='black')
@@ -103,7 +105,8 @@ def iteration_velocities(run_name):
     y_experiment = jd['experimental']['velocity']
     ax.plot(x_experiment, y_experiment, color='tab:orange', label='Experiment', zorder=2)
     # Plot simulated velocity at iteration 000
-    x = np.array(jd['iterations']['000']['time velocity']) - jd['parameters']['delay']
+    delay = jd['iterations']['000']['delay']
+    x = np.array(jd['iterations']['000']['time velocity']) - delay  # jd['parameters']['delay']
     y = jd['iterations']['000']['velocity']
     line, = ax.plot(x, y, color='tab:blue', label='Simulation', zorder=3)
     # Add text for residual
@@ -165,7 +168,7 @@ def iteration_velocities(run_name):
             iteration = max([int(i) for i in jd['iterations'].keys()])
         # Update simulated velocity line
         i = str(iteration).zfill(3)
-        x = np.array(jd['iterations'][i]['time velocity']) - jd['parameters']['delay']
+        x = np.array(jd['iterations'][i]['time velocity']) - jd['iterations'][i]['delay']
         y = jd['iterations'][i]['velocity']
         line.set_data(x, y)
         # Update formatting

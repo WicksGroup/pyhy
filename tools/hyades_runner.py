@@ -36,8 +36,7 @@ def run_hyades(inf_name, quiet=False):
 
     file_extensions = ('.otf', '.ppf', '.tmf')
     run_name = os.path.basename(os.path.splitext(inf_name)[0])
-    found_all = all([run_name + ext in os.listdir(os.path.dirname(inf_name))
-                     for ext in file_extensions])
+    found_all = all([run_name + ext in os.listdir() for ext in file_extensions])
     if found_all:
         log_string = f'Completed Hyades simulation of {os.path.basename(inf_name)} in {t1 - t0:.2f} seconds.'
     else:
@@ -69,7 +68,7 @@ def otf2cdf(otf_name, quiet=False):
             os.remove(txt_file)
 
     run_name = os.path.basename(os.path.splitext(otf_name)[0])
-    found = run_name + '.cdf' in os.listdir(os.path.dirname(otf_name))
+    found = run_name + '.cdf' in os.listdir()
     if found:
         log_string = 'Completed PPF2NCDF.'
     else:
@@ -80,6 +79,11 @@ def otf2cdf(otf_name, quiet=False):
 
 def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
     """Runs Hyades simulations of many .inf files and packages each output into its own folder.
+
+    Note:
+        According to page 13 of the Hyades User Guide, best practice is to change to the directory with the .inf
+        and run Hyades from there. This function moves into the directory with the .inf, runs Hyades and the post-
+        processor, then changes back to the original directory.
 
     Args:
         inf_dir (string): Name of the directory containing .inf files
@@ -95,7 +99,7 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
     if len(inf_files) == 0:  # if there are no inf files in the inf_directory
         raise ValueError(f'Did not find any .inf files in {inf_dir}')
 
-    if inf_dir.startswith('./'):  # Hyades does not work with ./ prepended on directories
+    if inf_dir.startswith('./') or inf_dir.startswith('.\\'):  # Hyades does not work with ./ or .\ prepended
         inf_dir = inf_dir[2:]
 
     # Set up a logging file
@@ -104,18 +108,19 @@ def batch_run_hyades(inf_dir, out_dir, excel_variables=[], quiet=False):
     date_format = '%Y-%m-%d %H:%M:%S'
     logging.basicConfig(filename=filename, format=log_format, datefmt=date_format, level=logging.DEBUG)
 
+    old_directory = os.getcwd()
     for inf in inf_files:
-        # print(f'Starting Hyades {inf}')
-        abs_path = os.path.join(inf_dir, inf)
-        # Run Hyades
-        log_note = run_hyades(abs_path, quiet=quiet)
-        # Run PPF2NCDF to create .cdf file and add note to log
-        log_note += ' ' + otf2cdf(abs_path, quiet=quiet)
-
-        # Optionally convert .cdf as a human-readable excel file
+        os.chdir(inf_dir)  # Change to the directory where the file is
+        try:
+            log_note = run_hyades(inf, quiet=quiet)  # Run Hyades
+            log_note += ' ' + otf2cdf(inf, quiet=quiet)  # Run PPF2NCDF to create .cdf file and add note to log
+        finally:
+            os.chdir(old_directory)  # Change back to the original directory
+        # Optionally convert .cdf as a human-readable Excel file
         if excel_variables:
-            excel_filename = os.path.join(os.path.splitext(abs_path)[0])
-            write_excel(abs_path, excel_filename, excel_variables)
+            absolute_path = os.path.join(inf_dir, inf)
+            excel_filename = os.path.join(os.path.splitext(absolute_path)[0])
+            write_excel(absolute_path, excel_filename, excel_variables)
             log_note += f' Saved {", ".join(excel_variables)} to excel file.'
         logging.info(log_note)
 

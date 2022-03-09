@@ -4,6 +4,7 @@ FIXME:
     * Figure out why excel throws an error when I first try to open these notebooks
       error does not break the excel notebook, just throws a pop up that doesn't appear to change any data
 """
+import os
 import pandas as pd
 import numpy as np
 from tools.hyades_reader import HyadesOutput
@@ -66,7 +67,6 @@ def write_excel(cdf_path, excel_fname, variables, coordinate_system='Lagrangian'
     if not excel_fname.endswith('.xlsx'):
         excel_fname += '.xlsx'
 
-    # writer = pd.ExcelWriter(excel_fname, mode='w')
     for var in variables:
         if var == 'Pres':
             label, units = 'Pressure', '(GPa)'
@@ -86,7 +86,11 @@ def write_excel(cdf_path, excel_fname, variables, coordinate_system='Lagrangian'
             raise Exception(f'Unrecognized variable {var}. Options are Pres, R, Rho, Te, Ti, Tr, U.')
         hyades = HyadesOutput(cdf_path, var)
         df = format_for_excel(hyades, f'{label} {units}', coordinate_system=coordinate_system)
-        with pd.ExcelWriter(excel_fname, mode='w') as writer:
+        if not os.path.exists(excel_fname):  # If the Excel file does not exist, use 'w' to create it
+            excel_writer_mode = 'w'
+        else:  # if the Excel file already exists, use 'a' to append to it
+            excel_writer_mode = 'a'
+        with pd.ExcelWriter(excel_fname, mode=excel_writer_mode) as writer:
             df.to_excel(writer, sheet_name=label, header=False, index=False)
 
     # Add a sheet to the excel file specifying the data format
@@ -103,11 +107,8 @@ def write_excel(cdf_path, excel_fname, variables, coordinate_system='Lagrangian'
                        '...': ['...', '...', '...', '...'],
                        'x M': ['Var (0, M)', 'Var (1, M)', '...', 'Var (N, M)']}
     df_format = pd.DataFrame.from_dict(format_dict, dtype=str)
-    with pd.ExcelWriter(excel_fname, mode='w') as writer:
+    with pd.ExcelWriter(excel_fname, mode='a') as writer:
         df_format.to_excel(writer, sheet_name='Data Format', header=True, index=False)
-
-    # writer.save()
-    # writer.close()
     print(f'Saved: {excel_fname}')
 
     return excel_fname
